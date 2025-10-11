@@ -149,6 +149,41 @@ export const trendingApi = {
   },
 }
 
+// Authentication API
+export const authApi = {
+  // Register new user
+  register: async (data: { email: string; password: string; full_name?: string }) => {
+    const response = await api.post('/auth/register', data)
+    // Save token to localStorage
+    if (response.data.access_token) {
+      localStorage.setItem('auth_token', response.data.access_token)
+    }
+    return response.data
+  },
+
+  // Login user
+  login: async (data: { email: string; password: string }) => {
+    const response = await api.post('/auth/login', data)
+    // Save token to localStorage
+    if (response.data.access_token) {
+      localStorage.setItem('auth_token', response.data.access_token)
+    }
+    return response.data
+  },
+
+  // Get current user
+  getCurrentUser: async () => {
+    const response = await api.get('/auth/me')
+    return response.data
+  },
+
+  // Logout
+  logout: () => {
+    localStorage.removeItem('auth_token')
+    window.location.href = '/login'
+  },
+}
+
 // Onboarding and Business Profile API
 export const onboardingApi = {
   // Start onboarding process
