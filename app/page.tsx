@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { ArrowRight, Sparkles, Zap, TrendingUp } from 'lucide-react'
+import { Header } from '@/components/header'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-purple-50">
+      <Header />
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
@@ -28,7 +30,7 @@ export default function HomePage() {
 
           <div className="flex items-center justify-center gap-4 mb-12">
             <Link
-              href="/dashboard"
+              href="/register"
               className="px-8 py-4 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 transition flex items-center gap-2"
             >
               Get Started
@@ -112,7 +114,7 @@ export default function HomePage() {
             Join creators generating viral AI content effortlessly.
           </p>
           <Link
-            href="/dashboard"
+            href="/register"
             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-brand-600 rounded-lg font-semibold hover:bg-gray-50 transition"
           >
             Start Creating Now
