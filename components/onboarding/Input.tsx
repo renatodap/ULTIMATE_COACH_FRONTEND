@@ -1,11 +1,12 @@
 'use client'
 
 /**
- * Onboarding Input - Appears when buttons don't apply
- * Minimal, clean, autofocus
+ * Onboarding Input - Framer Motion
+ * Smooth spring animations
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface InputProps {
   type?: 'text' | 'number'
@@ -13,7 +14,6 @@ interface InputProps {
   value: string
   onChange: (value: string) => void
   onSubmit: () => void
-  delay?: number
   min?: number
   max?: number
   step?: number
@@ -26,24 +26,17 @@ export function Input({
   value,
   onChange,
   onSubmit,
-  delay = 0,
   min,
   max,
   step,
   unit
 }: InputProps) {
-  const [visible, setVisible] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(true)
-      setTimeout(() => inputRef.current?.focus(), 100)
-    }, delay)
+    const timer = setTimeout(() => inputRef.current?.focus(), 300)
     return () => clearTimeout(timer)
-  }, [delay])
-
-  if (!visible) return null
+  }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && value) {
@@ -52,7 +45,17 @@ export function Input({
   }
 
   return (
-    <div className="mb-6 opacity-0 translate-y-2 animate-fade-in">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{
+        type: 'spring',
+        stiffness: 100,
+        damping: 15
+      }}
+      className="mb-12"
+    >
       <div className="relative">
         <input
           ref={inputRef}
@@ -65,33 +68,42 @@ export function Input({
           max={max}
           step={step}
           className="
-            w-full px-4 py-3 rounded-lg
-            bg-neutral-800 text-neutral-white
-            border-2 border-transparent
-            focus:border-primary focus:outline-none
-            transition-all duration-200
+            w-full px-6 py-6 rounded-xl text-xl
+            bg-neutral-900/50 text-neutral-white placeholder-neutral-500
+            border-2 border-neutral-700
+            focus:border-primary focus:outline-none focus:bg-neutral-800/80 focus:shadow-xl focus:shadow-primary/20
+            transition-all duration-300
           "
         />
         {unit && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500">
+          <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">
             {unit}
           </span>
         )}
       </div>
-      {value && (
-        <button
-          onClick={onSubmit}
-          className="
-            mt-3 px-6 py-2 rounded-lg
-            bg-primary text-white
-            hover:bg-primary-dark
-            transition-all duration-200
-            opacity-0 animate-fade-in
-          "
-        >
-          Continue
-        </button>
-      )}
-    </div>
+
+      <AnimatePresence mode="wait">
+        {value && (
+          <motion.button
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            onClick={onSubmit}
+            className="
+              mt-6 w-full px-6 py-6 rounded-xl text-xl font-bold
+              bg-primary text-neutral-white
+              shadow-xl shadow-primary/50
+              hover:shadow-2xl hover:shadow-primary/60
+              transition-all duration-300
+            "
+          >
+            Continue →
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
