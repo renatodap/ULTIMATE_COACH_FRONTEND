@@ -12,7 +12,11 @@ const config: Config = {
   theme: {
     // Import design system tokens
     colors: theme.colors,
-    fontFamily: theme.typography.fontFamily,
+    fontFamily: {
+      sans: [...theme.typography.fontFamily.sans],
+      mono: [...theme.typography.fontFamily.mono],
+      display: [...theme.typography.fontFamily.display],
+    },
     fontSize: theme.typography.fontSize,
     fontWeight: theme.typography.fontWeight,
     lineHeight: theme.typography.lineHeight,
