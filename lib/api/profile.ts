@@ -108,124 +108,54 @@ export interface UpdateProfileData {
 /**
  * Get user's auto-log preference
  *
- * @deprecated This function uses direct Supabase access. Consider migrating to backend API pattern.
- * Direct Supabase access should be used only for simple preferences like this.
- * For complex profile operations, use getFullUserProfile() instead.
+ * @deprecated DISABLED - The auto_log_enabled field does not exist in the database schema.
+ * This feature is not currently implemented. Use backend API for profile preferences instead.
  *
  * @returns {Promise<AutoLogPreference>} The auto-log preference
- * @throws {Error} If user is not authenticated or query fails
+ * @throws {Error} Always throws - feature not implemented
  */
 export async function getAutoLogPreference(): Promise<AutoLogPreference> {
-  const supabase = createClient()
-
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  // Fetch profile - gracefully handle missing column
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('auto_log_enabled')
-    .eq('id', user.id)
-    .single()
-
-  if (error) {
-    console.error('[getAutoLogPreference] Database error:', error)
-    throw new Error(`Failed to fetch auto-log preference: ${error.message}`)
-  }
-
-  return {
-    auto_log_enabled: (data as any)?.auto_log_enabled ?? false
-  }
+  throw new Error('Auto-log preference feature is not implemented. The auto_log_enabled column does not exist in the database schema.')
 }
 
 /**
  * Update user's auto-log preference
  *
- * @deprecated This function uses direct Supabase access. Consider migrating to backend API pattern.
- * Direct Supabase access should be used only for simple preferences like this.
- * For complex profile updates, use updateFullUserProfile() instead.
+ * @deprecated DISABLED - The auto_log_enabled field does not exist in the database schema.
+ * This feature is not currently implemented. Use backend API for profile preferences instead.
  *
  * @param {boolean} enabled - Whether to enable auto-logging
  * @returns {Promise<void>}
- * @throws {Error} If user is not authenticated or update fails
+ * @throws {Error} Always throws - feature not implemented
  */
 export async function updateAutoLogPreference(enabled: boolean): Promise<void> {
-  const supabase = createClient()
-
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  // Update profile
-  const { error } = await supabase
-    .from('profiles')
-    .update({ auto_log_enabled: enabled })
-    .eq('id', user.id)
-
-  if (error) {
-    console.error('[updateAutoLogPreference] Database error:', error)
-    throw new Error(`Failed to update auto-log preference: ${error.message}`)
-  }
+  throw new Error('Auto-log preference feature is not implemented. The auto_log_enabled column does not exist in the database schema.')
 }
 
 /**
  * Get full user profile
  *
- * @deprecated Use getFullUserProfile() instead. This function uses direct Supabase access
- * and returns a limited UserProfile type. The new backend API provides a complete profile
- * with 40+ fields including onboarding data, macro targets, and consultation status.
+ * @deprecated DISABLED - Use getFullUserProfile() instead. This function used direct Supabase access
+ * and returned a limited UserProfile type with fields that don't exist in the database schema.
+ * The new backend API provides a complete profile with 40+ fields including onboarding data,
+ * macro targets, and consultation status.
  *
  * Migration: Replace getUserProfile() with getFullUserProfile()
  * Returns: FullUserProfile (comprehensive) vs UserProfile (basic fields only)
  *
  * @returns {Promise<UserProfile>} The user's profile
- * @throws {Error} If user is not authenticated or query fails
+ * @throws {Error} Always throws - feature disabled
  */
 export async function getUserProfile(): Promise<UserProfile> {
-  const supabase = createClient()
-
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  // Fetch profile
-  const { data, error} = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (error) {
-    console.error('[getUserProfile] Database error:', error)
-    throw new Error('Failed to fetch user profile')
-  }
-
-  // Cast to any to bypass strict database typing for deprecated function
-  const profile = data as any
-  return {
-    id: profile.id,
-    full_name: profile.full_name,
-    goal: profile.goal,
-    auto_log_enabled: profile.auto_log_enabled ?? false,
-    timezone: profile.timezone ?? 'UTC',
-    created_at: profile.created_at,
-    updated_at: profile.updated_at
-  }
+  throw new Error('getUserProfile is disabled. Use getFullUserProfile() instead, which provides complete profile data from the backend API.')
 }
 
 /**
  * Update user's timezone preference
  *
- * @deprecated Use updateFullUserProfile({ timezone }) instead. This function uses direct Supabase access
- * and doesn't provide the benefits of the backend API (validation, structured logging, error handling).
- * The new backend API ensures consistency and better error messages.
+ * @deprecated DISABLED - The timezone field does not exist in the Supabase profiles table.
+ * Use updateFullUserProfile({ timezone }) instead, which uses the backend API.
+ * The backend stores timezone in the PostgreSQL users table.
  *
  * Migration:
  * OLD: await updateUserTimezone('America/New_York')
@@ -233,29 +163,10 @@ export async function getUserProfile(): Promise<UserProfile> {
  *
  * @param {string} timezone - IANA timezone identifier (e.g., "America/New_York")
  * @returns {Promise<void>}
- * @throws {Error} If user is not authenticated or update fails
+ * @throws {Error} Always throws - feature not implemented in Supabase
  */
 export async function updateUserTimezone(timezone: string): Promise<void> {
-  const supabase = createClient()
-
-  // Get current user
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  // Update profile
-  const { error } = await supabase
-    .from('profiles')
-    .update({ timezone })
-    .eq('id', user.id)
-
-  if (error) {
-    console.error('[updateUserTimezone] Database error:', error)
-    throw new Error('Failed to update timezone')
-  }
-
-  console.log(`[updateUserTimezone] Updated timezone to: ${timezone}`)
+  throw new Error('updateUserTimezone is disabled. The timezone field does not exist in the Supabase profiles table. Use updateFullUserProfile({ timezone }) instead.')
 }
 
 // =====================================================

@@ -115,11 +115,10 @@ export default function OnboardingPage() {
         timezone: timezone,
       }
 
-      console.log('Submitting onboarding payload:', payload)
       await completeOnboarding(payload)
 
       next('complete')
-      setTimeout(() => router.push('/dashboard'), 2000)
+      setTimeout(() => router.push('/profile'), 2000)
     } catch (err: any) {
       setError(err.message || 'Failed to complete onboarding')
       setLoading(false)

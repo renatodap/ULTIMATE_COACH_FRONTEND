@@ -19,21 +19,17 @@ export default function LoginPage() {
     setError('')
 
     try {
-      console.log('Attempting login...')
       const response = await login({ email, password })
-      console.log('Login response:', response)
 
       // Use window.location.href for hard redirect to ensure cookies are loaded
       // router.push() can fail because middleware checks cookies before they're set
       if (!response.user.onboarding_completed) {
-        console.log('Redirecting to onboarding...')
         window.location.href = '/onboarding'
       } else {
-        console.log('Redirecting to dashboard...')
         window.location.href = '/dashboard'
       }
     } catch (err: any) {
-      console.error('Login error:', err)
+      // Log error silently for debugging
 
       // Show detailed error message
       if (err?.type === 'NetworkError') {
