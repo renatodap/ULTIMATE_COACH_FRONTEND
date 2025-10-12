@@ -28,8 +28,15 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password')
+    } catch (err: any) {
+      console.error('Login error:', err)
+
+      // Show detailed error message
+      if (err?.type === 'NetworkError') {
+        setError('Unable to connect to server. Please check the Railway CORS configuration.')
+      } else {
+        setError(err?.detail || err?.message || 'Invalid email or password')
+      }
     } finally {
       setLoading(false)
     }

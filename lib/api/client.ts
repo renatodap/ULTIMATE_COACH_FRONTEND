@@ -136,18 +136,36 @@ class ApiClient {
   ): Promise<T> {
     const url = this.buildUrl(endpoint)
 
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include', // Include httpOnly cookies
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      ...options,
-    })
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'include', // Include httpOnly cookies
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        ...options,
+      })
 
-    return this.processResponse<T>(response)
+      return this.processResponse<T>(response)
+    } catch (error) {
+      // Handle network errors (including CORS failures)
+      if (error instanceof TypeError) {
+        console.error('[API Network Error]', {
+          url,
+          error: error.message,
+          hint: 'This may be a CORS issue or network connectivity problem',
+        })
+        throw new ApiRequestError(
+          'Unable to connect to server. This may be a CORS or network issue.',
+          0,
+          error.message,
+          'NetworkError'
+        )
+      }
+      throw error
+    }
   }
 
   /**
