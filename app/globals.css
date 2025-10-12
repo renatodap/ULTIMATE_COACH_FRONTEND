@@ -3,31 +3,254 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
+  --iron-black: #0A0A0B;
+  --iron-orange: #FF4500;
+  --iron-white: #FFFFFF;
+  --iron-gray: #4A4A4A;
+  --iron-dark-gray: #1A1A1B;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 15, 23, 42;
-    --background-end-rgb: 15, 23, 42;
+@layer base {
+  html {
+    color-scheme: dark;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  body {
+    @apply bg-iron-black text-iron-white antialiased;
+    overscroll-behavior-y: contain;
+    -webkit-text-size-adjust: 100%;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+
+  /* NO rounded corners - sharp and minimal */
+  *,
+  *::before,
+  *::after {
+    border-radius: 0 !important;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold uppercase tracking-wider;
+  }
+
+  /* Links */
+  a {
+    cursor: pointer;
+  }
+
+  /* Focus states */
+  *:focus-visible {
+    outline: 2px solid var(--iron-orange);
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--iron-orange);
+    color: var(--iron-black);
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer components {
+  /* Button - minimal, brutal */
+  .btn {
+    @apply px-6 py-3 font-semibold uppercase tracking-widest transition-all;
+    @apply active:scale-95;
+    touch-action: manipulation;
+    min-height: 44px;
+  }
+
+  .btn-primary {
+    background-color: var(--iron-orange);
+    color: var(--iron-black);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: #FF5722;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+  }
+
+  .btn-secondary {
+    @apply border-2 text-iron-white;
+    border-color: var(--iron-gray);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--iron-orange);
+  }
+
+  /* Input - minimal, sharp */
+  .input {
+    @apply w-full px-4 py-3 text-iron-white transition-colors;
+    background-color: var(--iron-black);
+    border: 2px solid var(--iron-gray);
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .input::placeholder {
+    color: var(--iron-gray);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--iron-orange);
+  }
+
+  /* Card with subtle glassmorphism */
+  .card {
+    background-color: rgba(26, 26, 27, 0.4);
+    border: 1px solid rgba(74, 74, 74, 0.2);
+    backdrop-filter: blur(8px);
+  }
+
+  .card-glass {
+    background-color: rgba(10, 10, 11, 0.6);
+    border: 1px solid rgba(74, 74, 74, 0.3);
+    backdrop-filter: blur(12px);
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* iOS safe areas */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
   }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Custom colors */
+  .bg-iron-black {
+    background-color: var(--iron-black);
+  }
+
+  .bg-iron-orange {
+    background-color: var(--iron-orange);
+  }
+
+  .bg-iron-white {
+    background-color: var(--iron-white);
+  }
+
+  .bg-iron-gray {
+    background-color: var(--iron-gray);
+  }
+
+  .bg-iron-dark-gray {
+    background-color: var(--iron-dark-gray);
+  }
+
+  .text-iron-black {
+    color: var(--iron-black);
+  }
+
+  .text-iron-orange {
+    color: var(--iron-orange);
+  }
+
+  .text-iron-white {
+    color: var(--iron-white);
+  }
+
+  .text-iron-gray {
+    color: var(--iron-gray);
+  }
+
+  .border-iron-gray {
+    border-color: var(--iron-gray);
+  }
+
+  .border-iron-orange {
+    border-color: var(--iron-orange);
+  }
+
+  /* Text gradients for 2027 touch */
+  .text-gradient {
+    background: linear-gradient(to right, var(--iron-white), var(--iron-gray));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-orange {
+    background: linear-gradient(to right, var(--iron-orange), #FF5722);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* Scrollbar - minimal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--iron-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--iron-gray);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--iron-orange);
+}
+
+/* Hide scrollbar on mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Prevent text selection on UI elements */
+button,
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Animations - smooth but minimal */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.4s ease-out;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

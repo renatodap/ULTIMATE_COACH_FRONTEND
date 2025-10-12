@@ -1,12 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
-    domains: ['localhost', 'your-storage-domain.com'],
+    domains: ['txuebspgxwtnwmwiwxfo.supabase.co'],
+    formats: ['image/avif', 'image/webp'],
   },
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+  webpack: (config) => {
+    // Fix for Windows path issues
+    config.resolve.fallback = { fs: false, path: false };
+    return config;
   },
 }
 

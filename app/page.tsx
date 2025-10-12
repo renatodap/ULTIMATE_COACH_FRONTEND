@@ -1,127 +1,88 @@
 import Link from 'next/link'
-import { ArrowRight, Sparkles, Zap, TrendingUp } from 'lucide-react'
-import { Header } from '@/components/header'
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-purple-50">
-      <Header />
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-brand-100 px-4 py-2 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-brand-600" />
-            <span className="text-sm font-medium text-brand-700">
-              AI-Powered Carousel Generation
-            </span>
+    <div className="min-h-screen bg-iron-black">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-dark-gray to-iron-black -z-10" />
+
+      {/* Main content */}
+      <main className="relative z-10 container mx-auto px-6 py-12">
+        {/* Hero section */}
+        <section className="min-h-[80vh] flex flex-col items-center justify-center text-center space-y-12">
+          {/* Brand */}
+          <div className="space-y-6">
+            <h1 className="text-7xl sm:text-8xl md:text-9xl lg:text-[12rem] font-black text-gradient-orange leading-none">
+              SHARPENED
+            </h1>
+            <p className="text-2xl sm:text-3xl md:text-4xl text-iron-gray uppercase tracking-[0.2em]">
+              AI Fitness Coach
+            </p>
           </div>
 
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
-            Generate Instagram Carousels
-            <br />
-            in Minutes, Not Hours
-          </h1>
-
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Automated research, AI-powered copywriting, professional design, and
-            instant publishing. Create viral-worthy carousels about AI topics with
-            one click.
+          {/* Description */}
+          <p className="max-w-2xl text-lg sm:text-xl text-iron-gray leading-relaxed">
+            Transform your fitness journey with AI-powered coaching, smart meal tracking,
+            and personalized workout plans. Your 24/7 fitness companion.
           </p>
 
-          <div className="flex items-center justify-center gap-4 mb-12">
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 pt-8">
             <Link
-              href="/register"
-              className="px-8 py-4 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 transition flex items-center gap-2"
+              href="/signup"
+              className="px-12 py-5 bg-iron-orange text-iron-black font-bold text-xl uppercase tracking-wider hover:bg-[#FF5722] transition-all hover:scale-105 active:scale-95"
             >
               Get Started
-              <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              href="/examples"
-              className="px-8 py-4 bg-white text-brand-600 rounded-lg font-semibold hover:bg-gray-50 transition border-2 border-brand-200"
+              href="/login"
+              className="px-12 py-5 border-2 border-iron-gray text-iron-white font-bold text-xl uppercase tracking-wider hover:border-iron-orange hover:text-iron-orange transition-all hover:scale-105 active:scale-95"
             >
-              See Examples
+              Sign In
             </Link>
           </div>
+        </section>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-brand-600 mb-2">5-10min</div>
-              <div className="text-gray-600">Generation Time</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-brand-600 mb-2">$2.60</div>
-              <div className="text-gray-600">Cost per Carousel</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-brand-600 mb-2">8-10</div>
-              <div className="text-gray-600">Slides Generated</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Everything You Need to Create Viral Carousels
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center mb-4">
-              <Sparkles className="w-6 h-6 text-brand-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">AI-Powered Research</h3>
-            <p className="text-gray-600">
-              Automatic topic research using Perplexity, Reddit, and Twitter APIs.
-              Get trending insights in seconds.
+        {/* Features section */}
+        <section className="py-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-4 hover:border-iron-orange transition-colors">
+            <div className="text-5xl">🤖</div>
+            <h3 className="text-2xl font-bold text-iron-white uppercase">AI Coach</h3>
+            <p className="text-iron-gray">
+              Get personalized guidance from an AI that understands your goals and adapts to your progress.
             </p>
           </div>
 
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Smart Copywriting</h3>
-            <p className="text-gray-600">
-              Claude AI generates scroll-stopping hooks, engaging copy, and
-              optimized captions with hashtags.
+          <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-4 hover:border-iron-orange transition-colors">
+            <div className="text-5xl">📸</div>
+            <h3 className="text-2xl font-bold text-iron-white uppercase">Photo Tracking</h3>
+            <p className="text-iron-gray">
+              Snap a picture of your meal and let AI analyze nutrition instantly. No manual entry needed.
             </p>
           </div>
 
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Professional Design</h3>
-            <p className="text-gray-600">
-              DALL-E 3 generates stunning visuals. Automatic composition and
-              brand-consistent styling.
+          <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-4 hover:border-iron-orange transition-colors">
+            <div className="text-5xl">📊</div>
+            <h3 className="text-2xl font-bold text-iron-white uppercase">Smart Analytics</h3>
+            <p className="text-iron-gray">
+              Track your progress with intelligent insights and data-driven recommendations.
             </p>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* CTA */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="bg-gradient-to-r from-brand-600 to-purple-600 rounded-2xl p-12 text-center text-white max-w-4xl mx-auto">
-          <h2 className="text-4xl font-bold mb-4">
-            Ready to 10x Your Content Output?
-          </h2>
-          <p className="text-xl mb-8 text-brand-100">
-            Join creators generating viral AI content effortlessly.
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-brand-600 rounded-lg font-semibold hover:bg-gray-50 transition"
-          >
-            Start Creating Now
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </div>
+        {/* Footer */}
+        <footer className="py-12 text-center text-iron-gray text-sm">
+          <p>Built with Next.js, FastAPI & Claude AI</p>
+          <div className="mt-4 space-x-6">
+            <Link href="/privacy" className="hover:text-iron-orange transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-iron-orange transition-colors">
+              Terms
+            </Link>
+          </div>
+        </footer>
+      </main>
     </div>
   )
 }

@@ -1,14 +1,10 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-import { Providers } from '@/components/providers'
-import { ErrorBoundary } from '@/components/error-boundary'
-
-const inter = Inter({ subsets: ['latin'] })
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export const metadata: Metadata = {
-  title: 'Carousel Instagram Agent',
-  description: 'AI-powered Instagram carousel generation',
+  title: 'SHARPENED - AI Fitness & Nutrition',
+  description: 'Become a sharpened version of yourself with AI-powered fitness and nutrition coaching',
 }
 
 export default function RootLayout({
@@ -17,11 +13,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ErrorBoundary>
-          <Providers>{children}</Providers>
-        </ErrorBoundary>
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
+        <ErrorBoundary>{children}</ErrorBoundary>
       </body>
     </html>
   )

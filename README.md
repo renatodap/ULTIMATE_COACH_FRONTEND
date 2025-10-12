@@ -1,193 +1,118 @@
-# Instagram Carousel Generator - Frontend
+# ULTIMATE COACH Frontend
 
-🎨 **Complete Next.js Frontend with Onboarding UI**
+**Production-ready Next.js 14 frontend for ULTIMATE COACH fitness application**
 
-Modern, responsive frontend for AI-powered Instagram carousel generation with comprehensive business profile onboarding.
+## 🚀 Features
 
-## Features
+- ✅ Next.js 14 with App Router
+- ✅ TypeScript with strict mode
+- ✅ Tailwind CSS + shadcn/ui components
+- ✅ Supabase authentication
+- ✅ Responsive mobile-first design
+- ✅ AI coach chat with streaming
+- ✅ Multimodal input (text, voice, images)
+- ✅ Optimistic UI updates
+- ✅ Comprehensive test coverage
 
-- ✨ **5-Step Onboarding Wizard**: Progressive disclosure onboarding flow
-- 👤 **Business Profile Management**: Complete profile system with completion tracking
-- 📊 **Dashboard**: Carousel management and status tracking
-- 🎯 **Approval Workflow**: Multi-stage variant approval interface
-- 📈 **Analytics & Insights**: Performance tracking and learning insights
-- 🎨 **Responsive Design**: Mobile-first, works on all devices
-- ⚡ **Optimized Performance**: Code splitting, React Query caching
+## 📋 Prerequisites
 
-## Tech Stack
+- Node.js 18+ and npm 9+
+- Backend API running (ULTIMATE_COACH_BACKEND)
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **State Management**: React Query (@tanstack/react-query)
-- **Forms**: react-hook-form + Zod validation
-- **Styling**: TailwindCSS
-- **Icons**: Lucide React
-- **HTTP Client**: Axios
+## 🛠️ Quick Start
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- Backend API running
-
-### Installation
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
 npm install
-
-# Or with yarn
-yarn install
 ```
 
-### Configuration
-
-Create `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-For production:
-```env
-NEXT_PUBLIC_API_URL=https://your-backend-url.com
-```
-
-### Development
+### 2. Setup Environment
 
 ```bash
-# Start dev server
+# Copy environment template
+cp .env.example .env.local
+
+# Edit .env.local with your actual values
+# Required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_BASE_URL
+```
+
+### 3. Run Development Server
+
+```bash
 npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
 ```
 
-Visit `http://localhost:3000`
+### 4. Access Application
 
-## Project Structure
+- **App**: http://localhost:3000
+- **API Health**: http://localhost:8000/api/v1/health
 
-```
-frontend/
-├── app/
-│   ├── onboarding/       # Onboarding flow page
-│   ├── profile/          # Profile management page
-│   ├── dashboard/        # Main dashboard
-│   ├── create/           # Carousel creation
-│   └── carousel/[id]/    # Carousel details
-├── components/
-│   ├── onboarding/       # Onboarding components
-│   │   ├── form-components.tsx
-│   │   ├── progress-indicator.tsx
-│   │   ├── onboarding-wizard.tsx
-│   │   └── steps/        # 5 step components
-│   ├── skeletons/        # Loading skeletons
-│   └── ...
-├── hooks/
-│   ├── useOnboardingFlow.ts
-│   ├── useBusinessProfile.ts
-│   └── ...
-├── lib/
-│   ├── api.ts            # API client
-│   ├── types/            # TypeScript types
-│   └── validation/       # Zod schemas
-```
-
-## Key Features
-
-### Onboarding Wizard
-
-**5 Steps:**
-1. **Business Basics** - Name, industry, target audience
-2. **Brand Voice** - Voice, personality, values
-3. **Content Strategy** - Goals, topics, examples
-4. **Visual Identity** - Colors, style preferences
-5. **Review** - USPs, competitors, final submission
-
-**Features:**
-- Progressive saving (each step auto-saves)
-- Form validation with helpful error messages
-- Mobile-responsive with adaptive layouts
-- Quick suggestions for common inputs
-- Profile completion tracking
-
-### Profile Management
-
-- View complete business profile
-- Completion percentage with recommendations
-- AI embedding status indicators
-- Edit capability (redirects to onboarding)
-- Profile summary with metadata
-
-### Dashboard Integration
-
-- Automatic redirect to onboarding for new users
-- Profile link in navigation
-- Carousel status tracking
-- Approval workflow integration
-
-## API Integration
-
-All endpoints are integrated via `lib/api.ts`:
-
-```typescript
-// Onboarding
-onboardingApi.start()
-onboardingApi.getProgress()
-onboardingApi.updateStep({ step, data })
-onboardingApi.complete({ profile_data })
-
-// Business Profile
-businessProfileApi.get()
-businessProfileApi.update({ profile_data })
-businessProfileApi.getCompletionStatus()
-```
-
-## Validation
-
-Uses Zod for type-safe validation:
-
-```typescript
-// Example step schema
-export const step1Schema = z.object({
-  business_name: z.string().min(2).max(100),
-  industry: z.string().min(2).max(100),
-  target_audience: z.string().min(5).max(200),
-  // ...
-})
-```
-
-## State Management
-
-React Query for server state:
-
-```typescript
-const { data, isLoading, error } = useQuery({
-  queryKey: ['onboarding', 'progress'],
-  queryFn: onboardingApi.getProgress,
-  staleTime: 30000,
-})
-```
-
-## Build & Deploy
-
-### Build
+## 🧪 Testing
 
 ```bash
-npm run build
+# Run tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Run with coverage
+npm run test:coverage
 ```
 
-**Bundle Sizes:**
-- Onboarding page: 31.1 kB
-- Profile page: 2.64 kB
-- Dashboard: 5.81 kB
+## 🏗️ Project Structure
 
-### Deploy to Vercel
+```
+ULTIMATE_COACH_FRONTEND/
+├── app/                           # Next.js App Router
+│   ├── (auth)/
+│   │   ├── login/page.tsx        # Login page
+│   │   └── signup/page.tsx       # Signup page
+│   ├── dashboard/page.tsx        # Main dashboard
+│   ├── coach/page.tsx           # AI coach chat
+│   ├── nutrition/page.tsx       # Meal logging
+│   ├── activities/page.tsx      # Workout logging
+│   ├── profile/page.tsx         # User profile
+│   ├── layout.tsx               # Root layout
+│   ├── page.tsx                 # Landing page
+│   └── globals.css              # Global styles
+├── components/
+│   ├── ui/                       # shadcn/ui components
+│   ├── Coach/                    # Coach-specific components
+│   ├── Nutrition/                # Nutrition components
+│   └── shared/                   # Shared components
+│       ├── BottomNav.tsx
+│       └── LoadingSpinner.tsx
+├── lib/
+│   ├── api/                      # API client functions
+│   ├── supabase/                 # Supabase clients
+│   └── utils/                    # Helper functions
+├── hooks/                        # Custom React hooks
+├── types/                        # TypeScript types
+├── middleware.ts                 # Auth middleware
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+## 🔧 Code Quality
+
+```bash
+# Type check
+npm run type-check
+
+# Lint
+npm run lint
+
+# Format code
+npm run format
+```
+
+## 🚢 Deployment
+
+### Vercel (Recommended)
 
 ```bash
 # Install Vercel CLI
@@ -195,94 +120,73 @@ npm i -g vercel
 
 # Deploy
 vercel
-
-# Set environment variable in Vercel dashboard:
-# NEXT_PUBLIC_API_URL=your_backend_url
 ```
 
-### Docker
+### Manual Build
 
 ```bash
-docker build -t insta-carousel-frontend .
-docker run -p 3000:3000 insta-carousel-frontend
-```
-
-## Testing
-
-```bash
-# Type check
-npm run type-check
-
-# Build check
+# Build for production
 npm run build
 
-# Start and test manually
-npm run dev
+# Start production server
+npm run start
 ```
 
-## Development Workflow
+## 🎨 Design System
 
-1. **Start Backend**: Ensure backend is running on port 8000
-2. **Start Frontend**: `npm run dev`
-3. **Test Flow**:
-   - Navigate to `/dashboard`
-   - Should redirect to `/onboarding`
-   - Complete all 5 steps
-   - Verify data saves
-   - Check profile page
+- **Framework**: Tailwind CSS
+- **Components**: shadcn/ui (headless, customizable)
+- **Icons**: Lucide React
+- **Colors**: Custom brand palette
+- **Typography**: Inter font
+- **Spacing**: Tailwind spacing scale (4px base)
 
-## Common Issues
+## 📱 Mobile-First
 
-### API Connection Fails
+All components are designed mobile-first with breakpoints:
+- **Mobile**: 320px - 639px (default)
+- **Tablet**: 640px - 1023px (`sm:`)
+- **Desktop**: 1024px+ (`lg:`)
 
-- Verify `NEXT_PUBLIC_API_URL` is set
-- Check backend is running
-- Check CORS settings in backend
+## ♿ Accessibility
 
-### Build Errors
+- WCAG 2.1 Level AA compliant
+- Keyboard navigation support
+- Screen reader optimized
+- Color contrast ratios validated
+- Focus indicators on all interactive elements
 
-```bash
-# Clear cache and rebuild
-rm -rf .next
-rm -rf node_modules
-npm install
-npm run build
-```
+## 🔐 Security
 
-### Type Errors
+- Supabase Auth for authentication
+- Row Level Security (RLS) enforced
+- HTTPS only in production
+- XSS prevention (React escaping)
+- CSRF protection (Next.js built-in)
+- Input validation with Zod
 
-```bash
-# Run type check
-npm run type-check
-```
+## 📊 Performance
 
-## Browser Support
+- Lighthouse Performance Score: ≥90
+- First Contentful Paint: <1.5s
+- Time to Interactive: <3.5s
+- Cumulative Layout Shift: <0.1
+- Next.js Image optimization
+- Code splitting & lazy loading
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Mobile browsers (iOS Safari, Chrome Android)
+## 📝 Contributing
 
-## Performance
+1. Create feature branch
+2. Write tests first (TDD)
+3. Implement feature
+4. Ensure tests pass
+5. Format and lint code
+6. Submit pull request
 
-- **First Load JS**: 81.9 kB shared
-- **Lighthouse Score**: 95+ (aim)
-- **Code Splitting**: Automatic via Next.js
-- **Image Optimization**: Next.js Image component
+## 📞 Support
 
-## Contributing
+For issues or questions: support@ultimatecoach.com
 
-1. Fork the repository
-2. Create feature branch
-3. Make changes
-4. Test thoroughly
-5. Submit PR
+## 📄 License
 
-## License
-
-MIT License
-
-## Support
-
-For issues, open a GitHub issue.
+Private - ULTIMATE COACH Application
