@@ -1,0 +1,163 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccess(false)
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Failed to send reset email')
+      }
+
+      setSuccess(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 animate-fade-in">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-black to-iron-dark-gray -z-10" />
+
+      {/* Main container */}
+      <div className="relative z-10 w-full max-w-md space-y-8">
+        {/* Back link */}
+        <Link
+          href="/login"
+          className="text-iron-gray hover:text-iron-orange transition-colors text-sm inline-block"
+        >
+          ← Back to Login
+        </Link>
+
+        {/* Header */}
+        <div className="text-center space-y-2 animate-slide-in">
+          <h1 className="text-5xl font-bold text-gradient-orange">
+            RESET PASSWORD
+          </h1>
+          <p className="text-iron-gray text-sm uppercase tracking-wider">
+            Enter your email to receive a reset link
+          </p>
+        </div>
+
+        {/* Form card with glassmorphism */}
+        <div className="card-glass p-8 space-y-6 border-2 border-iron-gray/20 animate-fade-in">
+          {!success ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email input */}
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-xs text-iron-gray uppercase tracking-widest">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <div className="p-4 bg-iron-orange/10 border-2 border-iron-orange text-iron-orange text-sm animate-fade-in">
+                  <strong>ERROR:</strong> {error}
+                </div>
+              )}
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary w-full text-lg"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-iron-black border-t-transparent animate-spin" />
+                    SENDING...
+                  </span>
+                ) : (
+                  'SEND RESET LINK'
+                )}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-6 text-center animate-fade-in">
+              {/* Success icon */}
+              <div className="w-16 h-16 mx-auto bg-iron-orange/20 border-2 border-iron-orange flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-iron-orange"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="square"
+                    strokeLinejoin="miter"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+
+              {/* Success message */}
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
+                  EMAIL SENT
+                </h2>
+                <p className="text-iron-gray text-sm leading-relaxed">
+                  We've sent a password reset link to <strong className="text-iron-white">{email}</strong>.
+                  Check your inbox and follow the instructions to reset your password.
+                </p>
+                <p className="text-iron-gray text-xs pt-2">
+                  Didn't receive the email? Check your spam folder or try again in a few minutes.
+                </p>
+              </div>
+
+              {/* Back to login button */}
+              <Link
+                href="/login"
+                className="btn btn-secondary w-full text-lg inline-block"
+              >
+                BACK TO LOGIN
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Footer text */}
+        <div className="text-center space-y-2">
+          <p className="text-xs text-iron-gray">
+            Remember your password?{' '}
+            <Link href="/login" className="text-iron-orange hover:underline">
+              Log in here
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
