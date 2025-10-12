@@ -19,13 +19,17 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Attempting login...')
       const response = await login({ email, password })
+      console.log('Login response:', response)
 
       // Check if user has completed onboarding
       // If not, redirect to onboarding; otherwise go to dashboard
       if (!response.user.onboarding_completed) {
+        console.log('Redirecting to onboarding...')
         router.push('/onboarding')
       } else {
+        console.log('Redirecting to dashboard...')
         router.push('/dashboard')
       }
     } catch (err: any) {
