@@ -1,11 +1,11 @@
 'use client'
 
 /**
- * Button Group - Choice buttons that appear after message
- * Clean, minimal, follows design tokens
+ * Button Group - Framer Motion
+ * Staggered children animations with spring physics
  */
 
-import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 
 interface ButtonOption {
   label: string
@@ -16,47 +16,89 @@ interface ButtonOption {
 interface ButtonGroupProps {
   options: ButtonOption[]
   onSelect: (value: string) => void
-  delay?: number
   selected?: string
 }
 
-export function ButtonGroup({ options, onSelect, delay = 0, selected }: ButtonGroupProps) {
-  const [visible, setVisible] = useState(false)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      staggerChildren: 0.05,
+      staggerDirection: -1
+    }
+  }
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(timer)
-  }, [delay])
+const buttonVariants = {
+  hidden: {
+    opacity: 0,
+    y: 40,
+    scale: 0.9
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 100,
+      damping: 15
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    scale: 0.95,
+    transition: {
+      duration: 0.3
+    }
+  }
+}
 
-  if (!visible) return null
-
+export function ButtonGroup({ options, onSelect, selected }: ButtonGroupProps) {
   return (
-    <div className="space-y-3 mb-6">
-      {options.map((option, index) => (
-        <button
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="space-y-4 mb-12"
+    >
+      {options.map((option) => (
+        <motion.button
           key={option.value}
+          variants={buttonVariants}
+          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => onSelect(option.value)}
-          disabled={selected !== undefined}
+          disabled={selected !== undefined && selected !== option.value}
           className={`
-            w-full p-4 rounded-lg text-left
-            transition-all duration-200
-            opacity-0 translate-y-2 animate-fade-in
+            w-full p-6 text-left
+            border-2 rounded-xl
             ${selected === option.value
-              ? 'bg-primary text-white'
+              ? 'bg-primary border-primary text-neutral-white shadow-xl shadow-primary/50'
               : selected
-              ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-              : 'bg-neutral-800 text-neutral-white hover:bg-neutral-700 active:scale-98'
+              ? 'bg-neutral-900 border-neutral-800 text-neutral-600 cursor-not-allowed opacity-40'
+              : 'bg-neutral-900/50 border-neutral-700 text-neutral-white hover:border-primary hover:bg-neutral-800/80 hover:shadow-lg hover:shadow-primary/20'
             }
+            transition-all duration-300
           `}
-          style={{ animationDelay: `${index * 100}ms` }}
         >
-          <div className="font-medium">{option.label}</div>
+          <div className="font-bold text-xl">{option.label}</div>
           {option.description && (
-            <div className="text-sm opacity-70 mt-1">{option.description}</div>
+            <div className="text-sm text-neutral-400 mt-2">{option.description}</div>
           )}
-        </button>
+        </motion.button>
       ))}
-    </div>
+    </motion.div>
   )
 }
