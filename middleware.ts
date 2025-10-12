@@ -23,30 +23,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname
-
-  // Public routes - no authentication required
-  const publicRoutes = ['/', '/login', '/signup']
-  if (publicRoutes.includes(path)) {
-    return NextResponse.next()
-  }
-
-  // Check authentication (httpOnly cookie)
-  const hasAuthCookie = request.cookies.has('access_token')
-  if (!hasAuthCookie) {
-    // Not authenticated - redirect to login
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // Allow onboarding and auth callback routes (authenticated but may not have completed onboarding)
-  if (path === '/onboarding' || path.startsWith('/auth/')) {
-    return NextResponse.next()
-  }
-
-  // For all other protected routes:
-  // - Middleware ensures user is authenticated ✅
-  // - Client-side hooks (useOnboardingCheck) ensure onboarding is complete
-  // - See: lib/hooks/useOnboardingCheck.ts for implementation
+  // TEMPORARY: Disable middleware auth checks
+  // Issue: Cookies from backend API (different origin) don't persist to frontend
+  // Solution: Use client-side localStorage and route guards instead
+  // TODO: Re-enable middleware auth when same-origin or fix cross-origin cookies
 
   return NextResponse.next()
 }
