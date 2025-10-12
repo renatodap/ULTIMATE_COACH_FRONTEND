@@ -27,7 +27,9 @@ const config: Config = {
     transitionDuration: theme.transitions.duration,
     transitionTimingFunction: theme.transitions.timing,
     screens: theme.breakpoints,
-    zIndex: theme.zIndex,
+    zIndex: Object.fromEntries(
+      Object.entries(theme.zIndex).map(([key, value]) => [key, String(value)])
+    ),
 
     container: {
       center: true,
