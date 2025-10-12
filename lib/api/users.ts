@@ -6,31 +6,93 @@
 
 import { apiClient } from './client'
 
-export interface UserProfile {
+export interface FullUserProfile {
+  // Basic info
   id: string
   email: string
   full_name?: string
-  onboarding_completed: boolean
   created_at?: string
   updated_at?: string
+
+  // Onboarding status
+  onboarding_completed: boolean
+  onboarding_completed_at?: string
+
+  // Physical stats
+  age?: number
+  biological_sex?: 'male' | 'female'
+  height_cm?: number
+  current_weight_kg?: number
+  goal_weight_kg?: number
+
+  // Goals & Training
+  primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  experience_level?: 'beginner' | 'intermediate' | 'advanced'
+  activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
+  workout_frequency?: number
+
+  // Dietary
+  dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
+  food_allergies?: string[]
+  foods_to_avoid?: string[]
+  meals_per_day?: number
+  cooks_regularly?: boolean
+
+  // Lifestyle
+  sleep_hours?: number
+  stress_level?: 'low' | 'medium' | 'high'
+
+  // Macro targets
+  estimated_tdee?: number
+  daily_calorie_goal?: number
+  daily_protein_goal?: number
+  daily_carbs_goal?: number
+  daily_fat_goal?: number
+  macros_last_calculated_at?: string
+
+  // Preferences
+  unit_system?: 'metric' | 'imperial'
+  timezone?: string
+
+  // Consultation
+  consultation_completed?: boolean
+  consultation_completed_at?: string
 }
 
 export interface UpdateProfileData {
   full_name?: string
+  age?: number
+  height_cm?: number
+  current_weight_kg?: number
+  goal_weight_kg?: number
+  primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  experience_level?: 'beginner' | 'intermediate' | 'advanced'
+  activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
+  workout_frequency?: number
+  dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
+  food_allergies?: string[]
+  foods_to_avoid?: string[]
+  meals_per_day?: number
+  cooks_regularly?: boolean
+  sleep_hours?: number
+  stress_level?: 'low' | 'medium' | 'high'
+  unit_system?: 'metric' | 'imperial'
+  timezone?: string
 }
 
 /**
- * Get current user profile
+ * Get current user profile (full profile with all data)
  * Requires authentication (httpOnly cookie)
  */
-export async function getCurrentUser(): Promise<UserProfile> {
-  return apiClient.get<UserProfile>('api/v1/users/me')
+export async function getCurrentUser(): Promise<FullUserProfile> {
+  return apiClient.get<FullUserProfile>('api/v1/users/me')
 }
 
 /**
  * Update current user profile
+ * Macros are automatically recalculated if physical stats change
  * Requires authentication (httpOnly cookie)
  */
-export async function updateCurrentUser(data: UpdateProfileData): Promise<UserProfile> {
-  return apiClient.patch<UserProfile>('api/v1/users/me', data)
+export async function updateCurrentUser(data: UpdateProfileData): Promise<FullUserProfile> {
+  return apiClient.patch<FullUserProfile>('api/v1/users/me', data)
 }
