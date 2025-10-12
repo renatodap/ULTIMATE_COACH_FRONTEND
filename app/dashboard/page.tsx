@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { logout } from '@/lib/api/auth'
+import { BottomNav } from '@/components/BottomNav'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-8 animate-fade-in">
+    <div className="min-h-screen p-8 animate-fade-in pb-24">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-black to-iron-dark-gray -z-10" />
 
@@ -90,6 +91,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   )
 }
