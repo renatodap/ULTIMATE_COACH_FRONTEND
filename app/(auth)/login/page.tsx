@@ -23,14 +23,14 @@ export default function LoginPage() {
       const response = await login({ email, password })
       console.log('Login response:', response)
 
-      // Check if user has completed onboarding
-      // If not, redirect to onboarding; otherwise go to dashboard
+      // Use window.location.href for hard redirect to ensure cookies are loaded
+      // router.push() can fail because middleware checks cookies before they're set
       if (!response.user.onboarding_completed) {
         console.log('Redirecting to onboarding...')
-        router.push('/onboarding')
+        window.location.href = '/onboarding'
       } else {
         console.log('Redirecting to dashboard...')
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       console.error('Login error:', err)
