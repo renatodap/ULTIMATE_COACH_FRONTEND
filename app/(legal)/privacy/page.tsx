@@ -74,7 +74,7 @@ export default function PrivacyPolicyPage() {
               <div>
                 <h3 className="text-lg font-semibold text-iron-white mb-2">Claude AI by Anthropic</h3>
                 <p>
-                  We use Claude AI to process your text, voice, and image inputs to provide coaching advice. Your data is sent to Anthropic's servers for processing in accordance with <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-iron-orange hover:underline">Anthropic's Privacy Policy</a>.
+                  We use Claude AI to process your text, voice, and image inputs to provide coaching advice. Your data is sent to Anthropic&apos;s servers for processing in accordance with <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-iron-orange hover:underline">Anthropic&apos;s Privacy Policy</a>.
                 </p>
               </div>
 
@@ -150,7 +150,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-iron-orange mb-4">8. Children's Privacy</h2>
+            <h2 className="text-2xl font-bold text-iron-orange mb-4">8. Children&apos;s Privacy</h2>
             <p className="text-iron-gray leading-relaxed">
               ULTIMATE COACH is not intended for children under 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
             </p>

@@ -78,7 +78,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 SOMETHING WENT WRONG
               </h1>
               <p className="text-iron-gray text-sm">
-                An unexpected error occurred. Don't worry, you can try again.
+                An unexpected error occurred. Don&apos;t worry, you can try again.
               </p>
             </div>
 

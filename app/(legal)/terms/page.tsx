@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-bold text-iron-orange mb-4">1. Acceptance of Terms</h2>
             <p className="text-iron-gray leading-relaxed">
-              By accessing and using ULTIMATE COACH ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use the Service.
+              By accessing and using ULTIMATE COACH (&quot;the Service&quot;), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use the Service.
             </p>
           </section>
 

@@ -252,7 +252,7 @@ export default function ConsultationPage() {
 
                   <div className="mt-8 pt-6 border-t border-slate-800">
                     <p className="text-xs text-slate-500 text-center">
-                      Don't have a key?{" "}
+                      Don&apos;t have a key?{" "}
                       <a
                         href="mailto:renato@example.com?subject=Consultation%20Key%20Request"
                         className="text-blue-400 hover:text-blue-300 underline"

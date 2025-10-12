@@ -1,23 +1,54 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { getCurrentUser } from '@/lib/api/users'
+import { logout } from '@/lib/api/auth'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is authenticated
-    const accessToken = localStorage.getItem('access_token')
-    if (!accessToken) {
-      router.push('/login')
+    // Check if user is authenticated by calling the API
+    const checkAuth = async () => {
+      try {
+        await getCurrentUser()
+        setIsAuthenticated(true)
+      } catch (error) {
+        // Not authenticated - redirect to login
+        router.push('/login')
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    checkAuth()
   }, [router])
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    router.push('/login')
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      router.push('/login')
+    }
+  }
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-iron-orange text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  // Don't render dashboard if not authenticated
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
