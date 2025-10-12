@@ -10,7 +10,7 @@ export const en = {
   // COMMON
   // ============================================================================
   common: {
-    appName: 'ULTIMATE COACH',
+    appName: 'SHARPENED',
     loading: 'Loading...',
     error: 'Error',
     success: 'Success',
@@ -271,7 +271,7 @@ export const en = {
     stepIndicator: 'Step {{current}} of {{total}}',
 
     // Step 1
-    step1Title: 'WELCOME TO ULTIMATE COACH',
+    step1Title: 'WELCOME TO SHARPENED',
     step1Subtitle: "Let's personalize your experience",
     primaryGoal: 'What is your primary goal?',
     loseWeight: 'Lose Weight',
@@ -390,7 +390,7 @@ export const en = {
     activityLogged: 'Activity logged successfully',
     activityDeleted: 'Activity deleted successfully',
     settingsSaved: 'Settings saved successfully',
-    onboardingCompleted: 'Welcome to ULTIMATE COACH!',
+    onboardingCompleted: 'Welcome to SHARPENED!',
   },
 } as const
 

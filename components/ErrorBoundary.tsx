@@ -32,13 +32,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log the error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error, errorInfo)
-    }
+    // Log the error to console
+    console.error('Error Boundary caught an error:', error, errorInfo)
 
-    // You can also log the error to an error reporting service
-    // e.g., Sentry, LogRocket, etc.
     this.setState({ error, errorInfo })
   }
 
@@ -118,7 +114,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-xs text-iron-gray">
                 Problem persists?{' '}
                 <a
-                  href="mailto:support@ultimatecoach.app"
+                  href="mailto:persimmonautomation@gmail.com"
                   className="text-iron-orange hover:underline"
                 >
                   Contact Support

@@ -254,3 +254,19 @@ button,
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* Gradient animation for welcome screen */
+@keyframes gradient {
+  0%, 100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}

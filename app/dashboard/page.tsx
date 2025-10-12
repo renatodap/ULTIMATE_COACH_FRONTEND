@@ -1,31 +1,15 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { getCurrentUser } from '@/lib/api/users'
+import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { logout } from '@/lib/api/auth'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    // Check if user is authenticated by calling the API
-    const checkAuth = async () => {
-      try {
-        await getCurrentUser()
-        setIsAuthenticated(true)
-      } catch (error) {
-        // Not authenticated - redirect to login
-        router.push('/login')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [router])
+  // Check authentication and onboarding status
+  // If user hasn't completed onboarding, hook will redirect to /onboarding
+  const { loading, onboardingComplete } = useOnboardingCheck()
 
   const handleLogout = async () => {
     try {
@@ -37,17 +21,20 @@ export default function DashboardPage() {
     }
   }
 
-  // Show loading state while checking authentication
-  if (isLoading) {
+  // Show loading state while checking authentication and onboarding
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-iron-orange text-xl">Loading...</div>
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
+        <div className="space-y-4 text-center">
+          <div className="w-12 h-12 mx-auto border-4 border-iron-orange border-t-transparent rounded-full animate-spin" />
+          <div className="text-iron-gray text-sm uppercase tracking-wider">Loading your profile...</div>
+        </div>
       </div>
     )
   }
 
-  // Don't render dashboard if not authenticated
-  if (!isAuthenticated) {
+  // Don't render dashboard if onboarding not complete (hook will redirect)
+  if (!onboardingComplete) {
     return null
   }
 

@@ -1,192 +1,149 @@
-# ULTIMATE COACH Frontend
+# SHARPENED Frontend
 
-**Production-ready Next.js 14 frontend for ULTIMATE COACH fitness application**
+> AI-powered fitness and nutrition coaching platform - Next.js frontend
 
-## 🚀 Features
+---
 
-- ✅ Next.js 14 with App Router
-- ✅ TypeScript with strict mode
-- ✅ Tailwind CSS + shadcn/ui components
-- ✅ Supabase authentication
-- ✅ Responsive mobile-first design
-- ✅ AI coach chat with streaming
-- ✅ Multimodal input (text, voice, images)
-- ✅ Optimistic UI updates
-- ✅ Comprehensive test coverage
-
-## 📋 Prerequisites
-
-- Node.js 18+ and npm 9+
-- Backend API running (ULTIMATE_COACH_BACKEND)
-
-## 🛠️ Quick Start
-
-### 1. Install Dependencies
+## Quick Start
 
 ```bash
+# 1. Install dependencies
 npm install
-```
 
-### 2. Setup Environment
+# 2. Setup environment (.env.local)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
-```bash
-# Copy environment template
-cp .env.example .env.local
-
-# Edit .env.local with your actual values
-# Required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_BASE_URL
-```
-
-### 3. Run Development Server
-
-```bash
+# 3. Run dev server
 npm run dev
+
+# Visit: http://localhost:3000
 ```
 
-### 4. Access Application
+---
 
-- **App**: http://localhost:3000
-- **API Health**: http://localhost:8000/api/v1/health
+## Tech Stack
 
-## 🧪 Testing
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS + Custom Design System
+- **Auth:** Supabase
+- **Error Tracking:** Sentry
+- **Deployment:** Vercel
+
+---
+
+## Documentation
+
+**READ FIRST:**
+- **[CLAUDE.md](./CLAUDE.md)** - Complete codebase index + development rules (AI assistants must read this)
+- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Coding standards and patterns
+
+**Setup & Production:**
+- **[PRODUCTION_ISSUES.md](./PRODUCTION_ISSUES.md)** - Known issues and TODOs before launch
+- **[SENTRY_SETUP.md](./SENTRY_SETUP.md)** - Error tracking setup (5 min)
+- **[vercel-env-setup.txt](./vercel-env-setup.txt)** - Environment variables for Vercel
+
+---
+
+## Project Structure
+
+```
+app/
+├── (auth)/                # Auth pages (login, signup)
+├── (legal)/               # Privacy & terms pages
+├── dashboard/             # Protected routes
+├── onboarding/            # One-page onboarding
+├── layout.tsx             # Root layout (Sentry, ErrorBoundary)
+├── page.tsx               # Landing page
+├── error.tsx              # Global error handler
+└── globals.css            # Design system + global styles
+
+lib/
+├── api/                   # API client (USE THIS for all API calls)
+├── design-system/         # Design tokens (colors, spacing, typography)
+├── sentry.ts              # Error tracking
+├── env.ts                 # Environment validation
+└── supabase.ts            # Supabase client
+
+components/
+└── ErrorBoundary.tsx      # React error handler
+```
+
+---
+
+## Development
 
 ```bash
-# Run tests
-npm run test
+# Dev server with hot reload
+npm run dev
 
-# Run tests with UI
-npm run test:ui
-
-# Run with coverage
-npm run test:coverage
-```
-
-## 🏗️ Project Structure
-
-```
-ULTIMATE_COACH_FRONTEND/
-├── app/                           # Next.js App Router
-│   ├── (auth)/
-│   │   ├── login/page.tsx        # Login page
-│   │   └── signup/page.tsx       # Signup page
-│   ├── dashboard/page.tsx        # Main dashboard
-│   ├── coach/page.tsx           # AI coach chat
-│   ├── nutrition/page.tsx       # Meal logging
-│   ├── activities/page.tsx      # Workout logging
-│   ├── profile/page.tsx         # User profile
-│   ├── layout.tsx               # Root layout
-│   ├── page.tsx                 # Landing page
-│   └── globals.css              # Global styles
-├── components/
-│   ├── ui/                       # shadcn/ui components
-│   ├── Coach/                    # Coach-specific components
-│   ├── Nutrition/                # Nutrition components
-│   └── shared/                   # Shared components
-│       ├── BottomNav.tsx
-│       └── LoadingSpinner.tsx
-├── lib/
-│   ├── api/                      # API client functions
-│   ├── supabase/                 # Supabase clients
-│   └── utils/                    # Helper functions
-├── hooks/                        # Custom React hooks
-├── types/                        # TypeScript types
-├── middleware.ts                 # Auth middleware
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
-```
-
-## 🔧 Code Quality
-
-```bash
-# Type check
-npm run type-check
-
-# Lint
-npm run lint
-
-# Format code
-npm run format
-```
-
-## 🚢 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
-
-### Manual Build
-
-```bash
-# Build for production
+# Build for production (validates env vars)
 npm run build
 
-# Start production server
-npm run start
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Tests
+npm test
 ```
 
-## 🎨 Design System
+---
 
-- **Framework**: Tailwind CSS
-- **Components**: shadcn/ui (headless, customizable)
-- **Icons**: Lucide React
-- **Colors**: Custom brand palette
-- **Typography**: Inter font
-- **Spacing**: Tailwind spacing scale (4px base)
+## Key Commands
 
-## 📱 Mobile-First
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (localhost:3000) |
+| `npm run build` | Production build (validates env) |
+| `npm run lint` | ESLint check |
+| `npm test` | Run tests |
 
-All components are designed mobile-first with breakpoints:
-- **Mobile**: 320px - 639px (default)
-- **Tablet**: 640px - 1023px (`sm:`)
-- **Desktop**: 1024px+ (`lg:`)
+---
 
-## ♿ Accessibility
+## Environment Variables
 
-- WCAG 2.1 Level AA compliant
-- Keyboard navigation support
-- Screen reader optimized
-- Color contrast ratios validated
-- Focus indicators on all interactive elements
+**Required:**
+- `NEXT_PUBLIC_API_BASE_URL` - Backend API URL
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
 
-## 🔐 Security
+**Optional:**
+- `NEXT_PUBLIC_SENTRY_DSN` - Error tracking (recommended for production)
 
-- Supabase Auth for authentication
-- Row Level Security (RLS) enforced
-- HTTPS only in production
-- XSS prevention (React escaping)
-- CSRF protection (Next.js built-in)
-- Input validation with Zod
+See `vercel-env-setup.txt` for complete list and Vercel setup.
 
-## 📊 Performance
+---
 
-- Lighthouse Performance Score: ≥90
-- First Contentful Paint: <1.5s
-- Time to Interactive: <3.5s
-- Cumulative Layout Shift: <0.1
-- Next.js Image optimization
-- Code splitting & lazy loading
+## Design System
 
-## 📝 Contributing
+**Colors:** `iron-black`, `iron-white`, `iron-orange`, `iron-gray`, `iron-dark-gray`
+**Typography:** Mobile-first responsive (text-4xl sm:text-6xl md:text-8xl)
+**Spacing:** Tailwind spacing scale (4px base unit)
 
-1. Create feature branch
-2. Write tests first (TDD)
-3. Implement feature
-4. Ensure tests pass
-5. Format and lint code
-6. Submit pull request
+**⚠️ NEVER hardcode colors** - Always use design tokens from `lib/design-system/tokens.ts`
 
-## 📞 Support
+---
 
-For issues or questions: support@ultimatecoach.com
+## Support
 
-## 📄 License
+- **Email:** persimmonautomation@gmail.com
+- **Privacy:** persimmonautomation@gmail.com
+- **Issues:** See PRODUCTION_ISSUES.md
 
-Private - ULTIMATE COACH Application
+---
+
+## For AI Assistants
+
+1. **READ [CLAUDE.md](./CLAUDE.md) FIRST** - Contains complete codebase index and development rules
+2. Follow the 5 Critical Rules (no hardcoded colors, no raw fetch, etc.)
+3. Check PRODUCTION_ISSUES.md before adding features
+4. Use existing patterns - don't invent new ones
+
+---
+
+**Last Updated:** 2025-10-12

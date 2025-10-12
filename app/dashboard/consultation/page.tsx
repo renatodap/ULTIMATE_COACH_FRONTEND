@@ -254,7 +254,7 @@ export default function ConsultationPage() {
                     <p className="text-xs text-slate-500 text-center">
                       Don&apos;t have a key?{" "}
                       <a
-                        href="mailto:renato@example.com?subject=Consultation%20Key%20Request"
+                        href="mailto:persimmonautomation@gmail.com?subject=Consultation%20Key%20Request"
                         className="text-blue-400 hover:text-blue-300 underline"
                       >
                         Contact us to request access

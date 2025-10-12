@@ -20,13 +20,40 @@ interface EnvConfig {
  * Validate and return environment variables
  */
 function validateEnv(): EnvConfig {
-  // Return config without validation
-  return {
+  const config = {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '',
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   }
+
+  // Only validate in production builds (not during runtime)
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+    const missing: string[] = []
+
+    if (!config.NEXT_PUBLIC_API_BASE_URL) {
+      missing.push('NEXT_PUBLIC_API_BASE_URL')
+    }
+    if (!config.NEXT_PUBLIC_SUPABASE_URL) {
+      missing.push('NEXT_PUBLIC_SUPABASE_URL')
+    }
+    if (!config.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    }
+
+    if (missing.length > 0) {
+      const errorMessage = [
+        '\n❌ Missing required environment variables:',
+        ...missing.map(key => `   - ${key}`),
+        '\nPlease check your .env.local file or Vercel environment variables.',
+        'See vercel-env-setup.txt for configuration guide.\n',
+      ].join('\n')
+
+      throw new Error(errorMessage)
+    }
+  }
+
+  return config
 }
 
 // Validate and export environment config

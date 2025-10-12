@@ -12,16 +12,28 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false)
   const router = useRouter()
+
+  // Password requirement checks
+  const passwordRequirements = {
+    minLength: password.length >= 8,
+    hasLowercase: /[a-z]/.test(password),
+    hasUppercase: /[A-Z]/.test(password),
+    hasDigit: /\d/.test(password),
+    hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  }
+
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    // Validate password length
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
+    // Validate password
+    if (!isPasswordValid) {
+      setError('Password must meet all requirements')
       setLoading(false)
       return
     }
@@ -32,8 +44,8 @@ export default function SignupPage() {
         password,
         full_name: fullName || undefined,
       })
-      // Navigate to dashboard after successful signup
-      router.push('/dashboard')
+      // Navigate to onboarding after successful signup (new users must complete onboarding)
+      router.push('/onboarding')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
@@ -140,14 +152,55 @@ export default function SignupPage() {
                 id="password"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setShowPasswordRequirements(true)}
                 className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
                 placeholder="••••••••"
                 disabled={loading}
               />
-              <p className="text-xs text-iron-gray">Minimum 6 characters</p>
+
+              {/* Password requirements */}
+              {(showPasswordRequirements || password.length > 0) && (
+                <div className="space-y-1 p-3 bg-iron-black border border-iron-gray">
+                  <p className="text-xs text-iron-gray uppercase tracking-wider font-semibold mb-2">
+                    Password Requirements:
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 ${passwordRequirements.minLength ? 'bg-success' : 'bg-iron-gray'}`} />
+                      <span className={`text-xs ${passwordRequirements.minLength ? 'text-success' : 'text-iron-gray'}`}>
+                        At least 8 characters
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasLowercase ? 'bg-success' : 'bg-iron-gray'}`} />
+                      <span className={`text-xs ${passwordRequirements.hasLowercase ? 'text-success' : 'text-iron-gray'}`}>
+                        One lowercase letter (a-z)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasUppercase ? 'bg-success' : 'bg-iron-gray'}`} />
+                      <span className={`text-xs ${passwordRequirements.hasUppercase ? 'text-success' : 'text-iron-gray'}`}>
+                        One uppercase letter (A-Z)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasDigit ? 'bg-success' : 'bg-iron-gray'}`} />
+                      <span className={`text-xs ${passwordRequirements.hasDigit ? 'text-success' : 'text-iron-gray'}`}>
+                        One number (0-9)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasSymbol ? 'bg-success' : 'bg-iron-gray'}`} />
+                      <span className={`text-xs ${passwordRequirements.hasSymbol ? 'text-success' : 'text-iron-gray'}`}>
+                        One symbol (!@#$%^&*...)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit button */}

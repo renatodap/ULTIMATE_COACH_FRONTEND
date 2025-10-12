@@ -294,7 +294,7 @@ export const branding = {
   logo: {
     // Logo can be text, SVG, or image path
     type: 'text' as 'text' | 'svg' | 'image',
-    text: 'ULTIMATE COACH',
+    text: 'SHARPENED',
     // For SVG/image logos, set path here:
     // path: '/logo.svg',
     height: '2rem', // 32px

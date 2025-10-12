@@ -16,10 +16,8 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log the error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Global error page:', error)
-    }
+    // Log the error to console
+    console.error('Global error page:', error)
   }, [error])
 
   return (
@@ -86,7 +84,7 @@ export default function Error({
           <p className="text-xs text-iron-gray">
             Problem persists?{' '}
             <a
-              href="mailto:support@ultimatecoach.app"
+              href="mailto:persimmonautomation@gmail.com"
               className="text-iron-orange hover:underline"
             >
               Contact Support

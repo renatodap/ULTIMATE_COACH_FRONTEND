@@ -19,9 +19,15 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await login({ email, password })
-      // Navigate to dashboard after successful login
-      router.push('/dashboard')
+      const response = await login({ email, password })
+
+      // Check if user has completed onboarding
+      // If not, redirect to onboarding; otherwise go to dashboard
+      if (!response.user.onboarding_completed) {
+        router.push('/onboarding')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password')
     } finally {
@@ -118,6 +124,9 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 disabled={loading}
               />
+              <p className="text-xs text-iron-gray">
+                Passwords must be 8+ characters with uppercase, lowercase, numbers, and symbols
+              </p>
             </div>
 
             {/* Forgot password link */}
@@ -190,9 +199,20 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-iron-gray">
-          Protected by modern encryption and security standards
-        </p>
+        <div className="text-center space-y-3">
+          <p className="text-xs text-iron-gray">
+            Protected by modern encryption and security standards
+          </p>
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <Link href="/privacy" className="text-iron-gray hover:text-iron-orange transition-colors">
+              Privacy Policy
+            </Link>
+            <span className="text-iron-gray">•</span>
+            <Link href="/terms" className="text-iron-gray hover:text-iron-orange transition-colors">
+              Terms of Service
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
