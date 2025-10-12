@@ -137,7 +137,7 @@ export async function getAutoLogPreference(): Promise<AutoLogPreference> {
   }
 
   return {
-    auto_log_enabled: data?.auto_log_enabled ?? false
+    auto_log_enabled: (data as any)?.auto_log_enabled ?? false
   }
 }
 
@@ -207,14 +207,16 @@ export async function getUserProfile(): Promise<UserProfile> {
     throw new Error('Failed to fetch user profile')
   }
 
+  // Cast to any to bypass strict database typing for deprecated function
+  const profile = data as any
   return {
-    id: data.id,
-    full_name: data.full_name,
-    goal: data.goal,
-    auto_log_enabled: data.auto_log_enabled ?? false,
-    timezone: data.timezone ?? 'UTC',
-    created_at: data.created_at,
-    updated_at: data.updated_at
+    id: profile.id,
+    full_name: profile.full_name,
+    goal: profile.goal,
+    auto_log_enabled: profile.auto_log_enabled ?? false,
+    timezone: profile.timezone ?? 'UTC',
+    created_at: profile.created_at,
+    updated_at: profile.updated_at
   }
 }
 
