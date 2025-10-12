@@ -320,7 +320,5 @@ export function getHeightConstraints(system: UnitSystem) {
 }
 
 // ============================================================================
-// TYPESCRIPT TYPES
+// TYPESCRIPT TYPES (exported above)
 // ============================================================================
-
-export type { UnitSystem, WeightDisplay, HeightDisplay, HeightFeetInches, DistanceDisplay, EnergyDisplay }
