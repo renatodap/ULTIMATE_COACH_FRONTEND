@@ -82,6 +82,7 @@ export default function NutritionPage() {
     }, 300)
 
     return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery])
 
   // ============================================================================
@@ -501,7 +502,7 @@ export default function NutritionPage() {
             {/* Daily Stats */}
             {stats && (
               <div className="rounded-lg bg-white p-6 shadow">
-                <h3 className="font-medium text-gray-900">Today's Nutrition</h3>
+                <h3 className="font-medium text-gray-900">Today&apos;s Nutrition</h3>
 
                 <div className="mt-4 grid grid-cols-2 gap-4">
                   <div>
@@ -554,7 +555,7 @@ export default function NutritionPage() {
 
             {/* Today's Meals */}
             <div className="rounded-lg bg-white p-6 shadow">
-              <h3 className="font-medium text-gray-900">Today's Meals</h3>
+              <h3 className="font-medium text-gray-900">Today&apos;s Meals</h3>
 
               {isLoadingMeals ? (
                 <p className="mt-4 text-sm text-gray-500">Loading meals...</p>
