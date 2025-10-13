@@ -194,18 +194,33 @@ export async function getFullUserProfile(): Promise<FullUserProfile> {
  * @throws {Error} If not authenticated or update fails
  */
 export async function updateFullUserProfile(data: UpdateProfileData): Promise<FullUserProfile> {
-  // Build form data for PATCH request
-  const formData: Record<string, string> = {}
+  // Build URLSearchParams for form data submission
+  const formData = new URLSearchParams()
   Object.entries(data).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       if (Array.isArray(value)) {
         // For arrays like food_allergies, send as JSON string
-        formData[key] = JSON.stringify(value)
+        formData.append(key, JSON.stringify(value))
       } else {
-        formData[key] = String(value)
+        formData.append(key, String(value))
       }
     }
   })
 
-  return apiClient.patch<FullUserProfile>('api/v1/users/me', formData)
+  // Use a custom fetch to send form data
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/users/me`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formData.toString(),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.detail || 'Failed to update profile')
+  }
+
+  return response.json()
 }

@@ -182,16 +182,25 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-2">
             {onEdit && (
-              <button
+              <div
                 onClick={(e) => {
                   e.stopPropagation()
                   onEdit()
                 }}
-                className="p-2 hover:bg-iron-orange/20 rounded transition-colors"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    onEdit()
+                  }
+                }}
+                className="p-2 hover:bg-iron-orange/20 rounded transition-colors cursor-pointer"
                 aria-label={`Edit ${title}`}
               >
                 <Edit2 className="w-4 h-4 text-iron-orange" />
-              </button>
+              </div>
             )}
             {isExpanded ? (
               <ChevronUp className="w-5 h-5 text-iron-gray" />
