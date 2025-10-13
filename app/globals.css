@@ -273,12 +273,12 @@ button,
 
 /* ========== Coach Chat Component Styles ========== */
 /* Import coach component styles */
-@import '../components/coach/Message/Message.css';
-@import '../components/coach/Input/Input.css';
-@import '../components/coach/Loading/Loading.css';
-@import '../components/coach/LogPreview/LogPreview.css';
-@import '../components/coach/QuickActions/QuickActions.css';
-@import '../components/coach/EmptyState/EmptyState.css';
+@import '../components/Coach/Message/Message.css';
+@import '../components/Coach/Input/Input.css';
+@import '../components/Coach/Loading/Loading.css';
+@import '../components/Coach/LogPreview/LogPreview.css';
+@import '../components/Coach/QuickActions/QuickActions.css';
+@import '../components/Coach/EmptyState/EmptyState.css';
 
 /* Override coach component colors to match SHARPENED iron design system */
 .message-bubble__content {
