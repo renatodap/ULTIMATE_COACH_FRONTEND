@@ -24,7 +24,6 @@ import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { getDailyNutrition, deleteMeal } from '@/lib/api/nutrition'
 import { transformDailyNutrition } from '@/lib/utils/nutrition-transformer'
-import { mockNutritionData } from '@/lib/mock-data/nutrition'
 import type { DailyNutrition } from '@/lib/types/nutrition'
 
 // Animation variants
@@ -33,7 +32,7 @@ const summaryVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.3, ease: 'easeOut' }
+    transition: { duration: 0.3 }
   }
 }
 
@@ -52,7 +51,7 @@ const mealCardVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' }
+    transition: { duration: 0.3 }
   }
 }
 
@@ -61,7 +60,7 @@ const emptyStateVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: 'easeOut' }
+    transition: { duration: 0.4 }
   }
 }
 
@@ -70,7 +69,7 @@ const fabVariants = {
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { duration: 0.3, ease: 'easeOut', delay: 0.2 }
+    transition: { duration: 0.3, delay: 0.2 }
   }
 }
 
@@ -102,10 +101,6 @@ export default function NutritionPage() {
       } catch (err) {
         console.error('Failed to load nutrition data:', err)
         setError('Failed to load nutrition data')
-        // Fallback to mock data in development
-        if (process.env.NODE_ENV === 'development') {
-          setNutritionData(mockNutritionData)
-        }
       } finally {
         setDataLoading(false)
       }

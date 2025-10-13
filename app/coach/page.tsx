@@ -336,7 +336,7 @@ export default function CoachPage() {
                   initial={{ opacity: 0, scale: 0.8, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.8, x: 20 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  transition={{ duration: 0.3 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -361,7 +361,7 @@ export default function CoachPage() {
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={{ duration: 0.4, ease: 'easeOut' }}
+            transition={{ duration: 0.4 }}
           >
             <EmptyState />
           </motion.div>
@@ -397,7 +397,7 @@ export default function CoachPage() {
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  transition={{ duration: 0.2 }}
                 >
                   <LoadingIndicator
                     message={loading.message}
@@ -451,7 +451,7 @@ export default function CoachPage() {
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.2 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -469,7 +469,7 @@ export default function CoachPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            transition={{ duration: 0.3 }}
           >
             <span className="text-red-500 text-sm uppercase tracking-wider">{error}</span>
             <button onClick={() => setError(null)} className="text-red-500 text-xl">×</button>

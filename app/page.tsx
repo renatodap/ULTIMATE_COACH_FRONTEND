@@ -9,7 +9,7 @@ import AdaptationDemo from '@/components/landing/AdaptationDemo'
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 }
 
 const staggerContainer = {
@@ -159,7 +159,7 @@ export default function LandingPage() {
           <motion.div
             className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
             animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 1.5, repeat: Infinity }}
           >
             <div className="text-iron-orange text-2xl">↓</div>
           </motion.div>
@@ -366,7 +366,7 @@ export default function LandingPage() {
                       initial={{ width: 0 }}
                       whileInView={{ width: '45%' }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
+                      transition={{ duration: 1 }}
                     />
                   </div>
                   <div className="space-y-3">

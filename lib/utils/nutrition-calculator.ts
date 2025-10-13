@@ -24,9 +24,9 @@ export interface Food {
   recipe_items?: Array<{
     food_id: string
     grams: number
-  }>
+  }> | null
   servings_count?: number
-  composed_total_grams?: number
+  composed_total_grams?: number | null
   servings?: FoodServing[]
 }
 

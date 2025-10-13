@@ -13,19 +13,21 @@ import type { MealAPI, MealItemAPI, NutritionStatsAPI, FoodServingAPI } from '..
 export function transformMealItem(item: MealItemAPI): FoodItem {
   return {
     id: item.id,
+    mealId: item.meal_id,
     foodId: item.food_id,
     foodName: '', // Will need to be enriched from food data if available
-    brandName: null,
+    brandName: undefined,
     quantity: item.quantity,
     servingId: item.serving_id,
     displayUnit: item.display_unit,
-    displayLabel: item.display_label,
+    displayLabel: item.display_label ?? undefined,
     grams: item.grams,
     calories: item.calories,
     protein: item.protein_g,
     carbs: item.carbs_g,
     fat: item.fat_g,
     availableServings: [], // Will be populated when needed
+    displayOrder: item.display_order
   }
 }
 
@@ -35,7 +37,7 @@ export function transformMealItem(item: MealItemAPI): FoodItem {
 export function transformMeal(meal: MealAPI): Meal {
   return {
     id: meal.id,
-    name: meal.name,
+    name: meal.name ?? undefined,
     mealType: meal.meal_type,
     loggedAt: meal.logged_at,
     totalCalories: meal.total_calories,
@@ -43,7 +45,7 @@ export function transformMeal(meal: MealAPI): Meal {
     totalCarbs: meal.total_carbs_g,
     totalFat: meal.total_fat_g,
     source: meal.source,
-    aiConfidence: meal.ai_confidence,
+    aiConfidence: meal.ai_confidence ?? undefined,
     foodItems: meal.items.map(transformMealItem),
   }
 }

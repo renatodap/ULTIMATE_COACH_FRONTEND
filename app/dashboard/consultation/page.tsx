@@ -283,7 +283,7 @@ export default function ConsultationPage() {
             >
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 2, repeat: Infinity }}
                 className="inline-block p-4 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full border border-blue-500/30 mb-6"
               >
                 <Sparkles className="w-12 h-12 text-blue-400" />
@@ -367,7 +367,7 @@ export default function ConsultationPage() {
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    transition={{ duration: 0.5 }}
                     className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
                   />
                 </div>

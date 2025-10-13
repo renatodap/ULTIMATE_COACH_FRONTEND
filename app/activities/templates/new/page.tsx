@@ -174,7 +174,7 @@ export default function NewTemplatePage() {
                 Description (optional)
               </label>
               <textarea
-                value={formData.description}
+                value={formData.description ?? ''}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Add notes about this template..."
                 rows={3}

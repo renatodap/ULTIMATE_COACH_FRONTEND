@@ -276,7 +276,7 @@ export const CoachChat: React.FC<CoachChatProps> = ({
         className="coach-chat__messages"
       >
         {messages.length === 0 && !loading.isLoading ? (
-          <EmptyState onQuickAction={handleQuickAction} />
+          <EmptyState />
         ) : (
           <>
             {messages.map((message, index) => (
