@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createActivity } from '@/lib/api/activities'
 import { getTemplates } from '@/lib/api/templates'
@@ -16,7 +16,7 @@ import type { CreateActivityRequest, ActivityCategory, ActivityMetrics, Exercise
 import type { ActivityTemplate } from '@/lib/types/templates'
 import { ACTIVITY_CATEGORIES } from '@/lib/types/activities'
 
-export default function LogActivityPage() {
+function LogActivityForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -706,5 +706,17 @@ export default function LogActivityPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function LogActivityPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
+        <div className="text-iron-white">Loading...</div>
+      </div>
+    }>
+      <LogActivityForm />
+    </Suspense>
   )
 }
