@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createActivity } from '@/lib/api/activities'
 import { getTemplates } from '@/lib/api/templates'
@@ -63,26 +63,6 @@ export default function LogActivityPage() {
     loadTemplates()
   }, [])
 
-  // Handle URL parameter for pre-selecting template
-  useEffect(() => {
-    const templateParam = searchParams.get('template')
-    if (templateParam && templates.length > 0) {
-      const template = templates.find(t => t.id === templateParam)
-      if (template) {
-        handleTemplateSelect(template.id)
-      }
-    }
-  }, [searchParams, templates, handleTemplateSelect])
-
-  // Show suggestions when category is selected (and no template selected)
-  useEffect(() => {
-    if (category && !selectedTemplate) {
-      setShowSuggestions(true)
-    } else {
-      setShowSuggestions(false)
-    }
-  }, [category, selectedTemplate])
-
   const loadTemplates = async () => {
     try {
       setTemplatesLoading(true)
@@ -96,7 +76,7 @@ export default function LogActivityPage() {
     }
   }
 
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = useCallback((templateId: string) => {
     const template = templates.find(t => t.id === templateId)
     if (!template) return
 
@@ -133,7 +113,27 @@ export default function LogActivityPage() {
     }
 
     setShowSuggestions(false)
-  }
+  }, [templates])
+
+  // Handle URL parameter for pre-selecting template
+  useEffect(() => {
+    const templateParam = searchParams.get('template')
+    if (templateParam && templates.length > 0) {
+      const template = templates.find(t => t.id === templateParam)
+      if (template) {
+        handleTemplateSelect(template.id)
+      }
+    }
+  }, [searchParams, templates, handleTemplateSelect])
+
+  // Show suggestions when category is selected (and no template selected)
+  useEffect(() => {
+    if (category && !selectedTemplate) {
+      setShowSuggestions(true)
+    } else {
+      setShowSuggestions(false)
+    }
+  }, [category, selectedTemplate])
 
   const handleApplyTemplate = (templateId: string, template: ActivityTemplate) => {
     handleTemplateSelect(templateId)
