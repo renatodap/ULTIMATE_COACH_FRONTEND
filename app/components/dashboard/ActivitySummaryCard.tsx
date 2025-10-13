@@ -24,7 +24,7 @@ export default function ActivitySummaryCard({ activity }: ActivitySummaryCardPro
     <div className="card-glass border border-iron-gray/30 p-6">
       <div className="flex items-center justify-between mb-4">
         <p className="text-iron-gray text-xs uppercase tracking-wider">
-          💪 Today's Activity
+          💪 Today&apos;s Activity
         </p>
         <button
           onClick={() => router.push('/activities')}

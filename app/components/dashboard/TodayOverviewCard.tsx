@@ -22,7 +22,7 @@ export default function TodayOverviewCard({ nutrition, activity, netCalories }: 
   return (
     <div className="card-glass border border-iron-gray/30 p-6">
       <p className="text-iron-gray text-xs uppercase tracking-wider mb-4">
-        Today's Energy Balance
+        Today&apos;s Energy Balance
       </p>
 
       <div className="grid grid-cols-2 gap-6 mb-6">

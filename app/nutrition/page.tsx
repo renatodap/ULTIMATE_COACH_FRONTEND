@@ -116,7 +116,7 @@ export default function NutritionPage() {
 
   const handleEditMeal = (mealId: string) => {
     // TODO: Phase 3 - Implement meal editing
-    console.log('Edit meal:', mealId)
+    // Placeholder for meal editing functionality
   }
 
   const handleDeleteMeal = async (mealId: string) => {
@@ -139,7 +139,7 @@ export default function NutritionPage() {
 
   const handleEditFoodItem = (mealId: string, itemId: string) => {
     // TODO: Phase 2 - Implement food item editing
-    console.log('Edit food item:', { mealId, itemId })
+    // Placeholder for food item editing functionality
   }
 
   // Show loading state while checking authentication
@@ -253,7 +253,7 @@ export default function NutritionPage() {
           {!hasNoMeals && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-iron-gray text-xs uppercase tracking-wider">
-                🍽️ Today's Meals
+                🍽️ Today&apos;s Meals
               </h2>
               <span className="text-xs text-iron-gray uppercase tracking-wider">
                 {nutritionData.meals.length} meal{nutritionData.meals.length !== 1 ? 's' : ''}

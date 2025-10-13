@@ -198,7 +198,7 @@ export default function WeightHistoryPage() {
                       {/* Notes */}
                       {metric.notes && (
                         <p className="text-sm text-iron-gray mt-2 italic">
-                          "{metric.notes}"
+                          &ldquo;{metric.notes}&rdquo;
                         </p>
                       )}
 

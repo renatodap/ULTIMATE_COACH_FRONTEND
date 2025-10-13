@@ -37,7 +37,7 @@ export default function DailySummaryCard({
       {/* Calorie Progress Section */}
       <div className="text-center mb-6">
         <p className="text-iron-gray text-xs uppercase tracking-wider mb-3">
-          📊 Today's Calories
+          📊 Today&apos;s Calories
         </p>
 
         {/* Main Calorie Display */}

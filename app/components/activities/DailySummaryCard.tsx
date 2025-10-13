@@ -20,7 +20,7 @@ export default function DailySummaryCard({ summary }: DailySummaryCardProps) {
     <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-iron-white">Today's Activity</h2>
+        <h2 className="text-lg font-semibold text-iron-white">Today&apos;s Activity</h2>
         <span className="text-sm text-iron-gray">
           {summary.activity_count} {summary.activity_count === 1 ? 'activity' : 'activities'}
         </span>

@@ -38,7 +38,7 @@ export default function MacroSummaryCard({ nutrition }: MacroSummaryCardProps) {
     <div className="card-glass border border-iron-gray/30 p-6">
       <div className="flex items-center justify-between mb-4">
         <p className="text-iron-gray text-xs uppercase tracking-wider">
-          🎯 Today's Macros
+          🎯 Today&apos;s Macros
         </p>
         <button
           onClick={() => router.push('/nutrition')}

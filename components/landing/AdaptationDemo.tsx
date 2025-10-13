@@ -95,7 +95,7 @@ export default function AdaptationDemo() {
 
       {/* Note */}
       <p className="text-xs text-iron-gray text-center uppercase tracking-wider">
-        Auto-adjusted based on today's activity
+        Auto-adjusted based on today&apos;s activity
       </p>
     </div>
   )

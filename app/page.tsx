@@ -377,7 +377,7 @@ export default function LandingPage() {
                       viewport={{ once: true }}
                       transition={{ delay: 0.2 }}
                     >
-                      What's your main training focus?
+                      What&apos;s your main training focus?
                     </motion.div>
                     <motion.div
                       className="bg-iron-orange bg-opacity-20 border border-iron-orange p-4 text-sm text-iron-white ml-8"
