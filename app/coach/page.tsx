@@ -17,15 +17,15 @@ import { sendCoachMessage, confirmLog, type SendMessageRequest, type SendMessage
 import { BottomNav } from '@/components/BottomNav'
 
 // Import coach components
-import { MessageBubble } from '@/components/coach/Message/MessageBubble'
-import { LoadingIndicator } from '@/components/coach/Loading/LoadingIndicator'
-import { LogPreviewCard } from '@/components/coach/LogPreview/LogPreviewCard'
-import { ChatInput } from '@/components/coach/Input/ChatInput'
-import { EmptyState } from '@/components/coach/EmptyState/EmptyState'
+import { MessageBubble } from '@/components/Coach/Message/MessageBubble'
+import { LoadingIndicator } from '@/components/Coach/Loading/LoadingIndicator'
+import { LogPreviewCard } from '@/components/Coach/LogPreview/LogPreviewCard'
+import { ChatInput } from '@/components/Coach/Input/ChatInput'
+import { EmptyState } from '@/components/Coach/EmptyState/EmptyState'
 
 // Import utils and types
-import { getSmartLoadingMessage, scrollToBottom, isScrolledToBottom, hapticFeedback } from '@/components/coach/shared/utils'
-import type { Message, LoadingState } from '@/components/coach/CoachChat/CoachChat.types'
+import { getSmartLoadingMessage, scrollToBottom, isScrolledToBottom, hapticFeedback } from '@/components/Coach/shared/utils'
+import type { Message, LoadingState } from '@/components/Coach/CoachChat/CoachChat.types'
 
 // Animation variants
 const messageVariants = {
