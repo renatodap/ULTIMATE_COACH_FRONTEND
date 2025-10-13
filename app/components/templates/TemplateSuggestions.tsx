@@ -48,6 +48,7 @@ export default function TemplateSuggestions({
     if (autoFetch && activityData.activity_type) {
       fetchMatches()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityData.activity_type, activityData.distance_km, activityData.duration_minutes, autoFetch])
 
   const fetchMatches = async () => {

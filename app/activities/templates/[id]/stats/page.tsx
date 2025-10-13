@@ -29,6 +29,7 @@ export default function TemplateStatsPage() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId])
 
   const loadData = async () => {

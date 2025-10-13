@@ -72,7 +72,7 @@ export default function LogActivityPage() {
         handleTemplateSelect(template.id)
       }
     }
-  }, [searchParams, templates])
+  }, [searchParams, templates, handleTemplateSelect])
 
   // Show suggestions when category is selected (and no template selected)
   useEffect(() => {
