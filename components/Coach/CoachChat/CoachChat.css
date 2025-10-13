@@ -1,0 +1,212 @@
+/**
+ * CoachChat Styles - Mobile-First Design
+ *
+ * Optimized for touch interfaces, thumb-reach zones, and various screen sizes
+ */
+
+/* Main container */
+.coach-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  background-color: #F9FAFB;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Header */
+.coach-chat__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 0.75rem 1rem;
+  /* Safe area for notch */
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.coach-chat__header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.coach-chat__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.coach-chat__avatar-icon {
+  font-size: 20px;
+}
+
+.coach-chat__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.coach-chat__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.coach-chat__subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Messages container */
+.coach-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  padding-bottom: 2rem;
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Scroll to bottom button */
+.coach-chat__scroll-button {
+  position: absolute;
+  bottom: 140px;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border: none;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 5;
+  transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out;
+  /* iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.coach-chat__scroll-button:active {
+  transform: scale(0.95);
+}
+
+/* Log preview overlay */
+.coach-chat__log-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+  /* Prevent scroll */
+  overflow: hidden;
+}
+
+/* Error banner */
+.coach-chat__error {
+  position: fixed;
+  top: calc(56px + env(safe-area-inset-top));
+  left: 1rem;
+  right: 1rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  z-index: 20;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  animation: slideDown 200ms ease-out;
+}
+
+.coach-chat__error button {
+  background: none;
+  border: none;
+  color: #DC2626;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Tablet and desktop styles */
+@media (min-width: 768px) {
+  .coach-chat {
+    max-width: 768px;
+    margin: 0 auto;
+    border-left: 1px solid #E5E7EB;
+    border-right: 1px solid #E5E7EB;
+  }
+
+  .coach-chat__messages {
+    padding: 1.5rem;
+  }
+
+  .coach-chat__scroll-button {
+    right: 1.5rem;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .coach-chat {
+    background-color: #111827;
+  }
+
+  .coach-chat__header {
+    background-color: #1F2937;
+    border-bottom-color: #374151;
+  }
+
+  .coach-chat__title {
+    color: #F9FAFB;
+  }
+
+  .coach-chat__subtitle {
+    color: #9CA3AF;
+  }
+}

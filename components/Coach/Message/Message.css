@@ -1,0 +1,347 @@
+/**
+ * Message Component Styles
+ * Includes: MessageBubble, NutritionCard, WorkoutCard
+ */
+
+/* ===== MESSAGE BUBBLE ===== */
+.message-bubble {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  animation: fadeIn 200ms ease-out;
+}
+
+.message-bubble--user {
+  flex-direction: row-reverse;
+}
+
+.message-bubble--error .message-bubble__content {
+  background-color: #FEF2F2;
+  border-color: #FCA5A5;
+  color: #DC2626;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Avatar */
+.message-bubble__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message-bubble__avatar-icon {
+  font-size: 16px;
+}
+
+/* Content wrapper */
+.message-bubble__content-wrapper {
+  flex: 1;
+  min-width: 0;
+  max-width: 85%;
+}
+
+.message-bubble--user .message-bubble__content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Content bubble */
+.message-bubble__content {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
+}
+
+.message-bubble--user .message-bubble__content {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border-color: #3B82F6;
+}
+
+/* Text */
+.message-bubble__text {
+  font-size: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Timestamp */
+.message-bubble__timestamp {
+  font-size: 0.75rem;
+  color: #9CA3AF;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.message-bubble--user .message-bubble__timestamp {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.message-bubble__model {
+  font-size: 0.625rem;
+  opacity: 0.6;
+}
+
+/* Action buttons */
+.message-bubble__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.message-bubble__action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #E5E7EB;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.message-bubble__action-btn:active {
+  transform: scale(0.95);
+  background-color: #F3F4F6;
+}
+
+/* ===== NUTRITION CARD ===== */
+.nutrition-card {
+  background-color: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.nutrition-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.nutrition-card__icon {
+  font-size: 20px;
+}
+
+.nutrition-card__title {
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+.nutrition-card__amount {
+  color: #6B7280;
+  font-weight: normal;
+}
+
+/* Calories */
+.nutrition-card__calories {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.nutrition-card__calories-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0C4A6E;
+  line-height: 1;
+}
+
+.nutrition-card__calories-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin-top: 0.25rem;
+}
+
+/* Macro bars */
+.nutrition-card__macros-bars {
+  height: 6px;
+  background-color: #E0F2FE;
+  border-radius: 3px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.nutrition-card__macro-bar {
+  display: flex;
+  height: 100%;
+}
+
+.nutrition-card__macro-bar-fill {
+  height: 100%;
+  transition: width 300ms ease-out;
+}
+
+.nutrition-card__macro-bar-fill--protein {
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
+}
+
+/* Macros */
+.nutrition-card__macros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.nutrition-card__macro {
+  text-align: center;
+  padding: 0.5rem;
+  background-color: #FFFFFF;
+  border-radius: 0.5rem;
+}
+
+.nutrition-card__macro-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0C4A6E;
+  display: block;
+  line-height: 1.25;
+}
+
+.nutrition-card__macro-label {
+  font-size: 0.75rem;
+  color: #6B7280;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.nutrition-card__macro-icon {
+  font-size: 16px;
+  margin-top: 0.25rem;
+}
+
+/* ===== WORKOUT CARD ===== */
+.workout-card {
+  background-color: #F5F3FF;
+  border: 1px solid #DDD6FE;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.workout-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.workout-card__icon {
+  font-size: 20px;
+}
+
+.workout-card__title {
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+.workout-card__duration {
+  color: #6B7280;
+  font-weight: normal;
+}
+
+/* Exercises */
+.workout-card__exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.workout-card__exercise {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background-color: #FFFFFF;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.workout-card__exercise-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #8B5CF6;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.workout-card__exercise-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.workout-card__exercise-name {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  line-height: 1.25;
+}
+
+.workout-card__exercise-details {
+  font-size: 0.875rem;
+  color: #6B7280;
+  line-height: 1.25;
+}
+
+.workout-card__exercise-weight {
+  color: #8B5CF6;
+  font-weight: 500;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .message-bubble__content {
+    background-color: #1F2937;
+    border-color: #374151;
+    color: #F9FAFB;
+  }
+
+  .message-bubble__timestamp {
+    color: #9CA3AF;
+  }
+
+  .nutrition-card,
+  .workout-card {
+    background-color: #1F2937;
+    border-color: #374151;
+  }
+
+  .nutrition-card__calories-value,
+  .nutrition-card__macro-value,
+  .workout-card__exercise-name {
+    color: #F9FAFB;
+  }
+}

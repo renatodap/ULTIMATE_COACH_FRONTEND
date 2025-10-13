@@ -16,8 +16,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Loader2,
   User,
   Activity,
   Apple,
@@ -35,6 +35,7 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
+import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { getFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
 import { logout } from '@/lib/api/auth'
 import EditPhysicalStatsModal from '@/app/components/profile/EditPhysicalStatsModal'
@@ -52,6 +53,39 @@ import {
   formatUnitSystem,
   formatStressLevel,
 } from '@/lib/constants/profile'
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+}
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' }
+  }
+}
+
+const contentVariants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    transition: { duration: 0.2, ease: 'easeOut' }
+  },
+  expanded: {
+    height: 'auto',
+    opacity: 1,
+    transition: { duration: 0.3, ease: 'easeOut' }
+  }
+}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -119,14 +153,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-iron-black text-iron-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-iron-orange" />
-          <p className="text-iron-gray">Loading your profile...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Loading your profile..." />
   }
 
   if (error) {
@@ -170,7 +197,10 @@ export default function ProfilePage() {
     const isExpanded = expandedSections.has(id)
 
     return (
-      <div className="border border-iron-gray">
+      <motion.div
+        className="border border-iron-gray"
+        variants={sectionVariants}
+      >
         <button
           onClick={() => toggleSection(id)}
           className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-iron-gray/10 transition-colors"
@@ -182,7 +212,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-2">
             {onEdit && (
-              <div
+              <motion.div
                 onClick={(e) => {
                   e.stopPropagation()
                   onEdit()
@@ -198,24 +228,37 @@ export default function ProfilePage() {
                 }}
                 className="p-2 hover:bg-iron-orange/20 rounded transition-colors cursor-pointer"
                 aria-label={`Edit ${title}`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
               >
                 <Edit2 className="w-4 h-4 text-iron-orange" />
-              </div>
+              </motion.div>
             )}
-            {isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-iron-gray" />
-            ) : (
+            <motion.div
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
               <ChevronDown className="w-5 h-5 text-iron-gray" />
-            )}
+            </motion.div>
           </div>
         </button>
 
-        {isExpanded && (
-          <div className="p-4 sm:p-6 pt-0 border-t border-iron-gray/30">
-            {children}
-          </div>
-        )}
-      </div>
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial="collapsed"
+              animate="expanded"
+              exit="collapsed"
+              variants={contentVariants}
+              className="overflow-hidden"
+            >
+              <div className="p-4 sm:p-6 pt-0 border-t border-iron-gray/30">
+                {children}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     )
   }
 
@@ -230,15 +273,27 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-iron-black text-iron-white pb-24">
       {/* Header */}
-      <header className="border-b border-iron-gray sticky top-0 bg-iron-black z-30">
+      <header className="border-b border-iron-gray/30 sticky top-0 bg-iron-black z-[100]">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="font-heading text-2xl sm:text-3xl text-iron-orange uppercase tracking-wider">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-iron-gray hover:text-iron-white transition mb-3 text-2xl"
+            aria-label="Back to dashboard"
+          >
+            ←
+          </button>
+          <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
             Profile
           </h1>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <motion.main
+        className="max-w-4xl mx-auto px-4 py-6 space-y-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Basic Info Section (Always visible) */}
         <CollapsibleSection id="basic" title="Basic Information" icon={User}>
           <div className="space-y-2">
@@ -423,14 +478,17 @@ export default function ProfilePage() {
         </CollapsibleSection>
 
         {/* Sign Out Button */}
-        <button
+        <motion.button
           onClick={handleSignOut}
           className="w-full border-2 border-red-600 text-red-600 font-heading text-base sm:text-lg md:text-xl py-3 sm:py-4 uppercase tracking-wider hover:bg-red-600 hover:text-iron-white transition-colors flex items-center justify-center gap-2"
+          variants={sectionVariants}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
           Sign Out
-        </button>
-      </main>
+        </motion.button>
+      </motion.main>
 
       {/* Bottom Navigation */}
       <BottomNav />

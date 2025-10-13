@@ -1,0 +1,121 @@
+/**
+ * Loading Indicator Styles
+ */
+
+.loading-indicator {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  animation: fadeIn 200ms ease-out;
+}
+
+/* Avatar */
+.loading-indicator__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.loading-indicator__avatar-icon {
+  font-size: 16px;
+}
+
+/* Content */
+.loading-indicator__content {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
+}
+
+/* Animated dots */
+.loading-indicator__dots {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.loading-indicator__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Message */
+.loading-indicator__message {
+  font-size: 0.875rem;
+  color: #6B7280;
+  line-height: 1.25;
+}
+
+/* Sizes */
+.loading-indicator--sm .loading-indicator__avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.loading-indicator--sm .loading-indicator__avatar-icon {
+  font-size: 12px;
+}
+
+.loading-indicator--sm .loading-indicator__content {
+  padding: 0.5rem 0.75rem;
+}
+
+.loading-indicator--sm .loading-indicator__dot {
+  width: 6px;
+  height: 6px;
+}
+
+.loading-indicator--lg .loading-indicator__avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.loading-indicator--lg .loading-indicator__avatar-icon {
+  font-size: 20px;
+}
+
+.loading-indicator--lg .loading-indicator__content {
+  padding: 1rem 1.25rem;
+}
+
+.loading-indicator--lg .loading-indicator__dot {
+  width: 10px;
+  height: 10px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .loading-indicator__content {
+    background-color: #1F2937;
+    border-color: #374151;
+  }
+
+  .loading-indicator__message {
+    color: #9CA3AF;
+  }
+
+  .loading-indicator__dot {
+    background-color: #60A5FA;
+  }
+}

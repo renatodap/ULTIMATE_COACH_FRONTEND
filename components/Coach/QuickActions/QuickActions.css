@@ -1,0 +1,81 @@
+/**
+ * Quick Actions Styles
+ * Horizontal scrollable shortcuts
+ */
+
+.quick-actions {
+  padding: 0.75rem 1rem;
+  background-color: #FFFFFF;
+  border-top: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.quick-actions__scroll-container {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Hide scrollbar but keep functionality */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  /* Smooth momentum scrolling */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding-bottom: 0.25rem;
+}
+
+.quick-actions__scroll-container::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+
+.quick-actions__button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 24px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  min-height: 44px; /* Touch target */
+}
+
+.quick-actions__button:active {
+  transform: scale(0.98);
+  background-color: #F3F4F6;
+  border-color: #3B82F6;
+}
+
+.quick-actions__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.quick-actions__label {
+  line-height: 1;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .quick-actions {
+    background-color: #1F2937;
+    border-top-color: #374151;
+  }
+
+  .quick-actions__button {
+    background-color: #111827;
+    border-color: #374151;
+    color: #F9FAFB;
+  }
+
+  .quick-actions__button:active {
+    background-color: #1F2937;
+  }
+}

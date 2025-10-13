@@ -1,0 +1,774 @@
+'use client'
+
+/**
+ * Nutrition Log Page - Complete Edition
+ *
+ * Full-featured meal logging with:
+ * - Quick meals display and instant logging
+ * - Recent foods for quick access
+ * - Live search with unified results
+ * - Inline editing of meal items
+ * - Save current meal as quick meal
+ * - Complete API integration
+ */
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock } from 'lucide-react'
+import { BottomNav } from '@/components/BottomNav'
+import Toast from '@/app/components/shared/Toast'
+import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
+import { searchFoods, getRecentFoods } from '@/lib/api/foods'
+import { listQuickMeals, createQuickMeal, logQuickMeal } from '@/lib/api/quick-meals'
+import { createMeal } from '@/lib/api/nutrition'
+import { calculateFoodNutrition, formatNutrition } from '@/lib/utils/nutrition-calculator'
+import type { Food, FoodServing, MealItemPreview, QuickMeal } from '@/lib/types/food'
+import type { CreateMealRequest, CreateMealItemRequest } from '@/lib/api/nutrition'
+
+export default function LogMealPage() {
+  const router = useRouter()
+  const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
+
+  // Data loading state
+  const [quickMeals, setQuickMeals] = useState<QuickMeal[]>([])
+  const [recentFoods, setRecentFoods] = useState<Food[]>([])
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Food[]>([])
+  const [searching, setSearching] = useState(false)
+
+  // Meal building state
+  const [mealItems, setMealItems] = useState<MealItemPreview[]>([])
+  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | 'other'>('other')
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
+  const [editQuantity, setEditQuantity] = useState<number>(0)
+
+  // Modal states
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null)
+  const [modalQuantity, setModalQuantity] = useState<number>(100)
+  const [modalUnit, setModalUnit] = useState<'grams' | 'serving'>('grams')
+  const [modalServing, setModalServing] = useState<FoodServing | null>(null)
+
+  // Save as quick meal modal
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [quickMealName, setQuickMealName] = useState('')
+  const [quickMealDescription, setQuickMealDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Logging state
+  const [logging, setLogging] = useState(false)
+
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  // Fetch initial data
+  useEffect(() => {
+    if (authLoading || !onboardingComplete) {
+      return
+    }
+
+    async function fetchInitialData() {
+      try {
+        setInitialLoading(true)
+        const [meals, recent] = await Promise.all([
+          listQuickMeals().catch(() => []),
+          getRecentFoods(10).catch(() => [])
+        ])
+        setQuickMeals(meals)
+        setRecentFoods(recent)
+      } catch (error) {
+        console.error('Failed to load initial data:', error)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
+    fetchInitialData()
+  }, [authLoading, onboardingComplete])
+
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setSearching(true)
+        const results = await searchFoods(searchQuery, 20)
+        setSearchResults(results.foods || [])
+      } catch (error) {
+        console.error('Search failed:', error)
+      } finally {
+        setSearching(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Handle quick meal logging
+  const handleLogQuickMeal = async (quickMealId: string) => {
+    try {
+      setLogging(true)
+      await logQuickMeal(quickMealId)
+      router.push('/nutrition')
+    } catch (error) {
+      console.error('Failed to log quick meal:', error)
+      setToast({ message: 'Failed to log quick meal. Please try again.', type: 'error' })
+    } finally {
+      setLogging(false)
+    }
+  }
+
+  // Handle food selection
+  const handleSelectFood = (food: Food) => {
+    setSelectedFood(food)
+    setModalQuantity(100)
+    setModalUnit('grams')
+    setModalServing(food.servings?.find(s => s.is_default) || food.servings?.[0] || null)
+  }
+
+  // Handle add to meal
+  const handleAddToMeal = () => {
+    if (!selectedFood) return
+
+    try {
+      const nutrition = calculateFoodNutrition(
+        selectedFood,
+        modalQuantity,
+        modalUnit,
+        modalServing || undefined
+      )
+
+      const newItem: MealItemPreview = {
+        food_id: selectedFood.id,
+        quantity: modalQuantity,
+        unit: modalUnit,
+        serving_id: modalServing?.id,
+        food: selectedFood,
+        serving: modalServing || undefined,
+        calculated_grams: nutrition.grams,
+        calculated_calories: nutrition.calories,
+        calculated_protein_g: nutrition.protein_g,
+        calculated_carbs_g: nutrition.carbs_g,
+        calculated_fat_g: nutrition.fat_g,
+      }
+
+      setMealItems([...mealItems, newItem])
+      setSelectedFood(null)
+      setSearchQuery('')
+      setSearchResults([])
+    } catch (error) {
+      console.error('Failed to add item:', error)
+      setToast({ message: 'Failed to add item to meal', type: 'error' })
+    }
+  }
+
+  // Handle inline edit
+  const handleStartEdit = (index: number) => {
+    setEditingItemIndex(index)
+    setEditQuantity(mealItems[index].quantity)
+  }
+
+  const handleSaveEdit = () => {
+    if (editingItemIndex === null) return
+
+    const item = mealItems[editingItemIndex]
+
+    try {
+      const nutrition = calculateFoodNutrition(
+        item.food,
+        editQuantity,
+        item.unit,
+        item.serving
+      )
+
+      const updatedItem: MealItemPreview = {
+        ...item,
+        quantity: editQuantity,
+        calculated_grams: nutrition.grams,
+        calculated_calories: nutrition.calories,
+        calculated_protein_g: nutrition.protein_g,
+        calculated_carbs_g: nutrition.carbs_g,
+        calculated_fat_g: nutrition.fat_g,
+      }
+
+      const newItems = [...mealItems]
+      newItems[editingItemIndex] = updatedItem
+      setMealItems(newItems)
+      setEditingItemIndex(null)
+    } catch (error) {
+      console.error('Failed to update item:', error)
+      setToast({ message: 'Failed to update item', type: 'error' })
+    }
+  }
+
+  // Calculate meal totals
+  const mealTotals = mealItems.reduce(
+    (totals, item) => ({
+      calories: totals.calories + item.calculated_calories,
+      protein_g: totals.protein_g + item.calculated_protein_g,
+      carbs_g: totals.carbs_g + item.calculated_carbs_g,
+      fat_g: totals.fat_g + item.calculated_fat_g,
+    }),
+    { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 }
+  )
+
+  // Handle save as quick meal
+  const handleSaveAsQuickMeal = async () => {
+    if (!quickMealName.trim() || mealItems.length === 0) {
+      setToast({ message: 'Please provide a name for your quick meal', type: 'error' })
+      return
+    }
+
+    try {
+      setSaving(true)
+      await createQuickMeal({
+        name: quickMealName.trim(),
+        description: quickMealDescription.trim() || undefined,
+        foods: mealItems.map((item, index) => ({
+          food_id: item.food_id,
+          quantity: item.quantity,
+          serving_id: item.serving_id,
+          display_order: index
+        }))
+      })
+
+      // Refresh quick meals list
+      const meals = await listQuickMeals()
+      setQuickMeals(meals)
+
+      // Reset modal
+      setShowSaveModal(false)
+      setQuickMealName('')
+      setQuickMealDescription('')
+
+      setToast({ message: 'Quick meal saved successfully!', type: 'success' })
+    } catch (error) {
+      console.error('Failed to save quick meal:', error)
+      setToast({ message: 'Failed to save quick meal. Please try again.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Handle log meal
+  const handleLogMeal = async () => {
+    if (mealItems.length === 0) {
+      setToast({ message: 'Please add at least one food item', type: 'error' })
+      return
+    }
+
+    try {
+      setLogging(true)
+
+      const items: CreateMealItemRequest[] = mealItems.map(item => ({
+        food_id: item.food_id,
+        quantity: item.quantity,
+        serving_id: item.serving_id || null,
+        grams: item.calculated_grams,
+        calories: Math.round(item.calculated_calories),
+        protein_g: Math.round(item.calculated_protein_g * 10) / 10,
+        carbs_g: Math.round(item.calculated_carbs_g * 10) / 10,
+        fat_g: Math.round(item.calculated_fat_g * 10) / 10,
+        display_unit: item.unit === 'grams' ? 'g' : item.serving?.serving_unit || 'serving',
+        display_label: item.serving?.serving_label || null,
+      }))
+
+      const request: CreateMealRequest = {
+        meal_type: mealType,
+        items,
+        source: 'manual'
+      }
+
+      await createMeal(request)
+
+      // Navigate back to nutrition page
+      router.push('/nutrition')
+    } catch (error) {
+      console.error('Failed to log meal:', error)
+      setToast({ message: 'Failed to log meal. Please try again.', type: 'error' })
+    } finally {
+      setLogging(false)
+    }
+  }
+
+  // Auth loading
+  if (authLoading || !onboardingComplete) {
+    return (
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-iron-orange animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-iron-black pb-20">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-iron-black border-b border-iron-gray/20">
+        <div className="px-4 py-4 flex items-center gap-4">
+          <button
+            onClick={() => router.push('/nutrition')}
+            className="text-iron-gray hover:text-iron-white transition-colors"
+            aria-label="Back to nutrition"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <div className="flex-1">
+            <h1 className="font-heading text-2xl text-iron-white uppercase tracking-wider">
+              Log Meal
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="px-4 py-6">
+        {/* Quick Meals Section */}
+        {!initialLoading && quickMeals.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-heading text-sm text-iron-white uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Star className="w-4 h-4 text-iron-orange" />
+              Quick Meals
+            </h2>
+            <div className="space-y-2">
+              {quickMeals.slice(0, 5).map((quickMeal) => (
+                <button
+                  key={quickMeal.id}
+                  onClick={() => handleLogQuickMeal(quickMeal.id)}
+                  disabled={logging}
+                  className="w-full bg-iron-black/50 backdrop-blur-sm border border-iron-gray/20 rounded-lg p-3 text-left hover:border-iron-orange/50 transition-colors disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-iron-white font-medium flex items-center gap-2">
+                        {quickMeal.name}
+                        {quickMeal.is_favorite && <Star className="w-3 h-3 text-iron-orange fill-iron-orange" />}
+                      </div>
+                      {quickMeal.description && (
+                        <div className="text-xs text-iron-gray mt-1">{quickMeal.description}</div>
+                      )}
+                      <div className="text-xs text-iron-gray mt-1">
+                        {quickMeal.foods.length} item{quickMeal.foods.length !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <Plus className="w-5 h-5 text-iron-orange flex-shrink-0" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Foods Section */}
+        {!initialLoading && recentFoods.length > 0 && !searchQuery && (
+          <div className="mb-6">
+            <h2 className="font-heading text-sm text-iron-white uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-iron-orange" />
+              Recent Foods
+            </h2>
+            <div className="space-y-2">
+              {recentFoods.slice(0, 5).map((food) => (
+                <button
+                  key={food.id}
+                  onClick={() => handleSelectFood(food)}
+                  className="w-full bg-iron-black/50 backdrop-blur-sm border border-iron-gray/20 rounded-lg p-3 text-left hover:border-iron-orange/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="text-iron-white font-medium">{food.name}</div>
+                      {food.brand_name && (
+                        <div className="text-xs text-iron-gray">{food.brand_name}</div>
+                      )}
+                      <div className="text-xs text-iron-gray mt-1">
+                        {food.calories_per_100g} cal per 100g
+                      </div>
+                    </div>
+                    <Plus className="w-4 h-4 text-iron-orange flex-shrink-0" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search foods..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-iron-black/50 border border-iron-gray/20 rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:border-iron-orange focus:outline-none"
+          />
+
+          {/* Search Results */}
+          {searchQuery.length >= 2 && (
+            <div className="mt-2 bg-iron-black/80 backdrop-blur-sm border border-iron-gray/20 rounded-xl overflow-hidden">
+              {searching ? (
+                <div className="p-4 text-center text-iron-gray">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div className="divide-y divide-iron-gray/10">
+                  {searchResults.map((food) => (
+                    <button
+                      key={food.id}
+                      onClick={() => handleSelectFood(food)}
+                      className="w-full px-4 py-3 text-left hover:bg-iron-gray/10 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-iron-white font-medium">{food.name}</div>
+                          {food.brand_name && (
+                            <div className="text-sm text-iron-gray">{food.brand_name}</div>
+                          )}
+                          <div className="text-xs text-iron-gray mt-1">
+                            {food.calories_per_100g} cal per 100g
+                            {food.composition_type === 'composed' && ' • Composed meal'}
+                            {food.composition_type === 'branded' && ' • Branded'}
+                          </div>
+                        </div>
+                        <div className="text-iron-orange text-sm">
+                          {food.composition_type === 'composed' ? '🍽️' : food.composition_type === 'branded' ? '🏪' : '🥩'}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-iron-gray">
+                  No foods found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Building Meal */}
+        {mealItems.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-heading text-lg text-iron-white uppercase tracking-wider">
+                Building Meal
+              </h2>
+              {mealItems.length >= 2 && (
+                <button
+                  onClick={() => setShowSaveModal(true)}
+                  className="text-xs text-iron-orange hover:text-iron-orange/80 transition-colors uppercase tracking-wider"
+                >
+                  Save as Quick Meal
+                </button>
+              )}
+            </div>
+
+            {/* Meal Type Selector */}
+            <div className="mb-4">
+              <div className="flex gap-2 overflow-x-auto">
+                {(['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setMealType(type)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                      mealType === type
+                        ? 'bg-iron-orange text-iron-black'
+                        : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-iron-black/50 backdrop-blur-sm border border-iron-gray/20 rounded-xl p-4 space-y-3">
+              {mealItems.map((item, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <div className="text-iron-white font-medium">{item.food.name}</div>
+
+                    {/* Inline Editing */}
+                    {editingItemIndex === index ? (
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="number"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(Number(e.target.value))}
+                          className="w-24 bg-iron-black border border-iron-orange rounded px-2 py-1 text-iron-white text-sm"
+                          min="0"
+                          step={item.unit === 'grams' ? '1' : '0.1'}
+                          autoFocus
+                        />
+                        <span className="text-sm text-iron-gray">
+                          {item.unit === 'grams' ? 'g' : item.serving?.serving_unit || 'serving'}
+                        </span>
+                        <button
+                          onClick={handleSaveEdit}
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-iron-orange hover:text-iron-orange/80 transition-colors"
+                          aria-label="Save changes"
+                        >
+                          <Check className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-iron-gray">
+                          {item.quantity} {item.unit === 'grams' ? 'g' : item.serving?.serving_unit || 'serving'}
+                        </span>
+                        <button
+                          onClick={() => handleStartEdit(index)}
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-iron-gray hover:text-iron-white transition-colors"
+                          aria-label="Edit quantity"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-iron-gray mt-1">
+                      {formatNutrition({
+                        calories: item.calculated_calories,
+                        protein_g: item.calculated_protein_g,
+                        carbs_g: item.calculated_carbs_g,
+                        fat_g: item.calculated_fat_g,
+                      })}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setMealItems(mealItems.filter((_, i) => i !== index))}
+                    className="text-iron-gray hover:text-iron-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+
+              <div className="pt-3 border-t border-iron-gray/20">
+                <div className="text-iron-white font-heading uppercase tracking-wider text-sm mb-1">
+                  Total
+                </div>
+                <div className="text-iron-orange font-medium">
+                  {formatNutrition(mealTotals)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Log Button */}
+        {mealItems.length > 0 && (
+          <button
+            onClick={handleLogMeal}
+            disabled={logging}
+            className="w-full bg-iron-orange text-iron-black py-4 rounded-xl font-heading text-lg uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-iron-orange/90 transition-colors shadow-lg disabled:opacity-50"
+          >
+            {logging ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                Logging...
+              </>
+            ) : (
+              <>
+                <Plus className="w-6 h-6" />
+                Log Meal ({Math.round(mealTotals.calories)} cal)
+              </>
+            )}
+          </button>
+        )}
+      </main>
+
+      {/* Food Selection Modal */}
+      {selectedFood && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <div className="bg-iron-black border border-iron-gray/20 rounded-xl max-w-md w-full p-6">
+            <h3 className="font-heading text-xl text-iron-white uppercase tracking-wider mb-4">
+              {selectedFood.name}
+            </h3>
+
+            {selectedFood.brand_name && (
+              <div className="text-sm text-iron-gray mb-4">{selectedFood.brand_name}</div>
+            )}
+
+            {/* Unit Selection */}
+            <div className="mb-4">
+              <label className="block text-sm text-iron-gray mb-2">Unit</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setModalUnit('grams')
+                    setModalQuantity(100)
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    modalUnit === 'grams'
+                      ? 'bg-iron-orange text-iron-black'
+                      : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
+                  }`}
+                >
+                  Grams
+                </button>
+                {selectedFood.servings && selectedFood.servings.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setModalUnit('serving')
+                      setModalQuantity(1)
+                    }}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      modalUnit === 'serving'
+                        ? 'bg-iron-orange text-iron-black'
+                        : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
+                    }`}
+                  >
+                    Serving
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quantity Input */}
+            <div className="mb-4">
+              <label className="block text-sm text-iron-gray mb-2">Quantity</label>
+              <input
+                type="number"
+                value={modalQuantity}
+                onChange={(e) => setModalQuantity(Number(e.target.value))}
+                className="w-full bg-iron-black/50 border border-iron-gray/20 rounded-lg px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
+                min="0"
+                step={modalUnit === 'grams' ? '1' : '0.1'}
+              />
+            </div>
+
+            {/* Serving Selection */}
+            {modalUnit === 'serving' && selectedFood.servings && selectedFood.servings.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm text-iron-gray mb-2">Serving Size</label>
+                <select
+                  value={modalServing?.id || ''}
+                  onChange={(e) => {
+                    const serving = selectedFood.servings?.find(s => s.id === e.target.value)
+                    setModalServing(serving || null)
+                  }}
+                  className="w-full bg-iron-black/50 border border-iron-gray/20 rounded-lg px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
+                >
+                  {selectedFood.servings.map((serving) => (
+                    <option key={serving.id} value={serving.id}>
+                      {serving.serving_size} {serving.serving_unit}
+                      {serving.serving_label && ` (${serving.serving_label})`}
+                      {' '}= {serving.grams_per_serving}g
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Preview */}
+            <div className="mb-6 p-4 bg-iron-gray/10 rounded-lg">
+              <div className="text-sm text-iron-gray mb-1">Nutrition</div>
+              <div className="text-iron-white font-medium">
+                {(() => {
+                  try {
+                    const nutrition = calculateFoodNutrition(
+                      selectedFood,
+                      modalQuantity,
+                      modalUnit,
+                      modalServing || undefined
+                    )
+                    return formatNutrition(nutrition)
+                  } catch {
+                    return 'Invalid input'
+                  }
+                })()}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedFood(null)}
+                className="flex-1 bg-iron-gray/10 text-iron-white py-3 rounded-lg font-medium hover:bg-iron-gray/20 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddToMeal}
+                className="flex-1 bg-iron-orange text-iron-black py-3 rounded-lg font-medium hover:bg-iron-orange/90 transition-colors"
+              >
+                Add to Meal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save as Quick Meal Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <div className="bg-iron-black border border-iron-gray/20 rounded-xl max-w-md w-full p-6">
+            <h3 className="font-heading text-xl text-iron-white uppercase tracking-wider mb-4">
+              Save as Quick Meal
+            </h3>
+
+            <div className="mb-4">
+              <label className="block text-sm text-iron-gray mb-2">Name *</label>
+              <input
+                type="text"
+                value={quickMealName}
+                onChange={(e) => setQuickMealName(e.target.value)}
+                placeholder="e.g., Morning Protein Shake"
+                className="w-full bg-iron-black/50 border border-iron-gray/20 rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:border-iron-orange focus:outline-none"
+                autoFocus
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm text-iron-gray mb-2">Description (optional)</label>
+              <input
+                type="text"
+                value={quickMealDescription}
+                onChange={(e) => setQuickMealDescription(e.target.value)}
+                placeholder="e.g., Pre-workout fuel"
+                className="w-full bg-iron-black/50 border border-iron-gray/20 rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:border-iron-orange focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowSaveModal(false)
+                  setQuickMealName('')
+                  setQuickMealDescription('')
+                }}
+                disabled={saving}
+                className="flex-1 bg-iron-gray/10 text-iron-white py-3 rounded-lg font-medium hover:bg-iron-gray/20 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAsQuickMeal}
+                disabled={saving || !quickMealName.trim()}
+                className="flex-1 bg-iron-orange text-iron-black py-3 rounded-lg font-medium hover:bg-iron-orange/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <BottomNav />
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  )
+}

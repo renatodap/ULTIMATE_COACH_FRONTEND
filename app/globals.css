@@ -270,3 +270,160 @@ button,
 .animate-gradient {
   animation: gradient 3s ease infinite;
 }
+
+/* ========== Coach Chat Component Styles ========== */
+/* Import coach component styles */
+@import '../components/coach/Message/Message.css';
+@import '../components/coach/Input/Input.css';
+@import '../components/coach/Loading/Loading.css';
+@import '../components/coach/LogPreview/LogPreview.css';
+@import '../components/coach/QuickActions/QuickActions.css';
+@import '../components/coach/EmptyState/EmptyState.css';
+
+/* Override coach component colors to match SHARPENED iron design system */
+.message-bubble__content {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.message-bubble--user .message-bubble__content {
+  background-color: var(--iron-orange) !important;
+  border-color: var(--iron-orange) !important;
+  color: var(--iron-black) !important;
+}
+
+.message-bubble__avatar {
+  background: linear-gradient(135deg, var(--iron-orange), #FF5722) !important;
+}
+
+.loading-indicator__content {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.loading-indicator__avatar {
+  background: linear-gradient(135deg, var(--iron-orange), #FF5722) !important;
+}
+
+.loading-indicator__dot {
+  background-color: var(--iron-orange) !important;
+}
+
+.chat-input {
+  background-color: var(--iron-black) !important;
+  border-top-color: var(--iron-gray) !important;
+}
+
+.chat-input__field {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+  color: var(--iron-white) !important;
+}
+
+.chat-input__field:focus {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-orange) !important;
+}
+
+.chat-input__button--send-active {
+  background-color: var(--iron-orange) !important;
+}
+
+.chat-input__button--send-active .chat-input__send-icon {
+  color: var(--iron-black) !important;
+}
+
+.nutrition-card {
+  background-color: rgba(26, 26, 27, 0.6) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.workout-card {
+  background-color: rgba(26, 26, 27, 0.6) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.log-preview-card {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.log-preview-card__header {
+  border-bottom-color: var(--iron-gray) !important;
+}
+
+.log-preview-card__title {
+  color: var(--iron-white) !important;
+}
+
+.log-preview-card__input {
+  background-color: var(--iron-black) !important;
+  border-color: var(--iron-gray) !important;
+  color: var(--iron-white) !important;
+}
+
+.log-preview-card__input:focus {
+  border-color: var(--iron-orange) !important;
+}
+
+.log-preview-card__button--confirm {
+  background-color: var(--iron-orange) !important;
+  border-color: var(--iron-orange) !important;
+  color: var(--iron-black) !important;
+}
+
+.log-preview-card__button--cancel {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+  color: var(--iron-white) !important;
+}
+
+.log-preview-card__meal-type {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+  color: var(--iron-white) !important;
+}
+
+.log-preview-card__meal-type--active {
+  background-color: var(--iron-orange) !important;
+  border-color: var(--iron-orange) !important;
+  color: var(--iron-black) !important;
+}
+
+.quick-actions {
+  background-color: var(--iron-black) !important;
+  border-top-color: var(--iron-gray) !important;
+}
+
+.quick-actions__button {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+  color: var(--iron-white) !important;
+}
+
+.quick-actions__button:active {
+  background-color: var(--iron-black) !important;
+  border-color: var(--iron-orange) !important;
+}
+
+.empty-state__avatar {
+  background: linear-gradient(135deg, var(--iron-orange), #FF5722) !important;
+}
+
+.empty-state__title {
+  color: var(--iron-white) !important;
+}
+
+.empty-state__action-btn {
+  background-color: var(--iron-dark-gray) !important;
+  border-color: var(--iron-gray) !important;
+}
+
+.empty-state__action-btn:active {
+  background-color: var(--iron-black) !important;
+  border-color: var(--iron-orange) !important;
+}
+
+.empty-state__action-label {
+  color: var(--iron-white) !important;
+}

@@ -1,99 +1,197 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+/**
+ * Dashboard Page
+ *
+ * Main dashboard with unified summary view
+ * Mobile-first, sharp design, NO rounded corners
+ */
+
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
-import { logout } from '@/lib/api/auth'
+import { getDashboardSummary } from '@/lib/api/dashboard'
+import type { DashboardSummary } from '@/lib/types/dashboard'
+
+// Components
 import { BottomNav } from '@/components/BottomNav'
+import { LoadingScreen, SkeletonCard, SkeletonGrid } from '@/components/shared/LoadingScreen'
+import DashboardHeader from '@/app/components/dashboard/DashboardHeader'
+import TodayOverviewCard from '@/app/components/dashboard/TodayOverviewCard'
+import WeightProgressCard from '@/app/components/dashboard/WeightProgressCard'
+import MacroSummaryCard from '@/app/components/dashboard/MacroSummaryCard'
+import ActivitySummaryCard from '@/app/components/dashboard/ActivitySummaryCard'
+import QuickActionsGrid from '@/app/components/dashboard/QuickActionsGrid'
+import WeeklyStatsCard from '@/app/components/dashboard/WeeklyStatsCard'
+import RecentActivityFeed from '@/app/components/dashboard/RecentActivityFeed'
+import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06
+    }
+  }
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' }
+  }
+}
 
 export default function DashboardPage() {
-  const router = useRouter()
+  const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
+  const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [weightModalOpen, setWeightModalOpen] = useState(false)
 
-  // Check authentication and onboarding status
-  // If user hasn't completed onboarding, hook will redirect to /onboarding
-  const { loading, onboardingComplete } = useOnboardingCheck()
+  useEffect(() => {
+    if (onboardingComplete) {
+      loadDashboard()
+    }
+  }, [onboardingComplete])
 
-  const handleLogout = async () => {
+  const loadDashboard = async () => {
     try {
-      await logout()
-    } catch (error) {
-      console.error('Logout error:', error)
+      setLoading(true)
+      setError(null)
+      const data = await getDashboardSummary()
+      setDashboardData(data)
+    } catch (err) {
+      console.error('Failed to load dashboard:', err)
+      setError('Failed to load dashboard. Please try again.')
     } finally {
-      router.push('/login')
+      setLoading(false)
     }
   }
 
-  // Show loading state while checking authentication and onboarding
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-iron-black flex items-center justify-center">
-        <div className="space-y-4 text-center">
-          <div className="w-12 h-12 mx-auto border-4 border-iron-orange border-t-transparent rounded-full animate-spin" />
-          <div className="text-iron-gray text-sm uppercase tracking-wider">Loading your profile...</div>
-        </div>
-      </div>
-    )
+  const handleWeightLogged = () => {
+    // Refresh dashboard data after logging weight
+    loadDashboard()
   }
 
-  // Don't render dashboard if onboarding not complete (hook will redirect)
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return <LoadingScreen message="Loading your profile..." />
+  }
+
+  // Don't render if onboarding not complete (hook will redirect)
   if (!onboardingComplete) {
     return null
   }
 
-  return (
-    <div className="min-h-screen p-8 animate-fade-in pb-24">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-black to-iron-dark-gray -z-10" />
-
-      {/* Header */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-gradient-orange mb-2">
-              DASHBOARD
-            </h1>
-            <p className="text-iron-gray text-sm uppercase tracking-wider">
-              Your transformation hub
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="btn btn-secondary text-sm"
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Coming soon placeholder */}
-        <div className="card-glass p-12 text-center space-y-6">
-          <div className="text-6xl">🚀</div>
-          <h2 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
-            Dashboard Coming Soon
-          </h2>
-          <p className="text-iron-gray max-w-md mx-auto">
-            Your personalized fitness dashboard with nutrition tracking, AI coach, and progress analytics is under construction.
-          </p>
-
-          <div className="flex gap-4 justify-center pt-4">
-            <div className="card p-4">
-              <div className="text-iron-orange font-bold text-2xl">0</div>
-              <div className="text-iron-gray text-xs uppercase tracking-wider">Meals Logged</div>
-            </div>
-            <div className="card p-4">
-              <div className="text-iron-orange font-bold text-2xl">0</div>
-              <div className="text-iron-gray text-xs uppercase tracking-wider">Workouts</div>
-            </div>
-            <div className="card p-4">
-              <div className="text-iron-orange font-bold text-2xl">0</div>
-              <div className="text-iron-gray text-xs uppercase tracking-wider">Days Active</div>
-            </div>
+  // Loading dashboard data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-iron-black pb-20">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <SkeletonCard height="h-16" />
+          <div className="mt-4">
+            <SkeletonGrid count={5} height="h-40" />
           </div>
         </div>
+        <BottomNav />
       </div>
+    )
+  }
+
+  // Error state
+  if (error || !dashboardData) {
+    return (
+      <div className="min-h-screen bg-iron-black pb-20">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="card-glass border border-red-500/50 p-8 text-center">
+            <p className="text-4xl mb-4">⚠️</p>
+            <h2 className="text-xl font-bold text-iron-white uppercase tracking-wider mb-2">
+              Unable to Load Dashboard
+            </h2>
+            <p className="text-iron-gray mb-6">
+              {error || 'Something went wrong. Please try again.'}
+            </p>
+            <button
+              onClick={loadDashboard}
+              className="btn-primary px-6 py-3"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-iron-black pb-20">
+      {/* Header */}
+      <DashboardHeader
+        displayName={dashboardData.display_name}
+        date={dashboardData.date}
+      />
+
+      {/* Main Content */}
+      <motion.div
+        className="max-w-4xl mx-auto px-4 py-6 space-y-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Today's Overview */}
+        <motion.div variants={cardVariants}>
+          <TodayOverviewCard
+            nutrition={dashboardData.nutrition}
+            activity={dashboardData.activity}
+            netCalories={dashboardData.net_calories}
+          />
+        </motion.div>
+
+        {/* Weight & Macros - Side by side on tablet+ */}
+        <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={cardVariants}>
+          <WeightProgressCard
+            weight={dashboardData.weight}
+            onLogWeight={() => setWeightModalOpen(true)}
+          />
+          <MacroSummaryCard nutrition={dashboardData.nutrition} />
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div variants={cardVariants}>
+          <QuickActionsGrid onLogWeight={() => setWeightModalOpen(true)} />
+        </motion.div>
+
+        {/* Activity Summary */}
+        <motion.div variants={cardVariants}>
+          <ActivitySummaryCard activity={dashboardData.activity} />
+        </motion.div>
+
+        {/* Weekly Stats */}
+        <motion.div variants={cardVariants}>
+          <WeeklyStatsCard weekly={dashboardData.weekly} />
+        </motion.div>
+
+        {/* Recent Activity Feed */}
+        <motion.div variants={cardVariants}>
+          <RecentActivityFeed />
+        </motion.div>
+      </motion.div>
 
       {/* Bottom Navigation */}
       <BottomNav />
+
+      {/* Weight Log Modal */}
+      <WeightLogModal
+        isOpen={weightModalOpen}
+        onClose={() => setWeightModalOpen(false)}
+        onSuccess={handleWeightLogged}
+      />
     </div>
   )
 }
