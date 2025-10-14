@@ -44,8 +44,10 @@ export default function SignupPage() {
         password,
         full_name: fullName || undefined,
       })
-      // Navigate to onboarding after successful signup (new users must complete onboarding)
-      router.push('/onboarding')
+      // After successful signup, require email verification before login
+      // Redirect to login with a banner prompting email confirmation
+      const params = new URLSearchParams({ verifyEmail: '1', email })
+      router.push(`/login?${params.toString()}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {

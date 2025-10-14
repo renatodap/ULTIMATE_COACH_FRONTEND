@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { login } from '@/lib/api/auth'
@@ -14,6 +15,9 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [checkingSession, setCheckingSession] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const verifyEmailBanner = searchParams?.get('verifyEmail') === '1'
+  const justSignedUpEmail = searchParams?.get('email') || ''
 
   // Check if user is already logged in with a VALID session
   // IMPORTANT: This check runs once on mount, not on every 401
@@ -136,6 +140,14 @@ export default function LoginPage() {
 
         {/* Form container */}
         <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-6">
+          {/* Post-signup email verification banner */}
+          {verifyEmailBanner && (
+            <div className="bg-iron-orange/10 border-2 border-iron-orange text-iron-orange p-4">
+              <p className="font-semibold">
+                {`Account created${justSignedUpEmail ? ` for ${justSignedUpEmail}` : ''}. Please check your email and confirm your account before signing in.`}
+              </p>
+            </div>
+          )}
           {/* Error message */}
           {error && (
             <div className="bg-iron-orange/10 border-2 border-iron-orange text-iron-orange p-4">
