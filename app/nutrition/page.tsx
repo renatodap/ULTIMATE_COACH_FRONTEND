@@ -18,7 +18,7 @@ import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import DailySummaryCard from '../components/nutrition/DailySummaryCard'
+import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import MealTypeCard from '../components/nutrition/MealTypeCard'
 import DateNavigation from '../components/nutrition/DateNavigation'
 import { BottomNav } from '@/components/BottomNav'
@@ -261,16 +261,7 @@ function NutritionPageContent() {
           initial="hidden"
           animate="visible"
         >
-          <DailySummaryCard
-            totalCalories={nutritionData.totalCalories}
-            totalProtein={nutritionData.totalProtein}
-            totalCarbs={nutritionData.totalCarbs}
-            totalFat={nutritionData.totalFat}
-            calorieGoal={nutritionData.calorieGoal}
-            proteinGoal={nutritionData.proteinGoal}
-            carbsGoal={nutritionData.carbsGoal}
-            fatGoal={nutritionData.fatGoal}
-          />
+          <DailySummaryCard type="nutrition" summary={nutritionData} />
         </motion.div>
 
         {/* Meals Section */}

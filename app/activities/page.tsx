@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from '@/lib/i18n'
 import { getActivities, getDailySummary, deleteActivity } from '@/lib/api/activities'
-import DailySummaryCard from '@/app/components/activities/DailySummaryCard'
+import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import ActivityCard from '@/app/components/activities/ActivityCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -188,7 +188,7 @@ export default function ActivitiesPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <DailySummaryCard summary={summary} />
+            <DailySummaryCard type="activity" summary={summary} />
           </motion.div>
         )}
 
