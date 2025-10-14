@@ -32,7 +32,7 @@ export function useOnboardingCheck() {
           console.warn('[Auth] Session expired or invalid. Redirecting to login...')
           // Note: Global 401 handler in API client will also trigger
           // But we add this as a backup in case the redirect didn't happen
-          router.push('/')
+          router.push('/login')
         } else {
           // Other errors (network, etc.) - log but don't redirect
           console.error('Failed to check onboarding status:', error)

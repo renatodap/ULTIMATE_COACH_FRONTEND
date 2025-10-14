@@ -56,14 +56,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // CASE 2: User IS authenticated
-  // If trying to access auth pages → redirect to dashboard
-  if (isAuthPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
+  // NOTE: We DON'T redirect away from auth pages here because:
+  // 1. Cookie might be stale/invalid (checked by API calls)
+  // 2. Login page itself will redirect to dashboard after successful login
+  // 3. Allows users to re-login if session expired
+  // The auth pages will handle their own redirect logic
 
-  // Allow access to all other routes
+  // Allow access to all routes
   return NextResponse.next()
 }
 

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { login } from '@/lib/api/auth'
+import { getCurrentUser } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
@@ -11,7 +12,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [checkingSession, setCheckingSession] = useState(true)
   const router = useRouter()
+
+  // Check if user is already logged in with a VALID session
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const user = await getCurrentUser()
+        // If we get here, token is valid - redirect to dashboard
+        if (user.onboarding_completed) {
+          window.location.href = '/dashboard'
+        } else {
+          window.location.href = '/onboarding'
+        }
+      } catch (error) {
+        // Token is invalid or doesn't exist - show login page
+        setCheckingSession(false)
+      }
+    }
+    checkExistingSession()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,6 +80,18 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : 'Failed to login with Google')
       setLoading(false)
     }
+  }
+
+  // Show loading while checking existing session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-iron-orange mx-auto mb-4"></div>
+          <p className="text-iron-gray uppercase tracking-wider">Checking session...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

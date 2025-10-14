@@ -92,8 +92,8 @@ class ApiClient {
         // Only redirect if we're in the browser (not during SSR)
         if (typeof window !== 'undefined') {
           // Clear any stale client state
-          // Redirect to landing page (middleware will handle from there)
-          window.location.href = '/'
+          // Redirect to login page (not / to avoid middleware redirect with stale cookie)
+          window.location.href = '/login'
         }
       }
 
