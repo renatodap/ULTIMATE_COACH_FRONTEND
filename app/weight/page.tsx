@@ -13,6 +13,8 @@ import { getBodyMetrics, deleteBodyMetric } from '@/lib/api/body-metrics'
 import type { BodyMetric } from '@/lib/types/body-metrics'
 import { BottomNav } from '@/components/BottomNav'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
+import { getFullUserProfile } from '@/lib/api/profile'
+import { displayWeight, type UnitSystem } from '@/lib/utils/units'
 
 export default function WeightHistoryPage() {
   const router = useRouter()
@@ -20,9 +22,16 @@ export default function WeightHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric')
 
   useEffect(() => {
-    loadMetrics()
+    ;(async () => {
+      try {
+        const profile = await getFullUserProfile()
+        setUnitSystem((profile.unit_system as UnitSystem) || 'metric')
+      } catch {}
+      loadMetrics()
+    })()
   }, [])
 
   const loadMetrics = async () => {
@@ -168,9 +177,9 @@ export default function WeightHistoryPage() {
                     <div className="flex-1">
                       <div className="flex items-baseline gap-3 mb-1">
                         <p className="text-3xl font-bold text-iron-white">
-                          {metric.weight_kg.toFixed(1)}
+                          {displayWeight(metric.weight_kg, unitSystem).value.toFixed(1)}
                         </p>
-                        <span className="text-sm text-iron-gray uppercase tracking-wider">kg</span>
+                        <span className="text-sm text-iron-gray uppercase tracking-wider">{displayWeight(metric.weight_kg, unitSystem).unit}</span>
 
                         {/* Change Indicator */}
                         {change !== null && (
@@ -184,7 +193,7 @@ export default function WeightHistoryPage() {
                             }`}
                           >
                             {change > 0 ? '↑' : change < 0 ? '↓' : '='}{' '}
-                            {Math.abs(change).toFixed(1)} kg
+                            {displayWeight(Math.abs(change), unitSystem).value.toFixed(1)} {displayWeight(0, unitSystem).unit}
                           </span>
                         )}
                       </div>
@@ -245,7 +254,7 @@ export default function WeightHistoryPage() {
                     ? 'text-green-500'
                     : 'text-red-500'
                 }`}>
-                  {(metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg).toFixed(1)} kg
+                  {displayWeight((metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg), unitSystem).value.toFixed(1)} {displayWeight(0, unitSystem).unit}
                 </p>
               </div>
             </div>
@@ -261,6 +270,7 @@ export default function WeightHistoryPage() {
         isOpen={weightModalOpen}
         onClose={() => setWeightModalOpen(false)}
         onSuccess={loadMetrics}
+        defaultUnit={unitSystem === 'imperial' ? 'lbs' : 'kg'}
       />
     </div>
   )

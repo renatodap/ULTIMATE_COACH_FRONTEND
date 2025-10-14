@@ -14,11 +14,12 @@ interface WeightLogModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  defaultUnit?: 'kg' | 'lbs'
 }
 
-export default function WeightLogModal({ isOpen, onClose, onSuccess }: WeightLogModalProps) {
+export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit = 'kg' }: WeightLogModalProps) {
   const [weight, setWeight] = useState('')
-  const [unit, setUnit] = useState<'kg' | 'lbs'>('kg')
+  const [unit, setUnit] = useState<'kg' | 'lbs'>(defaultUnit)
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
