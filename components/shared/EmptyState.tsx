@@ -78,7 +78,7 @@ export function EmptyState({
           shadow-xl
           transition-all duration-200
           hover:bg-iron-orange/90
-          active:scale-95
+          tap-target focus-ring-iron
         "
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -94,6 +94,7 @@ export function EmptyState({
             mt-4 text-iron-gray hover:text-iron-white
             text-sm uppercase tracking-wider
             transition-colors duration-200
+            tap-target focus-ring-iron
           "
         >
           {secondaryActionLabel}

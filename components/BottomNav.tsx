@@ -78,11 +78,12 @@ export function BottomNav() {
               <button
                 key={tab.path}
                 onClick={() => router.push(tab.path)}
-                className={`flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-0 flex-1 transition-all duration-200 ${
-                  active
-                    ? 'text-iron-orange'
-                    : 'text-iron-gray hover:text-iron-white'
-                }`}
+                className={`
+                  flex flex-col items-center justify-center gap-1 px-2 py-2 min-w-0 flex-1
+                  tap-target focus-ring-iron active-press
+                  transition-all duration-200
+                  ${active ? 'text-iron-white accent-edge' : 'text-iron-gray/60 hover:text-iron-white'}
+                `}
               >
                 {/* Icon */}
                 <div className={`transition-transform duration-200 ${active ? 'scale-110' : ''}`}>
@@ -95,11 +96,6 @@ export function BottomNav() {
                 }`}>
                   {tab.name}
                 </span>
-
-                {/* Active indicator - SHARP NO ROUNDED CORNERS */}
-                {active && (
-                  <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-12 h-1 bg-iron-orange" />
-                )}
               </button>
             )
           })}

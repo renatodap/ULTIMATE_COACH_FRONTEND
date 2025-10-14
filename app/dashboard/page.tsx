@@ -44,7 +44,7 @@ const cardVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3 }
+    transition: { duration: 0.22 }
   }
 }
 
@@ -171,6 +171,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-iron-black pb-20">
+      {/* Top Progress Indicator - shows during refresh */}
+      {refreshing && <div className="top-progress-iron" />}
+
       {/* Header */}
       <DashboardHeader
         displayName={dashboardData.display_name}
@@ -185,6 +188,10 @@ export default function DashboardPage() {
           currentPeriod={timePeriod}
           onChange={handleTimePeriodChange}
         />
+        {/* Swipe Hint - auto-dismissing gesture affordance */}
+        <p className="text-center mt-2 swipe-hint pointer-events-none">
+          ← Swipe for week/month →
+        </p>
       </div>
 
       {/* Swipeable Main Content */}

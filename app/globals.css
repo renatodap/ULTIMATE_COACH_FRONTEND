@@ -73,6 +73,16 @@
     background-color: #FF5722;
   }
 
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.99);
+    transition: transform 0.08s ease;
+  }
+
+  .btn-primary:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.95), 0 0 0 4px rgba(10, 10, 11, 1);
+  }
+
   .btn-primary:disabled {
     opacity: 0.5;
   }
@@ -84,6 +94,16 @@
 
   .btn-secondary:hover:not(:disabled) {
     border-color: var(--iron-orange);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.99);
+    transition: transform 0.08s ease;
+  }
+
+  .btn-secondary:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.95), 0 0 0 4px rgba(10, 10, 11, 1);
   }
 
   /* Input - minimal, sharp */
@@ -186,6 +206,92 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* ========== 2026/2027 Mobile-First Enhancements ========== */
+  
+  /* Focus Ring - WCAG AAA compliant, sharp edges */
+  .focus-ring-iron:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.95), 0 0 0 4px rgba(10, 10, 11, 1);
+  }
+
+  /* Tap Target - Apple HIG 44pt minimum */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Active Press - Tactile feedback */
+  .active-press:active {
+    transform: translateY(0.5px) scale(0.99);
+    transition: transform 0.08s ease;
+  }
+
+  /* Accent Edge - Highlight important surfaces */
+  .accent-edge {
+    position: relative;
+  }
+  
+  .accent-edge::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #FF4500, rgba(255, 69, 0, 0.6), transparent);
+    pointer-events: none;
+  }
+
+  /* Skeleton Shimmer - Perceived performance */
+  .skeleton-iron {
+    background: linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0.04) 25%,
+      rgba(255, 255, 255, 0.06) 37%,
+      rgba(255, 255, 255, 0.04) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.25s linear infinite;
+  }
+
+  /* Surface Elevated - Hero cards */
+  .surface-elevated {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Top Progress Indicator */
+  .top-progress-iron {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 69, 0, 0.1);
+    overflow: hidden;
+    z-index: 60;
+  }
+  
+  .top-progress-iron::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #FF4500, transparent);
+    animation: progress-indeterminate 1s ease-in-out infinite;
+  }
+
+  /* Swipe Hint - Auto-dismissing affordance */
+  .swipe-hint {
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 10px;
+    animation: fade-out-delayed 2.5s ease forwards;
+  }
 }
 
 /* Scrollbar - minimal */
@@ -269,6 +375,38 @@ button,
 
 .animate-gradient {
   animation: gradient 3s ease infinite;
+}
+
+/* ========== 2026/2027 Animation Keyframes ========== */
+
+/* Shimmer effect for skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Fade-out hint for gesture affordances */
+@keyframes fade-out-delayed {
+  0%, 60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Indeterminate progress bar */
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
 }
 
 /* ========== Coach Chat Component Styles ========== */

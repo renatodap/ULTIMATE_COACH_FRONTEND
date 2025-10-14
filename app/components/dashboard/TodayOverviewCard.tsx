@@ -35,13 +35,13 @@ export default function TodayOverviewCard({ nutrition, activity, netCalories }: 
 
   return (
     <motion.div
-      className="card-glass border border-iron-gray/30 overflow-hidden"
+      className="card-glass border border-iron-gray/30 overflow-hidden accent-edge"
       layout
     >
       {/* HERO STAT - Tap to expand */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-8 text-center active:scale-[0.99] transition-transform"
+        className="w-full p-8 text-center tap-target focus-ring-iron active-press"
       >
         {/* Status Label */}
         <p className="text-iron-gray text-sm uppercase tracking-wider mb-3 flex items-center justify-center gap-2">
@@ -52,14 +52,14 @@ export default function TodayOverviewCard({ nutrition, activity, netCalories }: 
         {/* THE BIG NUMBER - Hero stat */}
         <div className="mb-3">
           <motion.p
-            className={`text-7xl md:text-8xl font-bold ${statusColor}`}
+            className={`text-7xl md:text-8xl font-bold ${netCalories === 0 ? 'text-iron-white' : statusColor}`}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
           >
             {Math.abs(netCalories)}
           </motion.p>
-          <p className="text-xl md:text-2xl text-iron-gray uppercase tracking-wider mt-2">
+          <p className="text-xl md:text-2xl text-iron-gray uppercase tracking-widest mt-2">
             KCAL
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function TodayOverviewCard({ nutrition, activity, netCalories }: 
             <div className="p-6 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 {/* Calories In */}
-                <div className="text-center p-4 bg-iron-dark-gray/50">
+                <div className="text-center p-4 surface-elevated border border-iron-gray/20">
                   <p className="text-xs text-iron-gray mb-2 uppercase tracking-wider">Consumed</p>
                   <p className="text-3xl font-bold text-iron-orange mb-1">{caloriesConsumed}</p>
                   {nutrition.calories_goal && (
@@ -102,7 +102,7 @@ export default function TodayOverviewCard({ nutrition, activity, netCalories }: 
                 </div>
 
                 {/* Calories Out */}
-                <div className="text-center p-4 bg-iron-dark-gray/50">
+                <div className="text-center p-4 surface-elevated border border-iron-gray/20">
                   <p className="text-xs text-iron-gray mb-2 uppercase tracking-wider">Burned</p>
                   <p className="text-3xl font-bold text-green-500 mb-1">{caloriesBurned}</p>
                   <p className="text-xs text-iron-gray">

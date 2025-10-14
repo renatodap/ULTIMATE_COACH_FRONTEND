@@ -57,7 +57,7 @@ export function FAB({
         shadow-2xl
         flex items-center justify-center
         transition-all duration-200
-        active:scale-95
+        tap-target focus-ring-iron
         ${className}
       `}
       initial={{ scale: 0, rotate: -180 }}
@@ -121,7 +121,7 @@ export function FABFullWidth({
         shadow-2xl
         flex items-center justify-center gap-3
         transition-all duration-200
-        active:scale-95
+        tap-target focus-ring-iron
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
       whileTap={!disabled ? { scale: 0.98 } : {}}

@@ -32,12 +32,17 @@ export function LoadingScreen({
   }
 
   return (
-    <div className={`min-h-screen bg-iron-black flex items-center justify-center ${showBottomNav ? 'pb-20' : ''}`}>
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 text-iron-orange animate-spin mx-auto mb-4" />
-        <p className="text-iron-gray uppercase tracking-wider">{message}</p>
+    <>
+      {/* Top Progress Indicator */}
+      <div className="top-progress-iron" />
+      
+      <div className={`min-h-screen bg-iron-black surface-elevated flex items-center justify-center ${showBottomNav ? 'pb-20' : ''}`}>
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-iron-orange animate-spin mx-auto mb-4" />
+          <p className="text-iron-gray uppercase tracking-wider">{message}</p>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -47,7 +52,7 @@ export function LoadingScreen({
  */
 export function SkeletonCard({ height = 'h-40' }: { height?: string }) {
   return (
-    <div className={`${height} bg-iron-dark-gray border border-iron-gray/30 animate-pulse`} />
+    <div className={`${height} skeleton-iron border border-iron-gray/30`} />
   )
 }
 
