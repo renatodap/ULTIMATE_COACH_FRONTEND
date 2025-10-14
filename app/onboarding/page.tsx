@@ -10,7 +10,15 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { completeOnboarding } from '@/lib/api/onboarding'
-import { weightToKg, weightFromKg, type UnitSystem } from '@/lib/utils/units'
+import {
+  weightToKg,
+  weightFromKg,
+  heightToCm,
+  heightFromCm,
+  isValidHeight,
+  getHeightConstraints,
+  type UnitSystem,
+} from '@/lib/utils/units'
 import { detectBrowserLanguage, type SupportedLanguage } from '@/lib/utils/language'
 import { Message } from '@/components/onboarding/Message'
 import { ButtonGroup } from '@/components/onboarding/ButtonGroup'
@@ -70,7 +78,10 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
 
   // Local input mirrors so the field shows exactly what user types
+  // Height inputs: metric uses single cm field; imperial uses dual fields
   const [heightInput, setHeightInput] = useState('')
+  const [heightFeetInput, setHeightFeetInput] = useState('')
+  const [heightInchesInput, setHeightInchesInput] = useState('')
   const [currentWeightInput, setCurrentWeightInput] = useState('')
   const [goalWeightInput, setGoalWeightInput] = useState('')
 
@@ -88,13 +99,19 @@ export default function OnboardingPage() {
     if (step === 'height') {
       if (data.height_cm) {
         if (data.unit_system === 'imperial') {
-          const inches = Math.round(data.height_cm * 0.393701)
-          setHeightInput(String(inches))
+          const h = heightFromCm(data.height_cm, 'imperial') as { feet: number; inches: number }
+          setHeightFeetInput(String(h.feet))
+          setHeightInchesInput(String(h.inches))
+          setHeightInput('')
         } else {
           setHeightInput(String(Math.round(data.height_cm)))
+          setHeightFeetInput('')
+          setHeightInchesInput('')
         }
       } else {
         setHeightInput('')
+        setHeightFeetInput('')
+        setHeightInchesInput('')
       }
     }
     if (step === 'weight') {
@@ -289,26 +306,76 @@ export default function OnboardingPage() {
 
           {step === 'height' && (
             <div key="height">
-              <Message text={`Height in ${data.unit_system === 'imperial' ? 'inches' : 'cm'}?`} />
-              <Input
-                type="number"
-                placeholder={data.unit_system === 'imperial' ? 'e.g., 70' : 'e.g., 178'}
-                value={heightInput}
-                onChange={(val) => {
-                  setHeightInput(val)
-                  const num = parseFloat(val)
-                  if (!isNaN(num)) {
-                    const cm = data.unit_system === 'imperial' ? num * 2.54 : num
-                    setData(prev => ({ ...prev, height_cm: cm }))
-                  }
-                }}
-                onSubmit={() => {
-                  if (data.height_cm >= 100 && data.height_cm <= 300) {
-                    next('weight')
-                  }
-                }}
-                unit={data.unit_system === 'imperial' ? 'inches' : 'cm'}
-              />
+              <Message text={`Height in ${data.unit_system === 'imperial' ? 'feet and inches' : 'cm'}?`} />
+              {data.unit_system === 'imperial' ? (
+                <div className="mb-12">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={heightFeetInput}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setHeightFeetInput(val)
+                          const feet = parseInt(val || '0', 10)
+                          const inches = parseInt(heightInchesInput || '0', 10)
+                          const cm = heightToCm({ feet, inches }, 'imperial')
+                          setData(prev => ({ ...prev, height_cm: cm }))
+                        }}
+                        placeholder="e.g., 5"
+                        className="w-full px-6 py-6 rounded-xl text-xl bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">ft</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={heightInchesInput}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setHeightInchesInput(val)
+                          const feet = parseInt(heightFeetInput || '0', 10)
+                          const inches = parseInt(val || '0', 10)
+                          const cm = heightToCm({ feet, inches }, 'imperial')
+                          setData(prev => ({ ...prev, height_cm: cm }))
+                        }}
+                        placeholder="e.g., 10"
+                        className="w-full px-6 py-6 rounded-xl text-xl bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">in</span>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <button
+                      disabled={!isValidHeight({ feet: parseInt(heightFeetInput || '0', 10), inches: parseInt(heightInchesInput || '0', 10) }, 'imperial')}
+                      onClick={() => next('weight')}
+                      className="w-full px-6 py-6 rounded-xl text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Input
+                  type="number"
+                  placeholder={data.unit_system === 'imperial' ? 'e.g., 70' : 'e.g., 178'}
+                  value={heightInput}
+                  onChange={(val) => {
+                    setHeightInput(val)
+                    const num = parseFloat(val)
+                    if (!isNaN(num)) {
+                      const cm = num
+                      setData(prev => ({ ...prev, height_cm: cm }))
+                    }
+                  }}
+                  onSubmit={() => {
+                    if (data.height_cm >= 100 && data.height_cm <= 300) {
+                      next('weight')
+                    }
+                  }}
+                  unit="cm"
+                />
+              )}
             </div>
           )}
 

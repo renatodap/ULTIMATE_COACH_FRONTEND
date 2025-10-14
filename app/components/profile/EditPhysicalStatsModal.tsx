@@ -13,9 +13,20 @@
  * and should not change after onboarding.
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { X, Loader2, Scale } from 'lucide-react'
 import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import {
+  displayWeight,
+  displayHeight,
+  weightToKg,
+  weightFromKg,
+  heightToCm,
+  heightFromCm,
+  getWeightConstraints,
+  getHeightConstraints,
+  type UnitSystem,
+} from '@/lib/utils/units'
 
 interface EditPhysicalStatsModalProps {
   profile: FullUserProfile
@@ -32,10 +43,26 @@ export default function EditPhysicalStatsModal({
   onSuccess,
   onError,
 }: EditPhysicalStatsModalProps) {
+  const unitSystem: UnitSystem = (profile.unit_system as UnitSystem) || 'metric'
   const [age, setAge] = useState(profile.age?.toString() || '')
-  const [heightCm, setHeightCm] = useState(profile.height_cm?.toString() || '')
-  const [currentWeightKg, setCurrentWeightKg] = useState(profile.current_weight_kg?.toString() || '')
-  const [goalWeightKg, setGoalWeightKg] = useState(profile.goal_weight_kg?.toString() || '')
+  // Height state
+  const [heightCm, setHeightCm] = useState(profile.height_cm?.toString() || '') // used for metric view
+  const imperialHeight = useMemo(() => (
+    profile.height_cm ? (heightFromCm(profile.height_cm, 'imperial') as { feet: number; inches: number }) : { feet: 0, inches: 0 }
+  ), [profile.height_cm])
+  const [heightFeet, setHeightFeet] = useState(imperialHeight.feet ? String(imperialHeight.feet) : '')
+  const [heightInches, setHeightInches] = useState(imperialHeight.inches ? String(imperialHeight.inches) : '')
+  // Weight state (displayed in preferred unit)
+  const [currentWeightDisplay, setCurrentWeightDisplay] = useState(() => {
+    if (profile.current_weight_kg == null) return ''
+    const v = weightFromKg(profile.current_weight_kg, unitSystem)
+    return String(v)
+  })
+  const [goalWeightDisplay, setGoalWeightDisplay] = useState(() => {
+    if (profile.goal_weight_kg == null) return ''
+    const v = weightFromKg(profile.goal_weight_kg, unitSystem)
+    return String(v)
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!isOpen) return null
@@ -50,14 +77,37 @@ export default function EditPhysicalStatsModal({
       if (age && parseInt(age) !== profile.age) {
         updates.age = parseInt(age)
       }
-      if (heightCm && parseFloat(heightCm) !== profile.height_cm) {
-        updates.height_cm = parseFloat(heightCm)
+      // Height updates
+      if (unitSystem === 'imperial') {
+        const feet = parseInt(heightFeet || '0', 10)
+        const inches = parseInt(heightInches || '0', 10)
+        const cm = heightToCm({ feet, inches }, 'imperial')
+        if (!isNaN(cm) && cm !== profile.height_cm) {
+          updates.height_cm = cm
+        }
+      } else {
+        if (heightCm) {
+          const cm = parseFloat(heightCm)
+          if (!isNaN(cm) && cm !== profile.height_cm) {
+            updates.height_cm = cm
+          }
+        }
       }
-      if (currentWeightKg && parseFloat(currentWeightKg) !== profile.current_weight_kg) {
-        updates.current_weight_kg = parseFloat(currentWeightKg)
+
+      // Weight updates
+      if (currentWeightDisplay) {
+        const current = parseFloat(currentWeightDisplay)
+        const kg = unitSystem === 'imperial' ? weightToKg(current, 'imperial') : current
+        if (!isNaN(kg) && kg !== profile.current_weight_kg) {
+          updates.current_weight_kg = kg
+        }
       }
-      if (goalWeightKg && parseFloat(goalWeightKg) !== profile.goal_weight_kg) {
-        updates.goal_weight_kg = parseFloat(goalWeightKg)
+      if (goalWeightDisplay) {
+        const gw = parseFloat(goalWeightDisplay)
+        const kg = unitSystem === 'imperial' ? weightToKg(gw, 'imperial') : gw
+        if (!isNaN(kg) && kg !== profile.goal_weight_kg) {
+          updates.goal_weight_kg = kg
+        }
       }
 
       if (Object.keys(updates).length === 0) {
@@ -131,35 +181,63 @@ export default function EditPhysicalStatsModal({
 
           {/* Height */}
           <div>
-            <label htmlFor="height" className="block text-sm font-medium text-iron-white mb-2">
-              Height (cm)
+            <label className="block text-sm font-medium text-iron-white mb-2">
+              Height ({unitSystem === 'imperial' ? 'ft/in' : 'cm'})
             </label>
-            <input
-              type="number"
-              id="height"
-              value={heightCm}
-              onChange={(e) => setHeightCm(e.target.value)}
-              min="100"
-              max="300"
-              step="0.1"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
-              placeholder="Enter your height"
-            />
+            {unitSystem === 'imperial' ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={heightFeet}
+                    onChange={(e) => setHeightFeet(e.target.value)}
+                    min={getHeightConstraints('imperial').minFeet}
+                    max={getHeightConstraints('imperial').maxFeet}
+                    className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                    placeholder="Feet"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-iron-gray">ft</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={heightInches}
+                    onChange={(e) => setHeightInches(e.target.value)}
+                    min={getHeightConstraints('imperial').minInches}
+                    max={getHeightConstraints('imperial').maxInches}
+                    className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                    placeholder="Inches"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-iron-gray">in</span>
+                </div>
+              </div>
+            ) : (
+              <input
+                type="number"
+                value={heightCm}
+                onChange={(e) => setHeightCm(e.target.value)}
+                min="100"
+                max="300"
+                step="1"
+                className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                placeholder="Enter your height"
+              />
+            )}
           </div>
 
           {/* Current Weight */}
           <div>
             <label htmlFor="currentWeight" className="block text-sm font-medium text-iron-white mb-2">
-              Current Weight (kg)
+              Current Weight ({unitSystem === 'imperial' ? 'lbs' : 'kg'})
             </label>
             <input
               type="number"
               id="currentWeight"
-              value={currentWeightKg}
-              onChange={(e) => setCurrentWeightKg(e.target.value)}
-              min="30"
-              max="300"
-              step="0.1"
+              value={currentWeightDisplay}
+              onChange={(e) => setCurrentWeightDisplay(e.target.value)}
+              min={getWeightConstraints(unitSystem).min}
+              max={getWeightConstraints(unitSystem).max}
+              step={getWeightConstraints(unitSystem).step}
               className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your current weight"
             />
@@ -168,16 +246,16 @@ export default function EditPhysicalStatsModal({
           {/* Goal Weight */}
           <div>
             <label htmlFor="goalWeight" className="block text-sm font-medium text-iron-white mb-2">
-              Goal Weight (kg)
+              Goal Weight ({unitSystem === 'imperial' ? 'lbs' : 'kg'})
             </label>
             <input
               type="number"
               id="goalWeight"
-              value={goalWeightKg}
-              onChange={(e) => setGoalWeightKg(e.target.value)}
-              min="30"
-              max="300"
-              step="0.1"
+              value={goalWeightDisplay}
+              onChange={(e) => setGoalWeightDisplay(e.target.value)}
+              min={getWeightConstraints(unitSystem).min}
+              max={getWeightConstraints(unitSystem).max}
+              step={getWeightConstraints(unitSystem).step}
               className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your goal weight"
             />

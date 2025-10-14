@@ -160,7 +160,7 @@ export default function EditPreferencesModal({
               ))}
             </select>
             <p className="mt-2 text-xs text-iron-gray">
-              Note: Current app displays metric units. Imperial display coming soon.
+              Affects how height, weight, and distances are shown.
             </p>
           </div>
 

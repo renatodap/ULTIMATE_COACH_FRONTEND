@@ -39,6 +39,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { getFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
 import { logout } from '@/lib/api/auth'
+import { updateFullUserProfile } from '@/lib/api/profile'
 import { displayWeight, displayHeight } from '@/lib/utils/units'
 import EditPhysicalStatsModal from '@/app/components/profile/EditPhysicalStatsModal'
 import EditGoalsModal from '@/app/components/profile/EditGoalsModal'
@@ -278,10 +279,32 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-iron-black text-iron-white pb-24">
       {/* Header */}
       <header className="border-b border-iron-gray sticky top-0 bg-iron-black z-[100]">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
             {t('profile.pageTitle')}
           </h1>
+          {profile && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-iron-gray uppercase tracking-wider">Units</label>
+              <select
+                value={profile.unit_system || 'metric'}
+                onChange={async (e) => {
+                  const nextUnits = e.target.value as 'metric' | 'imperial'
+                  try {
+                    const updated = await updateFullUserProfile({ unit_system: nextUnits })
+                    setProfile(updated)
+                    setToast({ type: 'success', message: `Switched to ${nextUnits} units` })
+                  } catch (err) {
+                    setToast({ type: 'error', message: 'Failed to update unit preference' })
+                  }
+                }}
+                className="px-3 py-2 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange text-xs"
+              >
+                <option value="metric">Metric</option>
+                <option value="imperial">Imperial</option>
+              </select>
+            </div>
+          )}
         </div>
       </header>
 
