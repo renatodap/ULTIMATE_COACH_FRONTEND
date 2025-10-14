@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './client'
+import { supabase } from '@/lib/supabase'
 
 // ========== Types ==========
 
@@ -103,7 +104,11 @@ export interface ConfirmLogRequest {
  * Send a message to the AI coach
  */
 export async function sendCoachMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
-  return apiClient.post<SendMessageResponse>('/api/v1/coach/message', request)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<SendMessageResponse>('/api/v1/coach/message', request, { headers });
 }
 
 /**
@@ -124,12 +129,20 @@ export async function getUserConversations(): Promise<ConversationHistory[]> {
  * Confirm a log preview and save to database
  */
 export async function confirmLog(request: ConfirmLogRequest): Promise<{ success: boolean; message: string }> {
-  return apiClient.post<{ success: boolean; message: string }>('/api/v1/coach/confirm-log', request)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<{ success: boolean; message: string }>('/api/v1/coach/confirm-log', request, { headers });
 }
 
 /**
  * Delete a conversation
  */
 export async function deleteConversation(conversationId: string): Promise<void> {
-  return apiClient.delete<void>(`/api/v1/coach/conversations/${conversationId}`)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.delete<void>(`/api/v1/coach/conversations/${conversationId}`, { headers });
 }

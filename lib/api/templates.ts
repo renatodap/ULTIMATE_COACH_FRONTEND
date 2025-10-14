@@ -18,6 +18,7 @@ import type {
   ActivityDataForMatching,
   MatchDecision
 } from '@/lib/types/templates'
+import { supabase } from '@/lib/supabase'
 
 /**
  * Get activity templates for authenticated user
@@ -54,7 +55,11 @@ export async function getTemplate(templateId: string): Promise<ActivityTemplate>
 export async function createTemplate(
   data: CreateTemplateRequest
 ): Promise<ActivityTemplate> {
-  return apiClient.post<ActivityTemplate>('/api/v1/templates', data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<ActivityTemplate>('/api/v1/templates', data, { headers });
 }
 
 /**
@@ -64,9 +69,14 @@ export async function createTemplateFromActivity(
   activityId: string,
   data: CreateTemplateFromActivityRequest
 ): Promise<ActivityTemplate> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<ActivityTemplate>(
     `/api/v1/templates/from-activity/${activityId}`,
-    data
+    data,
+    { headers }
   )
 }
 
@@ -77,7 +87,11 @@ export async function updateTemplate(
   templateId: string,
   data: UpdateTemplateRequest
 ): Promise<ActivityTemplate> {
-  return apiClient.patch<ActivityTemplate>(`/api/v1/templates/${templateId}`, data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.patch<ActivityTemplate>(`/api/v1/templates/${templateId}`, data, { headers });
 }
 
 /**
@@ -86,7 +100,11 @@ export async function updateTemplate(
 export async function deleteTemplate(
   templateId: string
 ): Promise<SuccessResponse> {
-  return apiClient.delete<SuccessResponse>(`/api/v1/templates/${templateId}`)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.delete<SuccessResponse>(`/api/v1/templates/${templateId}`, { headers });
 }
 
 /**
@@ -127,7 +145,11 @@ export async function getTemplateActivities(
 export async function getTemplateMatches(
   activityData: ActivityDataForMatching
 ): Promise<MatchSuggestions> {
-  return apiClient.post<MatchSuggestions>('/api/v1/templates/match', activityData)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<MatchSuggestions>('/api/v1/templates/match', activityData, { headers });
 }
 
 /**
@@ -148,8 +170,11 @@ export async function applyTemplateToActivity(
 
   const query = queryParams.toString()
   const endpoint = `/api/v1/templates/${templateId}/apply/${activityId}?${query}`
-
-  return apiClient.post<any>(endpoint, {})
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<any>(endpoint, {}, { headers });
 }
 
 /**
@@ -158,5 +183,9 @@ export async function applyTemplateToActivity(
 export async function recordMatchDecision(
   decision: MatchDecision
 ): Promise<SuccessResponse> {
-  return apiClient.post<SuccessResponse>('/api/v1/templates/match/decision', decision)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<SuccessResponse>('/api/v1/templates/match/decision', decision, { headers });
 }

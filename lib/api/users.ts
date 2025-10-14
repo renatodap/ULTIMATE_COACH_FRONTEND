@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './client'
+import { supabase } from '@/lib/supabase'
 
 export interface FullUserProfile {
   // Basic info
@@ -96,5 +97,9 @@ export async function getCurrentUser(): Promise<FullUserProfile> {
  * Requires authentication (httpOnly cookie)
  */
 export async function updateCurrentUser(data: UpdateProfileData): Promise<FullUserProfile> {
-  return apiClient.patch<FullUserProfile>('api/v1/users/me', data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.patch<FullUserProfile>('api/v1/users/me', data, { headers });
 }

@@ -4,6 +4,7 @@
 
 import { apiClient } from './client'
 import type { QuickMeal } from '../types/food'
+import { supabase } from '@/lib/supabase'
 
 export interface CreateQuickMealRequest {
   name: string
@@ -33,7 +34,11 @@ export async function listQuickMeals(): Promise<QuickMeal[]> {
  * Create a new quick meal
  */
 export async function createQuickMeal(request: CreateQuickMealRequest): Promise<QuickMeal> {
-  return apiClient.post<QuickMeal>('api/v1/quick-meals', request)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<QuickMeal>('api/v1/quick-meals', request, { headers });
 }
 
 /**
@@ -43,19 +48,31 @@ export async function updateQuickMeal(
   quickMealId: string,
   request: UpdateQuickMealRequest
 ): Promise<QuickMeal> {
-  return apiClient.patch<QuickMeal>(`api/v1/quick-meals/${quickMealId}`, request)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.patch<QuickMeal>(`api/v1/quick-meals/${quickMealId}`, request, { headers });
 }
 
 /**
  * Delete a quick meal
  */
 export async function deleteQuickMeal(quickMealId: string): Promise<void> {
-  return apiClient.delete(`api/v1/quick-meals/${quickMealId}`)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.delete(`api/v1/quick-meals/${quickMealId}`, { headers });
 }
 
 /**
  * Log a quick meal (creates a meal with all foods)
  */
 export async function logQuickMeal(quickMealId: string): Promise<{ message: string }> {
-  return apiClient.post(`api/v1/quick-meals/${quickMealId}/log`, {})
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post(`api/v1/quick-meals/${quickMealId}/log`, {}, { headers });
 }

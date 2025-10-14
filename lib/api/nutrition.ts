@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './client'
+import { supabase } from '@/lib/supabase'
 
 // =====================================================
 // API Response Types (matching backend models)
@@ -143,7 +144,11 @@ export async function getMeal(mealId: string): Promise<MealAPI> {
  * Delete a meal
  */
 export async function deleteMeal(mealId: string): Promise<void> {
-  return apiClient.delete<void>(`api/v1/meals/${mealId}`)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.delete<void>(`api/v1/meals/${mealId}`, { headers });
 }
 
 /**
@@ -174,7 +179,11 @@ export interface CreateMealRequest {
 }
 
 export async function createMeal(request: CreateMealRequest): Promise<MealAPI> {
-  return apiClient.post<MealAPI>('api/v1/meals', request)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<MealAPI>('api/v1/meals', request, { headers });
 }
 
 /**
@@ -224,8 +233,7 @@ export async function updateMeal(
 ): Promise<MealAPI> {
   // 1. Fetch current meal data
   const currentMeal = await getMeal(mealId)
-
-  // 2. Merge current data with updates
+  // 2. Merge current data with updates (unchanged)
   const updatedMealData: CreateMealRequest = {
     name: updates.name !== undefined ? updates.name : currentMeal.name,
     meal_type: updates.meal_type || currentMeal.meal_type,
@@ -233,7 +241,6 @@ export async function updateMeal(
     notes: updates.notes !== undefined ? updates.notes : currentMeal.notes,
     source: updates.source || currentMeal.source,
     ai_confidence: updates.ai_confidence !== undefined ? updates.ai_confidence : currentMeal.ai_confidence,
-    // Use updated items if provided, otherwise map existing items
     items: updates.items || currentMeal.items.map(item => ({
       food_id: item.food_id,
       quantity: item.quantity,
@@ -248,10 +255,10 @@ export async function updateMeal(
       display_order: item.display_order
     }))
   }
-
-  // 3. Delete old meal
-  await deleteMeal(mealId)
-
-  // 4. Create new meal with updated data
-  return await createMeal(updatedMealData)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  await deleteMeal(mealId);
+  return await apiClient.post<MealAPI>('api/v1/meals', updatedMealData, { headers });
 }

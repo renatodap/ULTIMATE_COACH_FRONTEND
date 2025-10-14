@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './client'
+import { supabase } from '@/lib/supabase';
 
 // ============================================================================
 // TYPES
@@ -79,7 +80,11 @@ export interface OnboardingStatus {
  * Complete onboarding and get personalized targets
  */
 export async function completeOnboarding(data: OnboardingData): Promise<OnboardingResponse> {
-  return apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
 }
 
 /**

@@ -13,6 +13,7 @@ import type {
   WeightTrend,
   SuccessResponse
 } from '@/lib/types/body-metrics'
+import { supabase } from '@/lib/supabase'
 
 /**
  * Get body metrics for authenticated user
@@ -76,7 +77,11 @@ export async function getBodyMetric(metricId: string): Promise<BodyMetric> {
 export async function createBodyMetric(
   data: CreateBodyMetricRequest
 ): Promise<BodyMetric> {
-  return apiClient.post<BodyMetric>('/api/v1/body-metrics', data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.post<BodyMetric>('/api/v1/body-metrics', data, { headers });
 }
 
 /**
@@ -86,7 +91,11 @@ export async function updateBodyMetric(
   metricId: string,
   data: UpdateBodyMetricRequest
 ): Promise<BodyMetric> {
-  return apiClient.patch<BodyMetric>(`/api/v1/body-metrics/${metricId}`, data)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.patch<BodyMetric>(`/api/v1/body-metrics/${metricId}`, data, { headers });
 }
 
 /**
@@ -95,5 +104,9 @@ export async function updateBodyMetric(
 export async function deleteBodyMetric(
   metricId: string
 ): Promise<SuccessResponse> {
-  return apiClient.delete<SuccessResponse>(`/api/v1/body-metrics/${metricId}`)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  return apiClient.delete<SuccessResponse>(`/api/v1/body-metrics/${metricId}`, { headers });
 }
