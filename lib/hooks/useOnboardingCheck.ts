@@ -2,12 +2,14 @@
  * Onboarding Check Hook
  *
  * Redirects to /onboarding if user hasn't completed it
+ * Redirects to / (landing) if user is not authenticated (401)
  * Use in dashboard and protected pages
  */
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/api/users'
+import { ApiRequestError } from '@/lib/api/client'
 
 export function useOnboardingCheck() {
   const router = useRouter()
@@ -25,8 +27,16 @@ export function useOnboardingCheck() {
           setOnboardingComplete(true)
         }
       } catch (error) {
-        // User not authenticated - middleware will handle redirect
-        console.error('Failed to check onboarding status:', error)
+        // Check if it's a 401 error (unauthorized/session expired)
+        if (error instanceof ApiRequestError && error.status === 401) {
+          console.warn('[Auth] Session expired or invalid. Redirecting to login...')
+          // Note: Global 401 handler in API client will also trigger
+          // But we add this as a backup in case the redirect didn't happen
+          router.push('/')
+        } else {
+          // Other errors (network, etc.) - log but don't redirect
+          console.error('Failed to check onboarding status:', error)
+        }
       } finally {
         setLoading(false)
       }

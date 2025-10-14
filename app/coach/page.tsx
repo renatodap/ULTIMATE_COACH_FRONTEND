@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { sendCoachMessage, confirmLog, type SendMessageRequest, type SendMessageResponse, type LogPreview } from '@/lib/api/coach'
 import { BottomNav } from '@/components/BottomNav'
+import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 
 // Import coach components
 import { MessageBubble } from '@/components/Coach/Message/MessageBubble'
@@ -67,6 +69,9 @@ const buttonVariants = {
 
 export default function CoachPage() {
   const router = useRouter()
+  
+  // CRITICAL: Check authentication and onboarding status
+  const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
 
   // State
   const [messages, setMessages] = useState<Message[]>([])
@@ -297,6 +302,21 @@ export default function CoachPage() {
       toast.success('Chat cleared')
     }
   }, [messages.length])
+
+  // CRITICAL: Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <>
+        <LoadingScreen message="Verifying authentication..." showBottomNav />
+        <BottomNav />
+      </>
+    )
+  }
+
+  // CRITICAL: Don't render if onboarding not complete (hook will redirect)
+  if (!onboardingComplete) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-iron-black flex flex-col pb-20">

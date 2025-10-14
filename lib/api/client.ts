@@ -85,6 +85,18 @@ class ApiClient {
       const errorMessage = data?.detail || data?.message || 'Request failed'
       const errorType = data?.type || 'ApiError'
 
+      // CRITICAL: Handle 401 Unauthorized - Session expired or invalid
+      if (response.status === 401) {
+        console.warn('[API] 401 Unauthorized - Session expired. Redirecting to login...')
+        
+        // Only redirect if we're in the browser (not during SSR)
+        if (typeof window !== 'undefined') {
+          // Clear any stale client state
+          // Redirect to landing page (middleware will handle from there)
+          window.location.href = '/'
+        }
+      }
+
       // Log error in development
       if (process.env.NODE_ENV === 'development') {
         console.error('[API Error]', {

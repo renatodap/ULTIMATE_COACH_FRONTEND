@@ -131,8 +131,8 @@ export default function ProfilePage() {
   }, [loadProfile])
 
   const handleSignOut = async () => {
-    logout()
-    router.push('/auth')
+    // Logout function now handles redirect automatically
+    await logout()
   }
 
   const toggleSection = (section: string) => {

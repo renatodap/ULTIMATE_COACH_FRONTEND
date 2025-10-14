@@ -56,7 +56,20 @@ export async function refreshToken(refreshToken: string): Promise<{ access_token
 
 /**
  * Log out the current user
+ * Clears session on backend and redirects to landing page
  */
 export async function logout(): Promise<void> {
-  await apiClient.post('api/v1/auth/logout')
+  try {
+    // Call backend to clear session
+    await apiClient.post('api/v1/auth/logout')
+  } catch (error) {
+    // Even if backend call fails, still redirect to clear client state
+    console.warn('[Auth] Logout API call failed, but clearing client state anyway:', error)
+  } finally {
+    // Force reload to clear all client state and let middleware handle routing
+    // This ensures cookies are cleared and user is redirected properly
+    if (typeof window !== 'undefined') {
+      window.location.href = '/'
+    }
+  }
 }
