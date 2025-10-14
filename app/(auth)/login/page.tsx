@@ -16,10 +16,16 @@ export default function LoginPage() {
   const router = useRouter()
 
   // Check if user is already logged in with a VALID session
+  // IMPORTANT: This check runs once on mount, not on every 401
   useEffect(() => {
+    let mounted = true
+    
     async function checkExistingSession() {
       try {
         const user = await getCurrentUser()
+        // Only redirect if component is still mounted
+        if (!mounted) return
+        
         // If we get here, token is valid - redirect to dashboard
         if (user.onboarding_completed) {
           window.location.href = '/dashboard'
@@ -28,12 +34,19 @@ export default function LoginPage() {
         }
       } catch (error) {
         // Token is invalid or doesn't exist - show login page
-        setCheckingSession(false)
+        // This is expected behavior, not an error
+        if (mounted) {
+          setCheckingSession(false)
+        }
       }
     }
+    
     checkExistingSession()
+    
+    return () => {
+      mounted = false
+    }
   }, [])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)

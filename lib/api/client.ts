@@ -91,9 +91,15 @@ class ApiClient {
         
         // Only redirect if we're in the browser (not during SSR)
         if (typeof window !== 'undefined') {
-          // Clear any stale client state
-          // Redirect to login page (not / to avoid middleware redirect with stale cookie)
-          window.location.href = '/login'
+          // Don't redirect if we're already on the login page (prevents infinite loop)
+          const currentPath = window.location.pathname
+          if (currentPath !== '/login' && currentPath !== '/signup') {
+            // Clear any stale client state
+            // Redirect to login page
+            window.location.href = '/login'
+          }
+          // If already on login/signup, just let the error propagate
+          // The page will handle showing the login form
         }
       }
 
