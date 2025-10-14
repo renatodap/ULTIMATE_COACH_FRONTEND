@@ -1,12 +1,17 @@
 'use client'
 
 /**
- * Today Overview Card Component
+ * Today Overview Card Component - HERO STAT
  *
- * Shows calories consumed vs burned with net calculation
- * Sharp design, NO rounded corners, mobile-first
+ * Mobile-first: ONE big number users see immediately
+ * Intuitive: Net calories with clear visual indicator
+ * Easy to use: Tap to expand details
+ *
+ * 2026/2027 standard: Large, obvious, no explanation needed
  */
 
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { TodayNutritionSummary, TodayActivitySummary } from '@/lib/types/dashboard'
 
 interface TodayOverviewCardProps {
@@ -16,49 +21,99 @@ interface TodayOverviewCardProps {
 }
 
 export default function TodayOverviewCard({ nutrition, activity, netCalories }: TodayOverviewCardProps) {
+  const [expanded, setExpanded] = useState(false)
+
   const caloriesConsumed = Math.round(Number(nutrition.calories_consumed))
   const caloriesBurned = activity.total_calories_burned
 
+  // Determine status and color
+  const isDeficit = netCalories < 0
+  const isSurplus = netCalories > 0
+  const statusColor = isDeficit ? 'text-green-500' : isSurplus ? 'text-iron-orange' : 'text-iron-white'
+  const statusLabel = isDeficit ? 'Calorie Deficit' : isSurplus ? 'Calorie Surplus' : 'Balanced'
+  const statusEmoji = isDeficit ? '📉' : isSurplus ? '📈' : '⚖️'
+
   return (
-    <div className="card-glass border border-iron-gray/30 p-6">
-      <p className="text-iron-gray text-xs uppercase tracking-wider mb-4">
-        Today&apos;s Energy Balance
-      </p>
+    <motion.div
+      className="card-glass border border-iron-gray/30 overflow-hidden"
+      layout
+    >
+      {/* HERO STAT - Tap to expand */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full p-8 text-center active:scale-[0.99] transition-transform"
+      >
+        {/* Status Label */}
+        <p className="text-iron-gray text-sm uppercase tracking-wider mb-3 flex items-center justify-center gap-2">
+          <span>{statusEmoji}</span>
+          <span>{statusLabel}</span>
+        </p>
 
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Calories In */}
-        <div className="border-l-2 border-iron-orange pl-4">
-          <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">🍽️ Consumed</p>
-          <p className="text-4xl font-bold text-iron-orange">{caloriesConsumed}</p>
-          {nutrition.calories_goal && (
-            <p className="text-xs text-iron-gray mt-1">
-              / {nutrition.calories_goal} kcal
-            </p>
-          )}
-        </div>
-
-        {/* Calories Out */}
-        <div className="border-l-2 border-green-500 pl-4">
-          <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">🔥 Burned</p>
-          <p className="text-4xl font-bold text-green-500">{caloriesBurned}</p>
-          <p className="text-xs text-iron-gray mt-1">
-            {activity.activity_count} {activity.activity_count === 1 ? 'workout' : 'workouts'}
+        {/* THE BIG NUMBER - Hero stat */}
+        <div className="mb-3">
+          <motion.p
+            className={`text-7xl md:text-8xl font-bold ${statusColor}`}
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            {Math.abs(netCalories)}
+          </motion.p>
+          <p className="text-xl md:text-2xl text-iron-gray uppercase tracking-wider mt-2">
+            KCAL
           </p>
         </div>
-      </div>
 
-      {/* Net Calories */}
-      <div className="pt-4 border-t border-iron-gray/30">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-iron-gray uppercase tracking-wider">Net Calories</p>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-iron-white">{netCalories} kcal</p>
-            <p className="text-xs text-iron-gray mt-1">
-              {netCalories > 0 ? 'Surplus' : netCalories < 0 ? 'Deficit' : 'Balanced'}
-            </p>
-          </div>
+        {/* Tap to expand hint */}
+        <div className="flex items-center justify-center gap-2 text-iron-gray/60 text-xs uppercase tracking-wider">
+          <span>{expanded ? 'Hide' : 'View'} Details</span>
+          <svg
+            className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
-      </div>
-    </div>
+      </button>
+
+      {/* EXPANDED DETAILS - Progressive disclosure */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-t border-iron-gray/30"
+          >
+            <div className="p-6 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Calories In */}
+                <div className="text-center p-4 bg-iron-dark-gray/50">
+                  <p className="text-xs text-iron-gray mb-2 uppercase tracking-wider">Consumed</p>
+                  <p className="text-3xl font-bold text-iron-orange mb-1">{caloriesConsumed}</p>
+                  {nutrition.calories_goal && (
+                    <p className="text-xs text-iron-gray">
+                      of {nutrition.calories_goal}
+                    </p>
+                  )}
+                </div>
+
+                {/* Calories Out */}
+                <div className="text-center p-4 bg-iron-dark-gray/50">
+                  <p className="text-xs text-iron-gray mb-2 uppercase tracking-wider">Burned</p>
+                  <p className="text-3xl font-bold text-green-500 mb-1">{caloriesBurned}</p>
+                  <p className="text-xs text-iron-gray">
+                    {activity.activity_count} {activity.activity_count === 1 ? 'workout' : 'workouts'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }

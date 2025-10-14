@@ -25,6 +25,8 @@ import QuickActionsGrid from '@/app/components/dashboard/QuickActionsGrid'
 import WeeklyStatsCard from '@/app/components/dashboard/WeeklyStatsCard'
 import RecentActivityFeed from '@/app/components/dashboard/RecentActivityFeed'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
+import TimePeriodSelector, { TimePeriod } from '@/app/components/dashboard/TimePeriodSelector'
+import SwipeableContent from '@/app/components/dashboard/SwipeableContent'
 
 // Animation variants
 const containerVariants = {
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('today')
 
   useEffect(() => {
     // Load dashboard regardless of onboarding status
@@ -62,9 +66,13 @@ export default function DashboardPage() {
     }
   }, [authLoading])
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
       setError(null)
       const data = await getDashboardSummary()
       setDashboardData(data)
@@ -73,12 +81,41 @@ export default function DashboardPage() {
       setError('Failed to load dashboard. Please try again.')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
   const handleWeightLogged = () => {
     // Refresh dashboard data after logging weight
     loadDashboard()
+  }
+
+  const handleRefresh = () => {
+    loadDashboard(true)
+  }
+
+  const handleTimePeriodChange = (period: TimePeriod) => {
+    setTimePeriod(period)
+    // TODO: Fetch data for the selected period
+    // For now, just update the UI
+  }
+
+  const handleSwipeLeft = () => {
+    // Swipe left = next period (today -> week -> month)
+    const periods: TimePeriod[] = ['today', 'week', 'month']
+    const currentIndex = periods.indexOf(timePeriod)
+    if (currentIndex < periods.length - 1) {
+      setTimePeriod(periods[currentIndex + 1])
+    }
+  }
+
+  const handleSwipeRight = () => {
+    // Swipe right = previous period (month -> week -> today)
+    const periods: TimePeriod[] = ['today', 'week', 'month']
+    const currentIndex = periods.indexOf(timePeriod)
+    if (currentIndex > 0) {
+      setTimePeriod(periods[currentIndex - 1])
+    }
   }
 
   // Show loading state while checking authentication
@@ -138,15 +175,30 @@ export default function DashboardPage() {
       <DashboardHeader
         displayName={dashboardData.display_name}
         date={dashboardData.date}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
 
-      {/* Main Content */}
-      <motion.div
-        className="max-w-4xl mx-auto px-4 py-6 space-y-4"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+      {/* Time Period Selector with Swipe */}
+      <div className="max-w-4xl mx-auto px-4 pt-2">
+        <TimePeriodSelector
+          currentPeriod={timePeriod}
+          onChange={handleTimePeriodChange}
+        />
+      </div>
+
+      {/* Swipeable Main Content */}
+      <SwipeableContent
+        onSwipeLeft={handleSwipeLeft}
+        onSwipeRight={handleSwipeRight}
       >
+        <motion.div
+          key={timePeriod} // Re-animate when period changes
+          className="max-w-4xl mx-auto px-4 py-6 space-y-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
         {/* Today's Overview */}
         <motion.div variants={cardVariants}>
           <TodayOverviewCard
@@ -184,7 +236,8 @@ export default function DashboardPage() {
         <motion.div variants={cardVariants}>
           <RecentActivityFeed />
         </motion.div>
-      </motion.div>
+        </motion.div>
+      </SwipeableContent>
 
       {/* Bottom Navigation */}
       <BottomNav />

@@ -12,11 +12,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { useTranslation } from '@/lib/i18n'
 import { getActivities, getDailySummary, deleteActivity } from '@/lib/api/activities'
 import DailySummaryCard from '@/app/components/activities/DailySummaryCard'
 import ActivityCard from '@/app/components/activities/ActivityCard'
-import EmptyState from '@/app/components/activities/EmptyState'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { FAB } from '@/components/shared/FAB'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { Activity, DailySummary } from '@/lib/types/activities'
@@ -56,11 +59,16 @@ export default function ActivitiesPage() {
   const [summary, setSummary] = useState<DailySummary | null>(null)
   const [activitiesByDate, setActivitiesByDate] = useState<Map<string, Activity[]>>(new Map())
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loadActivities = useCallback(async () => {
+  const loadActivities = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
       setError(null)
 
       // Parallel fetch for better performance
@@ -82,11 +90,17 @@ export default function ActivitiesPage() {
       })
 
       setActivitiesByDate(grouped)
+
+      if (isRefresh) {
+        toast.success('Activities refreshed!')
+      }
     } catch (err) {
       console.error('Failed to load activities:', err)
       setError(t('activities.failedToLoad'))
+      toast.error('Failed to load activities')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [t])
 
@@ -102,14 +116,21 @@ export default function ActivitiesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm(t('activities.deleteActivityConfirm'))) return
 
+    const toastId = toast.loading('Deleting activity...')
+
     try {
       await deleteActivity(id)
+      toast.success('Activity deleted!', { id: toastId })
       // Refresh activities list
       await loadActivities()
     } catch (err) {
       console.error('Failed to delete activity:', err)
-      alert(t('activities.failedToDelete'))
+      toast.error('Failed to delete activity', { id: toastId })
     }
+  }
+
+  const handleRefresh = () => {
+    loadActivities(true)
   }
 
   const formatDateHeader = (dateStr: string) => {
@@ -144,20 +165,13 @@ export default function ActivitiesPage() {
 
   return (
     <div className="min-h-screen bg-iron-black pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">{t('activities.pageTitle')}</h1>
-            <button
-              onClick={() => router.push('/activities/log')}
-              className="bg-iron-orange text-iron-black border-2 border-iron-orange px-4 py-2 text-sm font-bold uppercase tracking-wider hover:bg-iron-black hover:text-iron-orange transition active:scale-95"
-            >
-              {t('activities.log')}
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Header - NEW CONSISTENT DESIGN */}
+      <PageHeader
+        title={t('activities.pageTitle')}
+        showRefresh={true}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+      />
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Error Message */}
@@ -180,13 +194,13 @@ export default function ActivitiesPage() {
 
         {/* Activities List */}
         {!hasActivities ? (
-          <motion.div
-            variants={emptyStateVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <EmptyState />
-          </motion.div>
+          <EmptyState
+            icon="💪"
+            title="No Activities Yet"
+            subtitle="Track your workouts to see your progress and hit your calorie goals"
+            actionLabel="Log Your First Activity"
+            onAction={() => router.push('/activities/log')}
+          />
         ) : (
           <motion.div
             className="space-y-6"
@@ -221,6 +235,12 @@ export default function ActivitiesPage() {
           </motion.div>
         )}
       </div>
+
+      {/* FAB - Floating Action Button */}
+      <FAB
+        href="/activities/log"
+        label="Log Activity"
+      />
 
       {/* Bottom Navigation */}
       <BottomNav />

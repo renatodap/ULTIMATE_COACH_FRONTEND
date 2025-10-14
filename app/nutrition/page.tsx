@@ -14,15 +14,18 @@
  * - Real-time data from API
  */
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import toast from 'react-hot-toast'
 import DailySummaryCard from '../components/nutrition/DailySummaryCard'
 import MealTypeCard from '../components/nutrition/MealTypeCard'
 import DateNavigation from '../components/nutrition/DateNavigation'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { FAB } from '@/components/shared/FAB'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { getDailyNutrition, deleteMeal } from '@/lib/api/nutrition'
 import { transformDailyNutrition } from '@/lib/utils/nutrition-transformer'
@@ -88,6 +91,7 @@ function NutritionPageContent() {
 
   const [nutritionData, setNutritionData] = useState<DailyNutrition | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Get date from URL or default to today
@@ -98,30 +102,45 @@ function NutritionPageContent() {
     router.push(`/nutrition?date=${newDate}`)
   }
 
+  // Fetch nutrition data function (with refresh support)
+  const loadNutritionData = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setDataLoading(true)
+      }
+      setError(null)
+
+      const { stats, meals } = await getDailyNutrition(selectedDate)
+      const transformed = transformDailyNutrition(stats, meals)
+      setNutritionData(transformed)
+
+      if (isRefresh) {
+        toast.success('Nutrition data refreshed!')
+      }
+    } catch (err) {
+      console.error('Failed to load nutrition data:', err)
+      setError('Failed to load nutrition data')
+      toast.error('Failed to load nutrition data')
+    } finally {
+      setDataLoading(false)
+      setRefreshing(false)
+    }
+  }, [selectedDate])
+
   // Fetch nutrition data only after auth is confirmed
   useEffect(() => {
     if (authLoading || !onboardingComplete) {
       return // Wait for auth check to complete
     }
 
-    async function fetchData() {
-      try {
-        setDataLoading(true)
-        setError(null)
+    loadNutritionData()
+  }, [selectedDate, authLoading, onboardingComplete, loadNutritionData])
 
-        const { stats, meals } = await getDailyNutrition(selectedDate)
-        const transformed = transformDailyNutrition(stats, meals)
-        setNutritionData(transformed)
-      } catch (err) {
-        console.error('Failed to load nutrition data:', err)
-        setError('Failed to load nutrition data')
-      } finally {
-        setDataLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [selectedDate, authLoading, onboardingComplete])
+  const handleRefresh = () => {
+    loadNutritionData(true)
+  }
 
   const handleEditMeal = (mealId: string) => {
     router.push(`/nutrition/meals/${mealId}?returnDate=${selectedDate}`)
@@ -132,16 +151,16 @@ function NutritionPageContent() {
       return
     }
 
+    const toastId = toast.loading('Deleting meal...')
+
     try {
       await deleteMeal(mealId)
-
+      toast.success('Meal deleted!', { id: toastId })
       // Refresh data after deletion
-      const { stats, meals } = await getDailyNutrition(selectedDate)
-      const transformed = transformDailyNutrition(stats, meals)
-      setNutritionData(transformed)
+      await loadNutritionData()
     } catch (err) {
       console.error('Failed to delete meal:', err)
-      alert(t('nutrition.failedToDeleteMeal'))
+      toast.error('Failed to delete meal', { id: toastId })
     }
   }
 
@@ -215,28 +234,23 @@ function NutritionPageContent() {
 
   return (
     <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-20'}`}>
-      {/* Header */}
-      <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
-              {t('nutrition.pageTitle')}
-            </h1>
-            <button
-              onClick={() => router.push('/nutrition/log')}
-              className="bg-iron-orange text-iron-black border-2 border-iron-orange px-4 py-2 text-sm font-bold uppercase tracking-wider hover:bg-iron-black hover:text-iron-orange transition active:scale-95"
-            >
-              LOG
-            </button>
-          </div>
+      {/* Header - NEW CONSISTENT DESIGN */}
+      <PageHeader
+        title={t('nutrition.pageTitle')}
+        showRefresh={true}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+      />
 
-          {/* Date Navigation */}
+      {/* Date Navigation - Keep below header */}
+      <div className="sticky top-16 z-[90] bg-iron-black border-b border-iron-gray/30">
+        <div className="max-w-4xl mx-auto px-4 py-4">
           <DateNavigation
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
           />
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className={`max-w-4xl mx-auto px-4 ${hasNoMeals ? 'flex-1 flex flex-col' : 'py-6'}`}>
@@ -291,39 +305,22 @@ function NutritionPageContent() {
               ))}
             </motion.div>
           ) : (
-            <motion.div
-              className="bg-iron-dark-gray border border-iron-gray p-8 text-center"
-              variants={emptyStateVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <div className="text-3xl mb-3">🍽️</div>
-              <h3 className="text-lg font-semibold text-iron-white mb-2 uppercase tracking-wider">
-                {t('nutrition.noMealsLogged')}
-              </h3>
-              <p className="text-iron-gray text-sm max-w-xs mx-auto">
-                {t('nutrition.startTracking')}
-              </p>
-            </motion.div>
+            <EmptyState
+              icon="🍽️"
+              title="No Meals Logged"
+              subtitle="Start tracking your nutrition to hit your calorie and macro goals"
+              actionLabel="Log Your First Meal"
+              onAction={() => router.push('/nutrition/log')}
+            />
           )}
         </div>
       </main>
 
-      {/* Floating Action Button - Always visible above bottom nav */}
-      <motion.button
-        onClick={() => {
-          window.location.href = '/nutrition/log'
-        }}
-        className="group fixed bottom-24 right-4 z-[200] w-14 h-14 bg-iron-orange border-2 border-iron-orange flex items-center justify-center hover:bg-iron-black transition-colors active:scale-95 shadow-lg hover:shadow-iron-orange/50"
-        aria-label="Log new meal"
-        variants={fabVariants}
-        initial="hidden"
-        animate="visible"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <Plus className="w-7 h-7 text-iron-black group-hover:text-iron-orange transition-colors" />
-      </motion.button>
+      {/* FAB - Floating Action Button */}
+      <FAB
+        href="/nutrition/log"
+        label="Log Meal"
+      />
 
       {/* Bottom Navigation */}
       <BottomNav />

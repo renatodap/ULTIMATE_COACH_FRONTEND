@@ -13,6 +13,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { sendCoachMessage, confirmLog, type SendMessageRequest, type SendMessageResponse, type LogPreview } from '@/lib/api/coach'
 import { BottomNav } from '@/components/BottomNav'
 
@@ -226,16 +227,7 @@ export default function CoachPage() {
     setLogPreview(null)
     hapticFeedback('medium')
 
-    // Add confirmation message
-    const confirmMessage: Message = {
-      id: `confirm_${Date.now()}`,
-      role: 'assistant',
-      content: 'Logged. Processing...',
-      timestamp: new Date(),
-      type: 'text'
-    }
-
-    setMessages(prev => [...prev, confirmMessage])
+    const toastId = toast.loading('Saving log...')
 
     try {
       if (conversationId) {
@@ -243,6 +235,8 @@ export default function CoachPage() {
           conversation_id: conversationId,
           data: logData
         })
+
+        toast.success('Log saved successfully!', { id: toastId })
 
         // Add success message
         const successMessage: Message = {
@@ -253,10 +247,12 @@ export default function CoachPage() {
           type: 'text'
         }
 
-        setMessages(prev => [...prev.slice(0, -1), successMessage]) // Replace processing message
+        setMessages(prev => [...prev, successMessage])
       }
     } catch (err: any) {
       console.error('Failed to confirm log:', err)
+      toast.error('Failed to save log', { id: toastId })
+
       const errorMsg: Message = {
         id: `error_${Date.now()}`,
         role: 'assistant',
@@ -264,7 +260,7 @@ export default function CoachPage() {
         timestamp: new Date(),
         type: 'error'
       }
-      setMessages(prev => [...prev.slice(0, -1), errorMsg]) // Replace processing message
+      setMessages(prev => [...prev, errorMsg])
     }
   }, [conversationId])
 
@@ -298,6 +294,7 @@ export default function CoachPage() {
       setConversationId(undefined)
       setError(null)
       hapticFeedback('medium')
+      toast.success('Chat cleared')
     }
   }, [messages.length])
 
