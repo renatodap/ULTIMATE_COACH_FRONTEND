@@ -87,7 +87,8 @@ export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit
       onClose()
     } catch (err: any) {
       console.error('Failed to log weight:', err)
-      setError(err.response?.data?.detail || 'Failed to log weight. Please try again.')
+      const detail = (err && typeof err.detail === 'string') ? err.detail : (err?.message || 'Failed to log metrics. Please try again.')
+      setError(detail)
     } finally {
       setLoading(false)
     }
