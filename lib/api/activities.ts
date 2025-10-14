@@ -13,6 +13,7 @@ import type {
   ActivityListResponse,
   SuccessResponse
 } from '@/lib/types/activities'
+import { supabase } from '@/lib/supabase'
 
 /**
  * Get activities for authenticated user
@@ -69,7 +70,17 @@ export async function getActivity(activityId: string): Promise<Activity> {
 export async function createActivity(
   data: CreateActivityRequest
 ): Promise<Activity> {
-  return apiClient.post<Activity>('/api/v1/activities', data)
+  // Always get latest session (in case tokens expire/refresh)
+  const { data: sessionData } = await supabase.auth.getSession()
+  const accessToken = sessionData?.session?.access_token
+
+  // Defensive: Automatically add supabase JWT to Authorization header if available (for future-proofing direct REST calls or proxy)
+  const headers: Record<string, string> = {}
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+  
+  return apiClient.post<Activity>('/api/v1/activities', data, { headers })
 }
 
 /**
