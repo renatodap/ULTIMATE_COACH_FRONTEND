@@ -1,20 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { login } from '@/lib/api/auth'
 import { getCurrentUser } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingSession, setCheckingSession] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const verifyEmailBanner = searchParams?.get('verifyEmail') === '1'
+  const justSignedUpEmail = searchParams?.get('email') || ''
   const searchParams = useSearchParams()
   const verifyEmailBanner = searchParams?.get('verifyEmail') === '1'
   const justSignedUpEmail = searchParams?.get('email') || ''
@@ -280,5 +283,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   )
 }
