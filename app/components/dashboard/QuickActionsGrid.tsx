@@ -43,38 +43,65 @@ export default function QuickActionsGrid({ onLogWeight }: QuickActionsGridProps)
   ]
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      {actions.map((action, index) => (
+    <>
+      <div className="grid grid-cols-3 gap-3">
+        {actions.map((action, index) => (
+          <motion.button
+            key={action.label}
+            onClick={action.onClick}
+            className={`
+              card-glass border-2 border-iron-gray/30 p-4
+              min-h-[160px] sm:min-h-[180px]
+              flex flex-col items-center justify-center gap-3
+              transition-all duration-200
+              active:scale-95
+              ${action.color}
+            `}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* BIG Icon - Easy to recognize */}
+            <motion.div
+              className="text-5xl sm:text-6xl"
+              whileTap={{ scale: 1.1 }}
+            >
+              {action.icon}
+            </motion.div>
+
+            {/* Clear Label */}
+            <p className="text-xs sm:text-sm uppercase tracking-wider text-iron-white font-bold text-center leading-tight">
+              {action.label}
+            </p>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Additional Metrics Actions */}
+      <div className="grid grid-cols-2 gap-3 mt-3">
         <motion.button
-          key={action.label}
-          onClick={action.onClick}
-          className={`
-            card-glass border-2 border-iron-gray/30 p-4
-            min-h-[160px] sm:min-h-[180px]
-            flex flex-col items-center justify-center gap-3
-            transition-all duration-200
-            active:scale-95
-            ${action.color}
-          `}
+          onClick={onLogWeight}
+          className="card-glass border-2 border-iron-gray/30 p-4 min-h-[120px] flex flex-col items-center justify-center gap-2 hover:border-purple-500 hover:bg-purple-500/10 active:scale-95 transition-all"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          {/* BIG Icon - Easy to recognize */}
-          <motion.div
-            className="text-5xl sm:text-6xl"
-            whileTap={{ scale: 1.1 }}
-          >
-            {action.icon}
-          </motion.div>
-
-          {/* Clear Label */}
-          <p className="text-xs sm:text-sm uppercase tracking-wider text-iron-white font-bold text-center leading-tight">
-            {action.label}
-          </p>
+          <div className="text-4xl">📏</div>
+          <p className="text-xs uppercase tracking-wider text-iron-white font-bold">Log Height</p>
         </motion.button>
-      ))}
-    </div>
+
+        <motion.button
+          onClick={onLogWeight}
+          className="card-glass border-2 border-iron-gray/30 p-4 min-h-[120px] flex flex-col items-center justify-center gap-2 hover:border-yellow-500 hover:bg-yellow-500/10 active:scale-95 transition-all"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <div className="text-4xl">💧</div>
+          <p className="text-xs uppercase tracking-wider text-iron-white font-bold">Body Fat %</p>
+        </motion.button>
+      </div>
+    </>
   )
 }

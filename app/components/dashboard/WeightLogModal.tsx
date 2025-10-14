@@ -20,6 +20,10 @@ interface WeightLogModalProps {
 export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit = 'kg' }: WeightLogModalProps) {
   const [weight, setWeight] = useState('')
   const [unit, setUnit] = useState<'kg' | 'lbs'>(defaultUnit)
+  const [heightCm, setHeightCm] = useState('')
+  const [heightFeet, setHeightFeet] = useState('')
+  const [heightInches, setHeightInches] = useState('')
+  const [bodyFat, setBodyFat] = useState('')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,14 +48,40 @@ export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit
         return
       }
 
+      // Optional height in cm
+      let heightValueCm: number | undefined
+      if (unit === 'lbs') {
+        // imperial -> ft/in if provided
+        const ft = parseInt(heightFeet || '0', 10)
+        const inch = parseInt(heightInches || '0', 10)
+        if (!isNaN(ft) || !isNaN(inch)) {
+          const totalInches = (isNaN(ft) ? 0 : ft) * 12 + (isNaN(inch) ? 0 : inch)
+          if (totalInches > 0) heightValueCm = totalInches * 2.54
+        }
+      } else {
+        const cm = parseFloat(heightCm)
+        if (!isNaN(cm)) heightValueCm = cm
+      }
+
+      // Optional body fat %
+      let bodyFatPct: number | undefined
+      const bf = parseFloat(bodyFat)
+      if (!isNaN(bf)) bodyFatPct = bf
+
       await createBodyMetric({
         recorded_at: new Date().toISOString(),
         weight_kg: parseFloat(weightKg.toFixed(2)),
+        height_cm: heightValueCm !== undefined ? parseFloat(heightValueCm.toFixed(2)) : undefined,
+        body_fat_percentage: bodyFatPct !== undefined ? parseFloat(bodyFatPct.toFixed(1)) : undefined,
         notes: notes || null
       })
 
       // Success
       setWeight('')
+      setHeightCm('')
+      setHeightFeet('')
+      setHeightInches('')
+      setBodyFat('')
       setNotes('')
       onSuccess()
       onClose()
@@ -89,12 +119,12 @@ export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit
             </div>
           )}
 
-          {/* Unit Toggle */}
-          <div>
-            <label className="text-sm text-iron-gray mb-2 block uppercase tracking-wider">
-              Unit
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+        {/* Unit Toggle */}
+        <div>
+          <label className="text-sm text-iron-gray mb-2 block uppercase tracking-wider">
+            Unit
+          </label>
+          <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setUnit('kg')}
@@ -117,8 +147,63 @@ export default function WeightLogModal({ isOpen, onClose, onSuccess, defaultUnit
               >
                 <span className="font-bold uppercase tracking-wider">LBS</span>
               </button>
-            </div>
           </div>
+        </div>
+
+        {/* Height Input (Optional) */}
+        <div>
+          <label className="text-sm text-iron-gray mb-2 block uppercase tracking-wider">
+            Height (optional)
+          </label>
+          {unit === 'lbs' ? (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                value={heightFeet}
+                onChange={(e) => setHeightFeet(e.target.value)}
+                placeholder="Feet"
+                className="input"
+              />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={heightInches}
+                onChange={(e) => setHeightInches(e.target.value)}
+                placeholder="Inches"
+                className="input"
+              />
+            </div>
+          ) : (
+            <input
+              type="number"
+              inputMode="numeric"
+              value={heightCm}
+              onChange={(e) => setHeightCm(e.target.value)}
+              placeholder="cm"
+              className="input"
+            />
+          )}
+          <p className="text-xs text-iron-gray mt-2">Stored in metric (cm).</p>
+        </div>
+
+        {/* Body Fat % (Optional) */}
+        <div>
+          <label className="text-sm text-iron-gray mb-2 block uppercase tracking-wider">
+            Body Fat % (optional)
+          </label>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={bodyFat}
+            onChange={(e) => setBodyFat(e.target.value)}
+            step="0.1"
+            min="3"
+            max="60"
+            placeholder="e.g., 18.5"
+            className="input"
+          />
+        </div>
 
           {/* Weight Input */}
           <div>

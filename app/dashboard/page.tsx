@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { getDashboardSummary } from '@/lib/api/dashboard'
+import { getFullUserProfile } from '@/lib/api/profile'
 import type { DashboardSummary } from '@/lib/types/dashboard'
 
 // Components
@@ -56,13 +57,20 @@ export default function DashboardPage() {
   const [weightModalOpen, setWeightModalOpen] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('today')
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric')
 
   useEffect(() => {
     // Load dashboard regardless of onboarding status
     // Middleware already handles authentication
     // If onboarding not complete, user will be redirected by useOnboardingCheck
     if (!authLoading) {
-      loadDashboard()
+      ;(async () => {
+        try {
+          const profile = await getFullUserProfile()
+          setUnitSystem((profile.unit_system as any) || 'metric')
+        } catch {}
+        loadDashboard()
+      })()
     }
   }, [authLoading])
 
@@ -254,6 +262,7 @@ export default function DashboardPage() {
         isOpen={weightModalOpen}
         onClose={() => setWeightModalOpen(false)}
         onSuccess={handleWeightLogged}
+        defaultUnit={unitSystem === 'imperial' ? 'lbs' : 'kg'}
       />
     </div>
   )

@@ -9,6 +9,9 @@
 
 import { useRouter } from 'next/navigation'
 import type { WeightProgressSummary } from '@/lib/types/dashboard'
+import { displayWeight, displayHeight } from '@/lib/utils/units'
+import { useEffect, useState } from 'react'
+import { getFullUserProfile } from '@/lib/api/profile'
 
 interface WeightProgressCardProps {
   weight: WeightProgressSummary
@@ -17,6 +20,16 @@ interface WeightProgressCardProps {
 
 export default function WeightProgressCard({ weight, onLogWeight }: WeightProgressCardProps) {
   const router = useRouter()
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric')
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const profile = await getFullUserProfile()
+        setUnitSystem((profile.unit_system as any) || 'metric')
+      } catch {}
+    })()
+  }, [])
 
   // Trend indicator
   const trendIcon = weight.trend_direction === 'up' ? '📈' : weight.trend_direction === 'down' ? '📉' : '➡️'
@@ -42,18 +55,28 @@ export default function WeightProgressCard({ weight, onLogWeight }: WeightProgre
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-iron-black border border-iron-gray/30 p-4">
               <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Current</p>
-              <p className="text-3xl font-bold text-iron-white">{weight.current_weight.toFixed(1)}</p>
-              <p className="text-xs text-iron-gray">kg</p>
+              <p className="text-3xl font-bold text-iron-white">
+                {displayWeight(weight.current_weight!, unitSystem).value.toFixed(1)}
+              </p>
+              <p className="text-xs text-iron-gray">{displayWeight(weight.current_weight!, unitSystem).unit}</p>
             </div>
 
             {weight.goal_weight && (
               <div className="bg-iron-black border border-iron-gray/30 p-4">
                 <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Goal</p>
-                <p className="text-3xl font-bold text-iron-orange">{weight.goal_weight.toFixed(1)}</p>
-                <p className="text-xs text-iron-gray">kg</p>
+                <p className="text-3xl font-bold text-iron-orange">{displayWeight(weight.goal_weight!, unitSystem).value.toFixed(1)}</p>
+                <p className="text-xs text-iron-gray">{displayWeight(weight.goal_weight!, unitSystem).unit}</p>
               </div>
             )}
           </div>
+
+          {/* Current Height (from profile latest value) */}
+          {weight.latest_recorded_at && (
+            <div className="mb-4 bg-iron-black border border-iron-gray/30 p-4">
+              <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Last Logged</p>
+              <p className="text-xs text-iron-white">{new Date(weight.latest_recorded_at).toLocaleDateString()}</p>
+            </div>
+          )}
 
           {/* Progress Bar */}
           {weight.progress_percentage !== null && weight.remaining_kg !== null && (
@@ -79,7 +102,7 @@ export default function WeightProgressCard({ weight, onLogWeight }: WeightProgre
                   <span className="text-2xl">{trendIcon}</span>
                   <div>
                     <p className={`text-lg font-bold ${trendColor}`}>
-                      {weight.change_kg > 0 ? '+' : ''}{weight.change_kg.toFixed(1)} kg
+                      {weight.change_kg > 0 ? '+' : ''}{displayWeight(Math.abs(weight.change_kg), unitSystem).value.toFixed(1)} {displayWeight(0, unitSystem).unit}
                     </p>
                     <p className="text-xs text-iron-gray">
                       {weight.change_percentage > 0 ? '+' : ''}{weight.change_percentage.toFixed(1)}%

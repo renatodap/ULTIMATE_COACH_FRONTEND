@@ -9,6 +9,7 @@ export interface BodyMetric {
   user_id: string
   recorded_at: string // ISO 8601
   weight_kg: number
+  height_cm: number | null
   body_fat_percentage: number | null
   notes: string | null
   created_at: string
@@ -18,6 +19,7 @@ export interface BodyMetric {
 export interface CreateBodyMetricRequest {
   recorded_at: string // ISO 8601
   weight_kg: number
+  height_cm?: number | null
   body_fat_percentage?: number | null
   notes?: string | null
 }
@@ -25,6 +27,7 @@ export interface CreateBodyMetricRequest {
 export interface UpdateBodyMetricRequest {
   recorded_at?: string
   weight_kg?: number
+  height_cm?: number | null
   body_fat_percentage?: number | null
   notes?: string | null
 }
