@@ -39,6 +39,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { getFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
 import { logout } from '@/lib/api/auth'
+import { displayWeight, displayHeight } from '@/lib/utils/units'
 import EditPhysicalStatsModal from '@/app/components/profile/EditPhysicalStatsModal'
 import EditGoalsModal from '@/app/components/profile/EditGoalsModal'
 import EditDietaryModal from '@/app/components/profile/EditDietaryModal'
@@ -320,15 +321,21 @@ export default function ProfilePage() {
             />
             <DataRow
               label={t('profile.height')}
-              value={profile.height_cm ? `${profile.height_cm} cm` : undefined}
+              value={profile.height_cm !== undefined && profile.height_cm !== null
+                ? displayHeight(profile.height_cm, profile.unit_system || 'metric').formatted
+                : undefined}
             />
             <DataRow
               label={t('profile.currentWeight')}
-              value={profile.current_weight_kg ? `${profile.current_weight_kg} kg` : undefined}
+              value={profile.current_weight_kg !== undefined && profile.current_weight_kg !== null
+                ? displayWeight(profile.current_weight_kg, profile.unit_system || 'metric').formatted
+                : undefined}
             />
             <DataRow
               label={t('profile.goalWeight')}
-              value={profile.goal_weight_kg ? `${profile.goal_weight_kg} kg` : undefined}
+              value={profile.goal_weight_kg !== undefined && profile.goal_weight_kg !== null
+                ? displayWeight(profile.goal_weight_kg, profile.unit_system || 'metric').formatted
+                : undefined}
             />
           </div>
         </CollapsibleSection>

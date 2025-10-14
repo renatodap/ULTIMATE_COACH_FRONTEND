@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { completeOnboarding } from '@/lib/api/onboarding'
-import { weightToKg, type UnitSystem } from '@/lib/utils/units'
+import { weightToKg, weightFromKg, type UnitSystem } from '@/lib/utils/units'
 import { detectBrowserLanguage, type SupportedLanguage } from '@/lib/utils/language'
 import { Message } from '@/components/onboarding/Message'
 import { ButtonGroup } from '@/components/onboarding/ButtonGroup'
@@ -69,6 +69,11 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Local input mirrors so the field shows exactly what user types
+  const [heightInput, setHeightInput] = useState('')
+  const [currentWeightInput, setCurrentWeightInput] = useState('')
+  const [goalWeightInput, setGoalWeightInput] = useState('')
+
   const next = useCallback((stepName: Step) => {
     setStep(stepName)
   }, [])
@@ -77,6 +82,38 @@ export default function OnboardingPage() {
     setData(prev => ({ ...prev, [field]: value }))
     setTimeout(() => next(nextStep), 600) // Delay for exit animation
   }, [next])
+
+  // Prefill inputs when entering steps based on stored metric values
+  useEffect(() => {
+    if (step === 'height') {
+      if (data.height_cm) {
+        if (data.unit_system === 'imperial') {
+          const inches = Math.round(data.height_cm * 0.393701)
+          setHeightInput(String(inches))
+        } else {
+          setHeightInput(String(Math.round(data.height_cm)))
+        }
+      } else {
+        setHeightInput('')
+      }
+    }
+    if (step === 'weight') {
+      if (data.current_weight_kg) {
+        const display = weightFromKg(data.current_weight_kg, data.unit_system)
+        setCurrentWeightInput(String(display))
+      } else {
+        setCurrentWeightInput('')
+      }
+    }
+    if (step === 'goal_weight') {
+      if (data.goal_weight_kg) {
+        const display = weightFromKg(data.goal_weight_kg, data.unit_system)
+        setGoalWeightInput(String(display))
+      } else {
+        setGoalWeightInput('')
+      }
+    }
+  }, [step, data.height_cm, data.current_weight_kg, data.goal_weight_kg, data.unit_system])
 
   const submit = async () => {
     setLoading(true)
@@ -256,8 +293,9 @@ export default function OnboardingPage() {
               <Input
                 type="number"
                 placeholder={data.unit_system === 'imperial' ? 'e.g., 70' : 'e.g., 178'}
-                value={data.height_cm ? data.height_cm.toString() : ''}
+                value={heightInput}
                 onChange={(val) => {
+                  setHeightInput(val)
                   const num = parseFloat(val)
                   if (!isNaN(num)) {
                     const cm = data.unit_system === 'imperial' ? num * 2.54 : num
@@ -280,8 +318,9 @@ export default function OnboardingPage() {
               <Input
                 type="number"
                 placeholder={data.unit_system === 'imperial' ? 'e.g., 180' : 'e.g., 82'}
-                value={data.current_weight_kg ? (data.unit_system === 'imperial' ? Math.round(data.current_weight_kg * 2.20462) : data.current_weight_kg).toString() : ''}
+                value={currentWeightInput}
                 onChange={(val) => {
+                  setCurrentWeightInput(val)
                   const num = parseFloat(val)
                   if (!isNaN(num)) {
                     const kg = weightToKg(num, data.unit_system)
@@ -305,8 +344,9 @@ export default function OnboardingPage() {
               <Input
                 type="number"
                 placeholder={data.unit_system === 'imperial' ? 'e.g., 170' : 'e.g., 77'}
-                value={data.goal_weight_kg ? (data.unit_system === 'imperial' ? Math.round(data.goal_weight_kg * 2.20462) : data.goal_weight_kg).toString() : ''}
+                value={goalWeightInput}
                 onChange={(val) => {
+                  setGoalWeightInput(val)
                   const num = parseFloat(val)
                   if (!isNaN(num)) {
                     const kg = weightToKg(num, data.unit_system)
