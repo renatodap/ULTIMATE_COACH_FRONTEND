@@ -35,7 +35,7 @@ export interface ActivityMetrics {
   max_heart_rate?: number
   avg_pace?: string // e.g., "5:47/km"
   elevation_gain_m?: number
-  avg_speed_kmh?: number
+  avg_speed_kph?: number
 
   // Strength training metrics
   exercises?: Exercise[]
