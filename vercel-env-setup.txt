@@ -1,16 +1,24 @@
 # Copy these to Vercel Project Settings > Environment Variables
 # Go to: https://vercel.com/your-username/your-project/settings/environment-variables
 
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://txuebspgxwtnwmwiwxfo.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4dWVic3BneHd0bndtd2l3eGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMTkwNTUsImV4cCI6MjA3NTc5NTA1NX0.o0_lvP4y42efC_gspZ2C9_XOk1VoP9-6pHv_4oUEw74
 
-# Update these for production:
-NEXT_PUBLIC_API_BASE_URL=https://your-backend-api-url.com
-NEXT_PUBLIC_APP_URL=https://your-vercel-app.vercel.app
+# API Configuration - IMPORTANT: Use proxy to avoid third-party cookie blocking
+NEXT_PUBLIC_API_BASE_URL=/api/proxy
+NEXT_PUBLIC_APP_URL=https://www.sharpened.me
+
+# Railway Backend URL (server-side only, used by /api/proxy route)
+# ⚠️ CRITICAL: Set this to your Railway backend URL (e.g., https://your-app.railway.app)
+RAILWAY_API_URL=https://ultimate-coach-backend-production.up.railway.app
 
 # Optional (for OpenAI meal photo analysis):
-NEXT_PUBLIC_OPENAI_API_KEY=your_openai_key_here
+NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key_here
 
 # Sentry Error Tracking (highly recommended for production):
-# Get your DSN from https://sentry.io (free tier available)
-NEXT_PUBLIC_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+NEXT_PUBLIC_SENTRY_DSN=https://0c5dee677577cd8b36c475ff4581857d@o4510177135886336.ingest.us.sentry.io/4510177142702080
+
+# NextAuth (legacy, may not be needed)
+NEXTAUTH_URL=https://www.sharpened.me
+NEXTAUTH_SECRET=test-nextauth-secret-for-development-only-32-chars-min
