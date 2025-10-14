@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { login } from '@/lib/api/auth'
@@ -15,9 +14,6 @@ function LoginPageContent() {
   const [error, setError] = useState('')
   const [checkingSession, setCheckingSession] = useState(true)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const verifyEmailBanner = searchParams?.get('verifyEmail') === '1'
-  const justSignedUpEmail = searchParams?.get('email') || ''
   const searchParams = useSearchParams()
   const verifyEmailBanner = searchParams?.get('verifyEmail') === '1'
   const justSignedUpEmail = searchParams?.get('email') || ''
