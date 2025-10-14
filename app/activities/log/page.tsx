@@ -179,7 +179,6 @@ export default function LogActivityPage() {
         notes: notes.trim() || null
       }
 
-      console.log('Submitting activity data:', JSON.stringify(data, null, 2))
       await createActivity(data)
 
       // Success! Redirect to activities page

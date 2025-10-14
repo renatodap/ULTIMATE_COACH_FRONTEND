@@ -9,7 +9,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
@@ -58,11 +58,7 @@ export default function ActivitiesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadActivities()
-  }, [])
-
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -92,7 +88,11 @@ export default function ActivitiesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    loadActivities()
+  }, [loadActivities])
 
   const handleEdit = (id: string) => {
     // TODO: Implement edit functionality

@@ -14,7 +14,7 @@
  * - Preferences (unit system, timezone)
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
@@ -111,11 +111,7 @@ export default function ProfilePage() {
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -128,7 +124,11 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
 
   const handleSignOut = async () => {
     logout()

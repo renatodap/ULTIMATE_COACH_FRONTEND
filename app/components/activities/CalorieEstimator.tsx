@@ -78,7 +78,7 @@ export default function CalorieEstimator({
           {estimate.method === 'partial' && ' (similar activity)'}
         </p>
         <p className="text-xs text-iron-gray mt-1">
-          Final values will be calculated automatically if you don't enter them manually.
+          Final values will be calculated automatically if you don&apos;t enter them manually.
         </p>
       </div>
     </div>
