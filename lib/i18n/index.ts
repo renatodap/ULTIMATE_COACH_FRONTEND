@@ -6,6 +6,7 @@
  */
 
 import { en, type TranslationKey } from './translations/en'
+import { pt } from './translations/pt'
 
 // ============================================================================
 // TYPES
@@ -35,9 +36,9 @@ let currentLanguage: Language = 'en'
 
 const translations: Record<Language, TranslationKey> = {
   en,
+  pt,
   // Future languages:
   // es: () => import('./translations/es').then(m => m.default),
-  // pt: () => import('./translations/pt').then(m => m.default),
   // fr: () => import('./translations/fr').then(m => m.default),
   // de: () => import('./translations/de').then(m => m.default),
 } as any
@@ -136,9 +137,9 @@ export function initI18n(): void {
 export function getAvailableLanguages(): { code: Language; name: string }[] {
   return [
     { code: 'en', name: 'English' },
+    { code: 'pt', name: 'Português' },
     // Future:
     // { code: 'es', name: 'Español' },
-    // { code: 'pt', name: 'Português' },
     // { code: 'fr', name: 'Français' },
     // { code: 'de', name: 'Deutsch' },
   ]

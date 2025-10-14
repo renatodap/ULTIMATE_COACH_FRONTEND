@@ -1,36 +1,44 @@
 /**
- * Log Activity Page
+ * Log Activity Page - Simplified Manual Logging
  *
- * Complete activity logging form with template integration
- * Supports all activity categories with category-specific fields
+ * Clean, mobile-first activity logging with:
+ * - Real-time calorie estimation
+ * - Optional calories/METs (calculated automatically)
+ * - Automatic pace calculation (distance + duration)
+ * - Category-specific fields
+ * - Consistent design with nutrition page
  */
 
 'use client'
 
-import { Suspense, useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { createActivity } from '@/lib/api/activities'
-import { getTemplates } from '@/lib/api/templates'
-import TemplateSuggestions from '@/app/components/templates/TemplateSuggestions'
+import { getFullUserProfile } from '@/lib/api/profile'
+import CalorieEstimator from '@/app/components/activities/CalorieEstimator'
 import type { CreateActivityRequest, ActivityCategory, ActivityMetrics, Exercise } from '@/lib/types/activities'
-import type { ActivityTemplate } from '@/lib/types/templates'
 import { ACTIVITY_CATEGORIES } from '@/lib/types/activities'
 
-function LogActivityForm() {
+export default function LogActivityPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
-  // Templates state
-  const [templates, setTemplates] = useState<ActivityTemplate[]>([])
-  const [selectedTemplate, setSelectedTemplate] = useState<ActivityTemplate | null>(null)
-  const [templatesLoading, setTemplatesLoading] = useState(false)
+  // User data
+  const [userWeightKg, setUserWeightKg] = useState<number | null>(null)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
-  // Form state
+  // Form state - Required fields
   const [category, setCategory] = useState<ActivityCategory | ''>('')
   const [activityName, setActivityName] = useState('')
-  const [startTime, setStartTime] = useState('')
+  const [startTime, setStartTime] = useState(() => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    return now.toISOString().slice(0, 16)
+  })
   const [endTime, setEndTime] = useState('')
   const [durationMinutes, setDurationMinutes] = useState<number | ''>('')
+
+  // Form state - Optional (auto-calculated if not provided)
   const [caloriesBurned, setCaloriesBurned] = useState<number | ''>('')
   const [intensityMets, setIntensityMets] = useState<number | ''>('')
   const [notes, setNotes] = useState('')
@@ -40,6 +48,7 @@ function LogActivityForm() {
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('')
   const [maxHeartRate, setMaxHeartRate] = useState<number | ''>('')
   const [avgPace, setAvgPace] = useState('')
+  const [paceManuallyEdited, setPaceManuallyEdited] = useState(false)
   const [elevationGain, setElevationGain] = useState<number | ''>('')
 
   // Category-specific state (strength training)
@@ -56,93 +65,35 @@ function LogActivityForm() {
   // UI state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Load templates on mount
+  // Load user profile to get weight for calorie estimation
   useEffect(() => {
-    loadTemplates()
-  }, [])
-
-  const loadTemplates = async () => {
-    try {
-      setTemplatesLoading(true)
-      const response = await getTemplates({ is_active: true })
-      setTemplates(response.templates)
-    } catch (err) {
-      console.error('Failed to load templates:', err)
-      // Non-critical, don't show error to user
-    } finally {
-      setTemplatesLoading(false)
-    }
-  }
-
-  const handleTemplateSelect = useCallback((templateId: string) => {
-    const template = templates.find(t => t.id === templateId)
-    if (!template) return
-
-    // Pre-fill form with template data
-    setSelectedTemplate(template)
-    setCategory(template.activity_type as ActivityCategory)
-    setActivityName(template.template_name)
-
-    // Expected values
-    if (template.expected_distance_m) {
-      setDistanceKm(template.expected_distance_m / 1000)
-    }
-    if (template.expected_duration_minutes) {
-      setDurationMinutes(template.expected_duration_minutes)
-    }
-
-    // Default metrics
-    if (template.default_metrics) {
-      const metrics = template.default_metrics as ActivityMetrics
-      if (metrics.avg_heart_rate) setAvgHeartRate(metrics.avg_heart_rate)
-      if (metrics.max_heart_rate) setMaxHeartRate(metrics.max_heart_rate)
-      if (metrics.avg_pace) setAvgPace(metrics.avg_pace)
-      if (metrics.elevation_gain_m) setElevationGain(metrics.elevation_gain_m)
-      if (metrics.exercises) setExercises(metrics.exercises)
-      if (metrics.sport_type) setSportType(metrics.sport_type)
-      if (metrics.opponent) setOpponent(metrics.opponent)
-      if (metrics.score) setScore(metrics.score)
-      if (metrics.stretch_type) setStretchType(metrics.stretch_type)
-    }
-
-    // Notes
-    if (template.default_notes) {
-      setNotes(template.default_notes)
-    }
-
-    setShowSuggestions(false)
-  }, [templates])
-
-  // Handle URL parameter for pre-selecting template
-  useEffect(() => {
-    const templateParam = searchParams.get('template')
-    if (templateParam && templates.length > 0) {
-      const template = templates.find(t => t.id === templateParam)
-      if (template) {
-        handleTemplateSelect(template.id)
+    async function fetchProfile() {
+      try {
+        const profile = await getFullUserProfile()
+        setUserWeightKg(profile.current_weight_kg || 70) // Default to 70kg
+      } catch (err) {
+        console.error('Failed to load profile:', err)
+        setUserWeightKg(70) // Default fallback
+      } finally {
+        setLoadingProfile(false)
       }
     }
-  }, [searchParams, templates, handleTemplateSelect])
+    fetchProfile()
+  }, [])
 
-  // Show suggestions when category is selected (and no template selected)
+  // Auto-calculate pace when distance and duration are provided
   useEffect(() => {
-    if (category && !selectedTemplate) {
-      setShowSuggestions(true)
-    } else {
-      setShowSuggestions(false)
+    // Only auto-calculate if user hasn't manually edited the pace
+    if (!paceManuallyEdited && distanceKm && durationMinutes && typeof distanceKm === 'number' && typeof durationMinutes === 'number') {
+      // Calculate pace in min/km
+      const paceMinutes = durationMinutes / distanceKm
+      const minutes = Math.floor(paceMinutes)
+      const seconds = Math.round((paceMinutes - minutes) * 60)
+      const formattedPace = `${minutes}:${seconds.toString().padStart(2, '0')}/km`
+      setAvgPace(formattedPace)
     }
-  }, [category, selectedTemplate])
-
-  const handleApplyTemplate = (templateId: string, template: ActivityTemplate) => {
-    handleTemplateSelect(templateId)
-  }
-
-  const clearTemplate = () => {
-    setSelectedTemplate(null)
-    // Don't clear the form - user might want to keep the data
-  }
+  }, [distanceKm, durationMinutes, paceManuallyEdited])
 
   const addExercise = () => {
     setExercises([
@@ -164,6 +115,7 @@ function LogActivityForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Validate required fields
     if (!category) {
       setError('Please select an activity category')
       return
@@ -179,13 +131,9 @@ function LogActivityForm() {
       return
     }
 
-    if (caloriesBurned === '' || caloriesBurned < 0) {
-      setError('Please enter calories burned')
-      return
-    }
-
-    if (intensityMets === '' || intensityMets < 0) {
-      setError('Please enter intensity (METs)')
+    // Duration validation: Either duration OR end_time must be provided
+    if (!durationMinutes && !endTime) {
+      setError('Please enter either duration or end time')
       return
     }
 
@@ -218,47 +166,58 @@ function LogActivityForm() {
         if (stretchType) metrics.stretch_type = stretchType
       }
 
+      // Build request - calories and METs are optional (null if not provided)
       const data: CreateActivityRequest = {
         category,
         activity_name: activityName.trim(),
         start_time: new Date(startTime).toISOString(),
         end_time: endTime ? new Date(endTime).toISOString() : null,
         duration_minutes: durationMinutes ? Number(durationMinutes) : null,
-        calories_burned: Number(caloriesBurned),
-        intensity_mets: Number(intensityMets),
+        calories_burned: caloriesBurned ? Number(caloriesBurned) : null, // ✅ null if empty
+        intensity_mets: intensityMets ? Number(intensityMets) : null,     // ✅ null if empty
         metrics,
         notes: notes.trim() || null
       }
 
-      const activity = await createActivity(data)
+      console.log('Submitting activity data:', JSON.stringify(data, null, 2))
+      await createActivity(data)
 
       // Success! Redirect to activities page
       router.push('/activities')
     } catch (err: any) {
       console.error('Failed to create activity:', err)
-      setError(err.message || 'Failed to create activity. Please try again.')
+
+      // Extract validation errors if available
+      if (err.detail && Array.isArray(err.detail)) {
+        const validationErrors = err.detail.map((e: any) =>
+          `${e.loc?.join(' > ') || 'Field'}: ${e.msg}`
+        ).join('\n')
+        setError(`Validation errors:\n${validationErrors}`)
+      } else {
+        setError(err.message || 'Failed to create activity. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-iron-black">
+    <div className="min-h-screen bg-iron-black pb-20">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-iron-black border-b border-iron-gray">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+        <div className="px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="text-iron-white hover:text-iron-orange transition"
+            className="text-iron-gray hover:text-iron-white transition-colors"
             aria-label="Go back"
           >
-            ← Back
+            <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold text-iron-white">Log Activity</h1>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Error Message */}
           {error && (
@@ -267,53 +226,9 @@ function LogActivityForm() {
             </div>
           )}
 
-          {/* Template Selection */}
-          <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
-            <h2 className="text-lg font-semibold text-iron-white">Use Template (Optional)</h2>
-
-            {templatesLoading ? (
-              <div className="text-sm text-iron-gray">Loading templates...</div>
-            ) : templates.length > 0 ? (
-              <select
-                value={selectedTemplate?.id || ''}
-                onChange={(e) => handleTemplateSelect(e.target.value)}
-                className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
-              >
-                <option value="">No template</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.icon} {template.template_name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <p className="text-sm text-iron-gray">
-                No templates yet. Create templates from your activities to speed up logging!
-              </p>
-            )}
-
-            {/* Applied Template Badge */}
-            {selectedTemplate && (
-              <div className="bg-iron-orange/20 p-3 rounded-lg border border-iron-orange/30">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-iron-orange">
-                    Using template: {selectedTemplate.icon} {selectedTemplate.template_name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={clearTemplate}
-                    className="text-xs text-iron-gray hover:text-iron-white transition"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Activity Category */}
-          <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
-            <h2 className="text-lg font-semibold text-iron-white">Activity Type</h2>
+          <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray">
+            <h2 className="text-lg font-semibold text-iron-white mb-4">Activity Type</h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Object.entries(ACTIVITY_CATEGORIES).map(([key, meta]) => (
@@ -321,7 +236,7 @@ function LogActivityForm() {
                   key={key}
                   type="button"
                   onClick={() => setCategory(key as ActivityCategory)}
-                  className={`p-4 rounded-lg border-2 transition ${
+                  className={`p-4 rounded-lg border-2 transition min-h-[88px] ${
                     category === key
                       ? 'border-iron-orange bg-iron-orange/10'
                       : 'border-iron-gray hover:border-iron-orange/50'
@@ -334,24 +249,10 @@ function LogActivityForm() {
             </div>
           </div>
 
-          {/* Template Suggestions */}
-          {showSuggestions && category && (
-            <TemplateSuggestions
-              activityData={{
-                activity_type: category,
-                distance_km: distanceKm ? Number(distanceKm) : undefined,
-                duration_minutes: durationMinutes ? Number(durationMinutes) : undefined,
-                start_time: startTime ? new Date(startTime).toISOString() : undefined
-              }}
-              onApplyTemplate={handleApplyTemplate}
-              autoFetch={true}
-            />
-          )}
-
           {/* Basic Fields */}
           {category && (
             <>
-              <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
+              <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
                 <h2 className="text-lg font-semibold text-iron-white">Basic Information</h2>
 
                 {/* Activity Name */}
@@ -363,8 +264,8 @@ function LogActivityForm() {
                     type="text"
                     value={activityName}
                     onChange={(e) => setActivityName(e.target.value)}
-                    className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
-                    placeholder="e.g., Morning Run"
+                    className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:outline-none focus:border-iron-orange transition"
+                    placeholder="e.g., Morning Run, Leg Day"
                   />
                 </div>
 
@@ -378,7 +279,7 @@ function LogActivityForm() {
                       type="datetime-local"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                     />
                   </div>
                   <div>
@@ -389,48 +290,77 @@ function LogActivityForm() {
                       type="datetime-local"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                     />
                   </div>
                 </div>
 
-                {/* Duration, Calories, Intensity */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Duration */}
+                <div>
+                  <label className="block text-sm font-medium text-iron-white mb-2">
+                    Duration (minutes) {!endTime && <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    type="number"
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(e.target.value ? Number(e.target.value) : '')}
+                    className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:outline-none focus:border-iron-orange transition"
+                    min="1"
+                    placeholder="e.g., 30"
+                  />
+                  <p className="text-xs text-iron-gray mt-1">
+                    {endTime ? 'Optional if end time is provided' : 'Required if end time is not provided'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Calorie Estimator */}
+              {!loadingProfile && (
+                <CalorieEstimator
+                  activityName={activityName}
+                  category={category}
+                  durationMinutes={durationMinutes}
+                  userWeightKg={userWeightKg}
+                />
+              )}
+
+              {/* Optional Override: Calories & METs */}
+              <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-iron-white mb-1">
+                    Advanced (Optional)
+                  </h2>
+                  <p className="text-sm text-iron-gray">
+                    Leave these blank to calculate automatically based on activity type
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-iron-white mb-2">
-                      Duration (min)
-                    </label>
-                    <input
-                      type="number"
-                      value={durationMinutes}
-                      onChange={(e) => setDurationMinutes(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-iron-white mb-2">
-                      Calories <span className="text-red-500">*</span>
+                      Calories Burned
                     </label>
                     <input
                       type="number"
                       value={caloriesBurned}
                       onChange={(e) => setCaloriesBurned(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:outline-none focus:border-iron-orange transition"
                       min="0"
+                      placeholder="Auto-calculated"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-iron-white mb-2">
-                      Intensity (METs) <span className="text-red-500">*</span>
+                      Intensity (METs)
                     </label>
                     <input
                       type="number"
                       value={intensityMets}
                       onChange={(e) => setIntensityMets(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:outline-none focus:border-iron-orange transition"
                       min="0"
                       step="0.1"
+                      placeholder="Auto-looked-up"
                     />
                   </div>
                 </div>
@@ -438,8 +368,8 @@ function LogActivityForm() {
 
               {/* Category-Specific Fields: Cardio */}
               {(category === 'cardio_steady_state' || category === 'cardio_interval') && (
-                <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
-                  <h2 className="text-lg font-semibold text-iron-white">Cardio Metrics</h2>
+                <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
+                  <h2 className="text-lg font-semibold text-iron-white">Cardio Metrics (Optional)</h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -450,7 +380,7 @@ function LogActivityForm() {
                         type="number"
                         value={distanceKm}
                         onChange={(e) => setDistanceKm(e.target.value ? Number(e.target.value) : '')}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         min="0"
                         step="0.1"
                       />
@@ -462,10 +392,18 @@ function LogActivityForm() {
                       <input
                         type="text"
                         value={avgPace}
-                        onChange={(e) => setAvgPace(e.target.value)}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
-                        placeholder="5:47/km"
+                        onChange={(e) => {
+                          setAvgPace(e.target.value)
+                          setPaceManuallyEdited(true)
+                        }}
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        placeholder="Auto-calculated from distance + duration"
                       />
+                      {distanceKm && durationMinutes && (
+                        <p className="text-xs text-iron-gray mt-1">
+                          Calculated automatically from distance and duration
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -478,7 +416,7 @@ function LogActivityForm() {
                         type="number"
                         value={avgHeartRate}
                         onChange={(e) => setAvgHeartRate(e.target.value ? Number(e.target.value) : '')}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         min="0"
                       />
                     </div>
@@ -490,7 +428,7 @@ function LogActivityForm() {
                         type="number"
                         value={maxHeartRate}
                         onChange={(e) => setMaxHeartRate(e.target.value ? Number(e.target.value) : '')}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         min="0"
                       />
                     </div>
@@ -502,7 +440,7 @@ function LogActivityForm() {
                         type="number"
                         value={elevationGain}
                         onChange={(e) => setElevationGain(e.target.value ? Number(e.target.value) : '')}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         min="0"
                       />
                     </div>
@@ -512,13 +450,13 @@ function LogActivityForm() {
 
               {/* Category-Specific Fields: Strength Training */}
               {category === 'strength_training' && (
-                <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
+                <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-iron-white">Exercises</h2>
+                    <h2 className="text-lg font-semibold text-iron-white">Exercises (Optional)</h2>
                     <button
                       type="button"
                       onClick={addExercise}
-                      className="bg-iron-orange text-iron-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition"
+                      className="bg-iron-orange text-iron-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition min-h-[44px]"
                     >
                       + Add Exercise
                     </button>
@@ -537,7 +475,7 @@ function LogActivityForm() {
                             <button
                               type="button"
                               onClick={() => removeExercise(index)}
-                              className="text-xs text-red-500 hover:underline"
+                              className="text-xs text-red-500 hover:underline min-h-[44px] px-3"
                             >
                               Remove
                             </button>
@@ -548,7 +486,7 @@ function LogActivityForm() {
                               type="text"
                               value={exercise.name}
                               onChange={(e) => updateExercise(index, 'name', e.target.value)}
-                              className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                              className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                               placeholder="Exercise name"
                             />
                           </div>
@@ -606,8 +544,8 @@ function LogActivityForm() {
 
               {/* Category-Specific Fields: Sports */}
               {category === 'sports' && (
-                <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
-                  <h2 className="text-lg font-semibold text-iron-white">Sports Details</h2>
+                <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
+                  <h2 className="text-lg font-semibold text-iron-white">Sports Details (Optional)</h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -618,7 +556,7 @@ function LogActivityForm() {
                         type="text"
                         value={sportType}
                         onChange={(e) => setSportType(e.target.value)}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         placeholder="e.g., Tennis, Basketball"
                       />
                     </div>
@@ -630,7 +568,7 @@ function LogActivityForm() {
                         type="text"
                         value={opponent}
                         onChange={(e) => setOpponent(e.target.value)}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         placeholder="John Doe"
                       />
                     </div>
@@ -642,7 +580,7 @@ function LogActivityForm() {
                         type="text"
                         value={score}
                         onChange={(e) => setScore(e.target.value)}
-                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                        className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                         placeholder="6-4, 6-3"
                       />
                     </div>
@@ -652,8 +590,8 @@ function LogActivityForm() {
 
               {/* Category-Specific Fields: Flexibility */}
               {category === 'flexibility' && (
-                <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
-                  <h2 className="text-lg font-semibold text-iron-white">Flexibility Details</h2>
+                <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
+                  <h2 className="text-lg font-semibold text-iron-white">Flexibility Details (Optional)</h2>
 
                   <div>
                     <label className="block text-sm font-medium text-iron-white mb-2">
@@ -663,7 +601,7 @@ function LogActivityForm() {
                       type="text"
                       value={stretchType}
                       onChange={(e) => setStretchType(e.target.value)}
-                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition"
+                      className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white focus:outline-none focus:border-iron-orange transition"
                       placeholder="e.g., Yoga, Static Stretching"
                     />
                   </div>
@@ -671,31 +609,31 @@ function LogActivityForm() {
               )}
 
               {/* Notes */}
-              <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray space-y-4">
+              <div className="bg-iron-dark-gray rounded-xl p-4 sm:p-6 border border-iron-gray space-y-4">
                 <h2 className="text-lg font-semibold text-iron-white">Notes (Optional)</h2>
 
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-2 text-iron-white focus:outline-none focus:border-iron-orange transition resize-none"
+                  className="w-full bg-iron-black border border-iron-gray rounded-lg px-4 py-3 text-iron-white placeholder:text-iron-gray focus:outline-none focus:border-iron-orange transition resize-none"
                   rows={4}
                   placeholder="How did it feel? Any observations?"
                 />
               </div>
 
               {/* Submit Button */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="flex-1 bg-iron-gray/30 text-iron-white px-6 py-3 rounded-lg font-medium hover:bg-iron-gray/50 transition disabled:opacity-50"
+                  className="flex-1 bg-iron-gray/30 text-iron-white px-6 py-4 rounded-lg font-medium hover:bg-iron-gray/50 transition disabled:opacity-50 min-h-[56px]"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-iron-orange text-iron-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-iron-orange text-iron-white px-6 py-4 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
                   disabled={loading}
                 >
                   {loading ? 'Logging Activity...' : 'Log Activity'}
@@ -704,19 +642,7 @@ function LogActivityForm() {
             </>
           )}
         </form>
-      </div>
+      </main>
     </div>
-  )
-}
-
-export default function LogActivityPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-iron-black flex items-center justify-center">
-        <div className="text-iron-white">Loading...</div>
-      </div>
-    }>
-      <LogActivityForm />
-    </Suspense>
   )
 }

@@ -3,8 +3,19 @@
  *
  * PURPOSE:
  * - Enforces authentication for protected routes
- * - Redirects unauthenticated users to login
- * - Allows public routes (landing, login, signup)
+ * - Redirects unauthenticated users to landing page
+ * - Redirects authenticated users away from auth pages
+ * - Allows public routes (landing, login, signup, legal)
+ *
+ * AUTHENTICATION METHOD:
+ * - Checks for httpOnly cookies set by backend API
+ * - Backend sets 'access_token' cookie after successful login
+ * - No Supabase session checks (backend handles auth entirely)
+ *
+ * AUTHENTICATION FLOW:
+ * - Unauthenticated + protected route → Redirect to / (landing)
+ * - Authenticated + auth page → Redirect to /dashboard
+ * - Public routes → Allow access for everyone
  *
  * ONBOARDING ENFORCEMENT:
  * Onboarding is NOT enforced here because Next.js middleware cannot make
@@ -12,22 +23,47 @@
  * - Login page checks onboarding_completed and redirects appropriately
  * - Dashboard and all protected pages use useOnboardingCheck() hook
  * - Hook fetches user profile and redirects to /onboarding if incomplete
- *
- * This client-side approach is:
- * - More flexible (can make API calls)
- * - More performant (cached user data)
- * - Recommended by Next.js docs for user-specific data checks
  */
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // TEMPORARY: Disable middleware auth checks
-  // Issue: Cookies from backend API (different origin) don't persist to frontend
-  // Solution: Use client-side localStorage and route guards instead
-  // TODO: Re-enable middleware auth when same-origin or fix cross-origin cookies
+  const { pathname } = request.nextUrl
 
+  // Check for authentication token (httpOnly cookie set by backend API)
+  const accessToken = request.cookies.get('access_token')
+  const isAuthenticated = !!accessToken
+
+  // Define public routes (accessible without authentication)
+  const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/privacy', '/terms']
+  const isPublicRoute = publicRoutes.includes(pathname)
+
+  // Define auth pages (login, signup, etc.)
+  const authPages = ['/login', '/signup', '/forgot-password']
+  const isAuthPage = authPages.includes(pathname)
+
+  // CASE 1: User is NOT authenticated
+  if (!isAuthenticated) {
+    // If trying to access protected route → redirect to landing page
+    if (!isPublicRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+    // If accessing public route → allow
+    return NextResponse.next()
+  }
+
+  // CASE 2: User IS authenticated
+  // If trying to access auth pages → redirect to dashboard
+  if (isAuthPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // Allow access to all other routes
   return NextResponse.next()
 }
 

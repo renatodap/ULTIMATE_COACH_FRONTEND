@@ -24,6 +24,10 @@ export interface Food {
   name: string
   brand_name: string | null
 
+  // Portuguese translations
+  name_pt: string | null
+  brand_name_pt: string | null
+
   // Nutrition (per 100g - single source of truth)
   calories_per_100g: number
   protein_g_per_100g: number

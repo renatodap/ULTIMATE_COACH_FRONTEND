@@ -93,7 +93,7 @@ export default function EditGoalsModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 rounded transition-colors"
+            className="p-2 hover:bg-iron-gray/20 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -103,7 +103,7 @@ export default function EditGoalsModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Info Message */}
-          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30 rounded">
+          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30">
             <p className="text-sm text-iron-white">
               Changes to your goals and activity level will automatically recalculate your macro targets.
             </p>
@@ -118,7 +118,7 @@ export default function EditGoalsModal({
               id="primaryGoal"
               value={primaryGoal}
               onChange={(e) => setPrimaryGoal(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               <option value="lose_weight">Lose Weight</option>
               <option value="build_muscle">Build Muscle</option>
@@ -136,7 +136,7 @@ export default function EditGoalsModal({
               id="experienceLevel"
               value={experienceLevel}
               onChange={(e) => setExperienceLevel(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
@@ -153,7 +153,7 @@ export default function EditGoalsModal({
               id="activityLevel"
               value={activityLevel}
               onChange={(e) => setActivityLevel(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               <option value="sedentary">Sedentary (desk job, little exercise)</option>
               <option value="lightly_active">Lightly Active (light exercise 1-3 days/week)</option>
@@ -175,7 +175,7 @@ export default function EditGoalsModal({
               onChange={(e) => setWorkoutFrequency(e.target.value)}
               min="0"
               max="7"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="How many days per week do you workout?"
             />
           </div>

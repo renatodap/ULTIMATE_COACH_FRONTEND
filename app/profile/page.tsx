@@ -17,6 +17,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 import {
   User,
   Activity,
@@ -53,6 +54,7 @@ import {
   formatUnitSystem,
   formatStressLevel,
 } from '@/lib/constants/profile'
+import { getLanguageDisplayName, type SupportedLanguage } from '@/lib/utils/language'
 
 // Animation variants
 const containerVariants = {
@@ -89,6 +91,7 @@ const contentVariants = {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [profile, setProfile] = useState<FullUserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -119,7 +122,7 @@ export default function ProfilePage() {
       const data = await getFullUserProfile()
       setProfile(data)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load profile'
+      const errorMessage = err instanceof Error ? err.message : t('profile.failedToLoad')
       setError(errorMessage)
       console.error('Profile load error:', err)
     } finally {
@@ -145,7 +148,7 @@ export default function ProfilePage() {
   // Modal handlers
   const handleUpdateSuccess = (updatedProfile: FullUserProfile) => {
     setProfile(updatedProfile)
-    setToast({ message: 'Profile updated successfully!', type: 'success' })
+    setToast({ message: t('profile.profileUpdated'), type: 'success' })
   }
 
   const handleUpdateError = (errorMessage: string) => {
@@ -153,7 +156,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading) {
-    return <LoadingScreen message="Loading your profile..." />
+    return <LoadingScreen message={t('profile.loadingProfile')} />
   }
 
   if (error) {
@@ -161,13 +164,13 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-iron-black text-iron-white">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md px-4">
-            <h2 className="font-heading text-2xl text-iron-orange mb-2 uppercase">Unable to Load Profile</h2>
+            <h2 className="font-heading text-2xl text-iron-orange mb-2 uppercase">{t('profile.unableToLoad')}</h2>
             <p className="text-iron-gray mb-6">{error}</p>
             <button
               onClick={loadProfile}
               className="bg-iron-orange text-iron-black font-heading px-6 py-3 uppercase tracking-wider hover:bg-orange-600 transition-colors"
             >
-              Try Again
+              {t('profile.tryAgain')}
             </button>
           </div>
         </div>
@@ -226,7 +229,7 @@ export default function ProfilePage() {
                     onEdit()
                   }
                 }}
-                className="p-2 hover:bg-iron-orange/20 rounded transition-colors cursor-pointer"
+                className="p-2 hover:bg-iron-orange/20 transition-colors cursor-pointer"
                 aria-label={`Edit ${title}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -266,24 +269,17 @@ export default function ProfilePage() {
   const DataRow = ({ label, value }: { label: string; value: string | number | undefined | null }) => (
     <div className="flex justify-between items-center py-2">
       <span className="text-sm text-iron-gray">{label}</span>
-      <span className="text-sm text-iron-white font-medium">{value || 'Not set'}</span>
+      <span className="text-sm text-iron-white font-medium">{value || t('profile.notSet')}</span>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-iron-black text-iron-white pb-24">
       {/* Header */}
-      <header className="border-b border-iron-gray/30 sticky top-0 bg-iron-black z-[100]">
+      <header className="border-b border-iron-gray sticky top-0 bg-iron-black z-[100]">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="text-iron-gray hover:text-iron-white transition mb-3 text-2xl"
-            aria-label="Back to dashboard"
-          >
-            ←
-          </button>
           <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
-            Profile
+            {t('profile.pageTitle')}
           </h1>
         </div>
       </header>
@@ -295,15 +291,15 @@ export default function ProfilePage() {
         animate="visible"
       >
         {/* Basic Info Section (Always visible) */}
-        <CollapsibleSection id="basic" title="Basic Information" icon={User}>
+        <CollapsibleSection id="basic" title={t('profile.basicInfo')} icon={User}>
           <div className="space-y-2">
-            <DataRow label="Name" value={profile.full_name} />
-            <DataRow label="Email" value={profile.email} />
-            <DataRow label="Member Since" value={profile.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'} />
+            <DataRow label={t('profile.name')} value={profile.full_name} />
+            <DataRow label={t('profile.email')} value={profile.email} />
+            <DataRow label={t('profile.memberSince')} value={profile.created_at ? new Date(profile.created_at).toLocaleDateString() : t('profile.unknown')} />
             {profile.onboarding_completed && (
               <DataRow
-                label="Onboarding Completed"
-                value={profile.onboarding_completed_at ? new Date(profile.onboarding_completed_at).toLocaleDateString() : 'Yes'}
+                label={t('profile.onboardingCompleted')}
+                value={profile.onboarding_completed_at ? new Date(profile.onboarding_completed_at).toLocaleDateString() : t('profile.yes')}
               />
             )}
           </div>
@@ -312,26 +308,26 @@ export default function ProfilePage() {
         {/* Physical Stats Section */}
         <CollapsibleSection
           id="physical"
-          title="Physical Stats"
+          title={t('profile.physicalStats')}
           icon={Scale}
           onEdit={() => setShowPhysicalModal(true)}
         >
           <div className="space-y-2">
-            <DataRow label="Age" value={profile.age ? `${profile.age} years` : undefined} />
+            <DataRow label={t('profile.age')} value={profile.age ? `${profile.age} ${t('profile.years')}` : undefined} />
             <DataRow
-              label="Sex"
+              label={t('profile.sex')}
               value={formatBiologicalSex(profile.biological_sex)}
             />
             <DataRow
-              label="Height"
+              label={t('profile.height')}
               value={profile.height_cm ? `${profile.height_cm} cm` : undefined}
             />
             <DataRow
-              label="Current Weight"
+              label={t('profile.currentWeight')}
               value={profile.current_weight_kg ? `${profile.current_weight_kg} kg` : undefined}
             />
             <DataRow
-              label="Goal Weight"
+              label={t('profile.goalWeight')}
               value={profile.goal_weight_kg ? `${profile.goal_weight_kg} kg` : undefined}
             />
           </div>
@@ -340,34 +336,34 @@ export default function ProfilePage() {
         {/* Goals & Training Section */}
         <CollapsibleSection
           id="goals"
-          title="Goals & Training"
+          title={t('profile.goalsTraining')}
           icon={Target}
           onEdit={() => setShowGoalsModal(true)}
         >
           <div className="space-y-2">
-            <DataRow label="Primary Goal" value={formatGoal(profile.primary_goal)} />
+            <DataRow label={t('profile.primaryGoal')} value={formatGoal(profile.primary_goal)} />
             <DataRow
-              label="Experience Level"
+              label={t('profile.experienceLevel')}
               value={formatExperienceLevel(profile.experience_level)}
             />
-            <DataRow label="Activity Level" value={formatActivityLevel(profile.activity_level)} />
+            <DataRow label={t('profile.activityLevel')} value={formatActivityLevel(profile.activity_level)} />
             <DataRow
-              label="Workout Frequency"
-              value={profile.workout_frequency ? `${profile.workout_frequency}x per week` : undefined}
+              label={t('profile.workoutFrequency')}
+              value={profile.workout_frequency ? `${profile.workout_frequency}${t('profile.timesPerWeek')}` : undefined}
             />
           </div>
         </CollapsibleSection>
 
         {/* Nutrition Plan Section (Prominent Display) */}
-        <CollapsibleSection id="macros" title="Nutrition Plan" icon={TrendingUp}>
+        <CollapsibleSection id="macros" title={t('profile.nutritionPlan')} icon={TrendingUp}>
           <div className="space-y-4">
             {/* Calorie Goal - Large Display */}
-            <div className="text-center p-4 bg-iron-gray/20 border border-iron-orange/30 rounded">
-              <div className="text-sm text-iron-gray mb-1 uppercase tracking-wider">Daily Calorie Goal</div>
+            <div className="text-center p-4 bg-iron-gray/20 border border-iron-orange/30">
+              <div className="text-sm text-iron-gray mb-1 uppercase tracking-wider">{t('profile.dailyCalorieGoal')}</div>
               <div className="text-4xl font-heading text-iron-orange">
                 {profile.daily_calorie_goal || '—'}
               </div>
-              <div className="text-xs text-iron-gray mt-1">calories/day</div>
+              <div className="text-xs text-iron-gray mt-1">{t('profile.caloriesPerDay')}</div>
             </div>
 
             {/* Macros Grid */}
@@ -391,9 +387,9 @@ export default function ProfilePage() {
 
             {/* TDEE */}
             <div className="space-y-2 pt-2 border-t border-iron-gray/30">
-              <DataRow label="Estimated TDEE" value={profile.estimated_tdee ? `${profile.estimated_tdee} cal` : undefined} />
+              <DataRow label={t('profile.estimatedTDEE')} value={profile.estimated_tdee ? `${profile.estimated_tdee} ${t('profile.cal')}` : undefined} />
               <DataRow
-                label="Macros Last Calculated"
+                label={t('profile.macrosLastCalculated')}
                 value={profile.macros_last_calculated_at ? new Date(profile.macros_last_calculated_at).toLocaleDateString() : undefined}
               />
             </div>
@@ -403,39 +399,39 @@ export default function ProfilePage() {
         {/* Dietary Preferences Section */}
         <CollapsibleSection
           id="dietary"
-          title="Dietary Preferences"
+          title={t('profile.dietaryPreferences')}
           icon={Apple}
           onEdit={() => setShowDietaryModal(true)}
         >
           <div className="space-y-2">
             <DataRow
-              label="Dietary Preference"
+              label={t('profile.dietaryPreference')}
               value={formatDietaryPreference(profile.dietary_preference)}
             />
             <DataRow
-              label="Food Allergies"
-              value={profile.food_allergies && profile.food_allergies.length > 0 ? profile.food_allergies.join(', ') : 'None'}
+              label={t('profile.foodAllergies')}
+              value={profile.food_allergies && profile.food_allergies.length > 0 ? profile.food_allergies.join(', ') : t('profile.none')}
             />
             <DataRow
-              label="Foods to Avoid"
-              value={profile.foods_to_avoid && profile.foods_to_avoid.length > 0 ? profile.foods_to_avoid.join(', ') : 'None'}
+              label={t('profile.foodsToAvoid')}
+              value={profile.foods_to_avoid && profile.foods_to_avoid.length > 0 ? profile.foods_to_avoid.join(', ') : t('profile.none')}
             />
-            <DataRow label="Meals Per Day" value={profile.meals_per_day} />
-            <DataRow label="Cooks Regularly" value={profile.cooks_regularly ? 'Yes' : 'No'} />
+            <DataRow label={t('profile.mealsPerDay')} value={profile.meals_per_day} />
+            <DataRow label={t('profile.cooksRegularly')} value={profile.cooks_regularly ? t('profile.yes') : t('profile.no')} />
           </div>
         </CollapsibleSection>
 
         {/* Lifestyle Section */}
         <CollapsibleSection
           id="lifestyle"
-          title="Lifestyle"
+          title={t('profile.lifestyle')}
           icon={Moon}
           onEdit={() => setShowLifestyleModal(true)}
         >
           <div className="space-y-2">
-            <DataRow label="Sleep Hours" value={profile.sleep_hours ? `${profile.sleep_hours} hours/night` : undefined} />
+            <DataRow label={t('profile.sleepHours')} value={profile.sleep_hours ? `${profile.sleep_hours} ${t('profile.hoursPerNight')}` : undefined} />
             <DataRow
-              label="Stress Level"
+              label={t('profile.stressLevel')}
               value={formatStressLevel(profile.stress_level)}
             />
           </div>
@@ -443,17 +439,17 @@ export default function ProfilePage() {
 
         {/* Consultation Section (if completed) */}
         {profile.consultation_completed && (
-          <CollapsibleSection id="consultation" title="Consultation" icon={Heart}>
+          <CollapsibleSection id="consultation" title={t('profile.consultation')} icon={Heart}>
             <div className="space-y-2">
-              <div className="p-4 bg-green-900/20 border border-green-700/50 rounded">
+              <div className="p-4 bg-green-900/20 border border-green-700/50">
                 <div className="flex items-center gap-2 text-green-500 mb-2">
                   <Heart className="w-4 h-4" />
-                  <span className="font-medium">Consultation Completed</span>
+                  <span className="font-medium">{t('profile.consultationCompleted')}</span>
                 </div>
                 <p className="text-sm text-iron-gray">
                   {profile.consultation_completed_at
-                    ? `Completed on ${new Date(profile.consultation_completed_at).toLocaleDateString()}`
-                    : 'You have completed a consultation'}
+                    ? `${t('profile.completedOn')} ${new Date(profile.consultation_completed_at).toLocaleDateString()}`
+                    : t('profile.youHaveCompleted')}
                 </p>
               </div>
               {/* Additional consultation data can be displayed here when available */}
@@ -464,16 +460,20 @@ export default function ProfilePage() {
         {/* Preferences Section */}
         <CollapsibleSection
           id="preferences"
-          title="Preferences"
+          title={t('profile.preferences')}
           icon={Settings}
           onEdit={() => setShowPreferencesModal(true)}
         >
           <div className="space-y-2">
             <DataRow
-              label="Unit System"
+              label={t('profile.language')}
+              value={profile.language ? getLanguageDisplayName(profile.language as SupportedLanguage) : 'English'}
+            />
+            <DataRow
+              label={t('profile.unitSystem')}
               value={formatUnitSystem(profile.unit_system)}
             />
-            <DataRow label="Timezone" value={profile.timezone} />
+            <DataRow label={t('profile.timezone')} value={profile.timezone} />
           </div>
         </CollapsibleSection>
 
@@ -486,7 +486,7 @@ export default function ProfilePage() {
           whileTap={{ scale: 0.98 }}
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-          Sign Out
+          {t('profile.signOut')}
         </motion.button>
       </motion.main>
 

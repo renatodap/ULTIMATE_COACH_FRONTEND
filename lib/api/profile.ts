@@ -74,6 +74,7 @@ export interface FullUserProfile {
   // Preferences
   unit_system?: 'metric' | 'imperial'
   timezone?: string
+  language?: string
 
   // Consultation
   consultation_completed?: boolean
@@ -99,6 +100,7 @@ export interface UpdateProfileData {
   stress_level?: 'low' | 'medium' | 'high'
   unit_system?: 'metric' | 'imperial'
   timezone?: string
+  language?: string
 }
 
 // =====================================================

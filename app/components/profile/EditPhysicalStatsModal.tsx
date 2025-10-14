@@ -96,7 +96,7 @@ export default function EditPhysicalStatsModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 rounded transition-colors"
+            className="p-2 hover:bg-iron-gray/20 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -106,7 +106,7 @@ export default function EditPhysicalStatsModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Info Message */}
-          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30 rounded">
+          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30">
             <p className="text-sm text-iron-white">
               Changes to physical stats will automatically recalculate your macro targets.
             </p>
@@ -124,7 +124,7 @@ export default function EditPhysicalStatsModal({
               onChange={(e) => setAge(e.target.value)}
               min="13"
               max="120"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your age"
             />
           </div>
@@ -142,7 +142,7 @@ export default function EditPhysicalStatsModal({
               min="100"
               max="300"
               step="0.1"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your height"
             />
           </div>
@@ -160,7 +160,7 @@ export default function EditPhysicalStatsModal({
               min="30"
               max="300"
               step="0.1"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your current weight"
             />
           </div>
@@ -178,7 +178,7 @@ export default function EditPhysicalStatsModal({
               min="30"
               max="300"
               step="0.1"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="Enter your goal weight"
             />
           </div>
@@ -188,7 +188,7 @@ export default function EditPhysicalStatsModal({
             <label className="block text-sm font-medium text-iron-gray mb-2">
               Biological Sex (cannot be changed)
             </label>
-            <div className="px-4 py-3 bg-iron-gray/10 border border-iron-gray/30 text-iron-gray rounded">
+            <div className="px-4 py-3 bg-iron-gray/10 border border-iron-gray/30 text-iron-gray">
               {profile.biological_sex ? profile.biological_sex.charAt(0).toUpperCase() + profile.biological_sex.slice(1) : 'Not set'}
             </div>
           </div>

@@ -84,7 +84,7 @@ export default function EditLifestyleModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 rounded transition-colors"
+            className="p-2 hover:bg-iron-gray/20 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -106,7 +106,7 @@ export default function EditLifestyleModal({
               min={VALIDATION_RULES.sleep_hours.min}
               max={VALIDATION_RULES.sleep_hours.max}
               step={VALIDATION_RULES.sleep_hours.step}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="How many hours do you sleep per night?"
             />
             <p className="mt-2 text-xs text-iron-gray">
@@ -123,7 +123,7 @@ export default function EditLifestyleModal({
               id="stressLevel"
               value={stressLevel}
               onChange={(e) => setStressLevel(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               {STRESS_LEVEL_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>

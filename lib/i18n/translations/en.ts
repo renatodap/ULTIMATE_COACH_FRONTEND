@@ -114,13 +114,56 @@ export const en = {
   // NUTRITION
   // ============================================================================
   nutrition: {
-    title: 'NUTRITION',
+    title: 'Nutrition Tracker',
+    pageTitle: 'NUTRITION TRACKER',
     searchFoods: 'Search foods...',
     recentMeals: 'Recent Meals',
     logMeal: 'Log Meal',
+    logNewMeal: 'Log New Meal',
     mealLogged: 'Meal logged successfully',
     deleteMeal: 'Delete Meal',
     deleteMealConfirm: 'Are you sure you want to delete this meal?',
+
+    // Log page
+    quickMeals: 'Quick Meals',
+    recentFoods: 'Recent Foods',
+    buildingMeal: 'Building Meal',
+    saveAsQuickMeal: 'Save as Quick Meal',
+    noFoodsFound: 'No foods found',
+    total: 'Total',
+    logging: 'Logging...',
+    addToMeal: 'Add to Meal',
+    unit: 'Unit',
+    quantity: 'Quantity',
+    servingSize: 'Serving Size',
+    nutrition: 'Nutrition',
+    invalidInput: 'Invalid input',
+
+    // Quick meal modal
+    saveQuickMealTitle: 'Save as Quick Meal',
+    quickMealName: 'Name',
+    quickMealNamePlaceholder: 'e.g., Morning Protein Shake',
+    quickMealDescription: 'Description (optional)',
+    quickMealDescriptionPlaceholder: 'e.g., Pre-workout fuel',
+    saving: 'Saving...',
+
+    // Daily summary
+    dailyCalorieGoal: 'Daily Calorie Goal',
+    caloriesPerDay: 'calories/day',
+    remaining: 'remaining',
+    over: 'over',
+    todaysMeals: "Today's Meals",
+    meal: 'meal',
+    meals: 'meals',
+    noMealsLogged: 'No Meals Logged Yet',
+    startTracking: 'Start tracking your nutrition by logging your first meal',
+
+    // Food composition types
+    composedMeal: 'Composed meal',
+    branded: 'Branded',
+
+    // Units
+    calPerHundredG: 'cal per 100g',
 
     // Macros
     calories: 'Calories',
@@ -135,27 +178,58 @@ export const en = {
     lunch: 'Lunch',
     dinner: 'Dinner',
     snack: 'Snack',
+    other: 'Other',
 
     // Servings
     serving: 'Serving',
     servings: 'Servings',
-    grams: 'g',
+    grams: 'Grams',
+    gramsShort: 'g',
     ounces: 'oz',
     cups: 'cups',
     tablespoons: 'tbsp',
     teaspoons: 'tsp',
+
+    // Items
+    item: 'item',
+    items: 'items',
+
+    // Actions
+    backToNutrition: 'Back to nutrition',
+
+    // Errors
+    failedToLogQuickMeal: 'Failed to log quick meal. Please try again.',
+    failedToAddItem: 'Failed to add item to meal',
+    failedToUpdateItem: 'Failed to update item',
+    pleaseAddOneItem: 'Please add at least one food item',
+    pleaseProvideName: 'Please provide a name for your quick meal',
+    failedToSaveQuickMeal: 'Failed to save quick meal. Please try again.',
+    failedToLogMeal: 'Failed to log meal. Please try again.',
+    failedToLoadData: 'Failed to load nutrition data',
+    failedToDeleteMeal: 'Failed to delete meal. Please try again.',
+    unableToLoadData: 'Unable to Load Data',
+    tryAgain: 'Try Again',
+
+    // Success
+    quickMealSaved: 'Quick meal saved successfully!',
+
+    // Loading
+    verifyingAuth: 'Verifying authentication...',
+    loadingNutritionData: 'Loading nutrition data...',
   },
 
   // ============================================================================
   // ACTIVITIES
   // ============================================================================
   activities: {
-    title: 'ACTIVITIES',
+    title: 'Activity Tracker',
+    pageTitle: 'ACTIVITY TRACKER',
+    log: '+ Log',
     logActivity: 'Log Activity',
     recentActivities: 'Recent Activities',
     activityLogged: 'Activity logged successfully',
     deleteActivity: 'Delete Activity',
-    deleteActivityConfirm: 'Are you sure you want to delete this activity?',
+    deleteActivityConfirm: 'Delete this activity? This action cannot be undone.',
 
     // Activity types
     strength: 'Strength Training',
@@ -163,6 +237,10 @@ export const en = {
     sports: 'Sports',
     flexibility: 'Flexibility',
     other: 'Other',
+
+    // Date headers
+    today: 'Today',
+    yesterday: 'Yesterday',
 
     // Metrics
     duration: 'Duration',
@@ -174,6 +252,17 @@ export const en = {
     minutes: 'minutes',
     kilometers: 'km',
     miles: 'miles',
+
+    // Empty state
+    noActivitiesLogged: 'No Activities Yet',
+    startLogging: 'Log your first activity to start tracking your fitness progress!',
+
+    // Errors
+    failedToLoad: 'Failed to load activities. Please try again.',
+    failedToDelete: 'Failed to delete activity. Please try again.',
+
+    // Loading
+    loadingActivities: 'Loading activities...',
   },
 
   // ============================================================================
@@ -199,20 +288,63 @@ export const en = {
   // PROFILE
   // ============================================================================
   profile: {
-    title: 'PROFILE',
+    title: 'Profile',
+    pageTitle: 'PROFILE',
     editProfile: 'Edit Profile',
     personalInfo: 'Personal Information',
     goals: 'Goals',
     preferences: 'Preferences',
+    backToDashboard: 'Back to dashboard',
+    signOut: 'Sign Out',
+
+    // Sections
+    basicInfo: 'Basic Information',
+    physicalStats: 'Physical Stats',
+    goalsTraining: 'Goals & Training',
+    nutritionPlan: 'Nutrition Plan',
+    dietaryPreferences: 'Dietary Preferences',
+    lifestyle: 'Lifestyle',
+    consultation: 'Consultation',
 
     // Fields
     fullName: 'Full Name',
+    name: 'Name',
     email: 'Email',
+    memberSince: 'Member Since',
+    onboardingCompleted: 'Onboarding Completed',
     age: 'Age',
+    sex: 'Sex',
     height: 'Height',
     weight: 'Weight',
+    currentWeight: 'Current Weight',
     goalWeight: 'Goal Weight',
     activityLevel: 'Activity Level',
+    primaryGoal: 'Primary Goal',
+    experienceLevel: 'Experience Level',
+    workoutFrequency: 'Workout Frequency',
+    estimatedTDEE: 'Estimated TDEE',
+    macrosLastCalculated: 'Macros Last Calculated',
+    dietaryPreference: 'Dietary Preference',
+    foodAllergies: 'Food Allergies',
+    foodsToAvoid: 'Foods to Avoid',
+    mealsPerDay: 'Meals Per Day',
+    cooksRegularly: 'Cooks Regularly',
+    sleepHours: 'Sleep Hours',
+    stressLevel: 'Stress Level',
+    language: 'Language',
+    unitSystem: 'Unit System',
+    timezone: 'Timezone',
+
+    // Values
+    years: 'years',
+    timesPerWeek: 'x per week',
+    cal: 'cal',
+    hoursPerNight: 'hours/night',
+    yes: 'Yes',
+    no: 'No',
+    none: 'None',
+    notSet: 'Not set',
+    unknown: 'Unknown',
 
     // Activity levels
     sedentary: 'Sedentary',
@@ -225,7 +357,55 @@ export const en = {
     loseWeight: 'Lose Weight',
     maintainWeight: 'Maintain Weight',
     gainMuscle: 'Gain Muscle',
+    buildMuscle: 'Build Muscle',
     improveHealth: 'Improve Health',
+    improvePerformance: 'Improve Performance',
+
+    // Experience levels
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    advanced: 'Advanced',
+
+    // Biological sex
+    male: 'Male',
+    female: 'Female',
+
+    // Dietary preferences
+    noRestrictions: 'No Restrictions',
+    vegetarian: 'Vegetarian',
+    vegan: 'Vegan',
+    pescatarian: 'Pescatarian',
+    keto: 'Keto',
+    paleo: 'Paleo',
+
+    // Stress levels
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+
+    // Unit systems
+    metric: 'Metric (kg, cm)',
+    imperial: 'Imperial (lbs, in)',
+
+    // Consultation
+    consultationCompleted: 'Consultation Completed',
+    completedOn: 'Completed on',
+    youHaveCompleted: 'You have completed a consultation',
+
+    // Nutrition plan
+    dailyCalorieGoal: 'Daily Calorie Goal',
+    caloriesPerDay: 'calories/day',
+
+    // Errors
+    unableToLoad: 'Unable to Load Profile',
+    failedToLoad: 'Failed to load profile',
+    tryAgain: 'Try Again',
+
+    // Success
+    profileUpdated: 'Profile updated successfully!',
+
+    // Loading
+    loadingProfile: 'Loading your profile...',
   },
 
   // ============================================================================

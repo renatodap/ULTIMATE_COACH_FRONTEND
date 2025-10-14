@@ -54,10 +54,13 @@ export default function DashboardPage() {
   const [weightModalOpen, setWeightModalOpen] = useState(false)
 
   useEffect(() => {
-    if (onboardingComplete) {
+    // Load dashboard regardless of onboarding status
+    // Middleware already handles authentication
+    // If onboarding not complete, user will be redirected by useOnboardingCheck
+    if (!authLoading) {
       loadDashboard()
     }
-  }, [onboardingComplete])
+  }, [authLoading])
 
   const loadDashboard = async () => {
     try {

@@ -79,8 +79,8 @@ export interface CreateActivityRequest {
   start_time: string // ISO 8601
   end_time?: string | null
   duration_minutes?: number | null
-  calories_burned: number
-  intensity_mets: number
+  calories_burned?: number | null // Auto-calculated if not provided
+  intensity_mets?: number | null // Auto-looked-up if not provided
   metrics?: ActivityMetrics
   notes?: string | null
 }

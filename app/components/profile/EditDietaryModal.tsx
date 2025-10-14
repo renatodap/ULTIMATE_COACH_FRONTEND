@@ -131,7 +131,7 @@ export default function EditDietaryModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 rounded transition-colors"
+            className="p-2 hover:bg-iron-gray/20 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -149,7 +149,7 @@ export default function EditDietaryModal({
               id="dietaryPreference"
               value={dietaryPreference}
               onChange={(e) => setDietaryPreference(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               <option value="none">None</option>
               <option value="vegetarian">Vegetarian</option>
@@ -170,12 +170,12 @@ export default function EditDietaryModal({
               {foodAllergies.length > 0 && (
                 <div className="space-y-1">
                   {foodAllergies.map((allergy, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray rounded">
+                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray">
                       <span className="flex-1 text-sm text-iron-white">{allergy}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveAllergy(index)}
-                        className="p-1 hover:bg-red-900/20 rounded transition-colors"
+                        className="p-1 hover:bg-red-900/20 transition-colors"
                         aria-label={`Remove ${allergy}`}
                       >
                         <Trash2 className="w-4 h-4 text-red-500" />
@@ -193,12 +193,12 @@ export default function EditDietaryModal({
                   onChange={(e) => setNewAllergy(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAllergy())}
                   placeholder="Add allergy..."
-                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm rounded focus:outline-none focus:border-iron-orange transition-colors"
+                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleAddAllergy}
-                  className="px-3 py-2 bg-iron-orange text-iron-black rounded hover:bg-orange-600 transition-colors"
+                  className="px-3 py-2 bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors"
                   aria-label="Add allergy"
                 >
                   <Plus className="w-4 h-4" />
@@ -217,12 +217,12 @@ export default function EditDietaryModal({
               {foodsToAvoid.length > 0 && (
                 <div className="space-y-1">
                   {foodsToAvoid.map((food, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray rounded">
+                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray">
                       <span className="flex-1 text-sm text-iron-white">{food}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveAvoid(index)}
-                        className="p-1 hover:bg-red-900/20 rounded transition-colors"
+                        className="p-1 hover:bg-red-900/20 transition-colors"
                         aria-label={`Remove ${food}`}
                       >
                         <Trash2 className="w-4 h-4 text-red-500" />
@@ -240,12 +240,12 @@ export default function EditDietaryModal({
                   onChange={(e) => setNewAvoid(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAvoid())}
                   placeholder="Add food to avoid..."
-                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm rounded focus:outline-none focus:border-iron-orange transition-colors"
+                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleAddAvoid}
-                  className="px-3 py-2 bg-iron-orange text-iron-black rounded hover:bg-orange-600 transition-colors"
+                  className="px-3 py-2 bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors"
                   aria-label="Add food to avoid"
                 >
                   <Plus className="w-4 h-4" />
@@ -266,7 +266,7 @@ export default function EditDietaryModal({
               onChange={(e) => setMealsPerDay(e.target.value)}
               min="1"
               max="8"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
               placeholder="How many meals do you eat per day?"
             />
           </div>
@@ -278,7 +278,7 @@ export default function EditDietaryModal({
                 type="checkbox"
                 checked={cooksRegularly}
                 onChange={(e) => setCooksRegularly(e.target.checked)}
-                className="w-5 h-5 bg-iron-black border border-iron-gray rounded focus:outline-none focus:ring-2 focus:ring-iron-orange"
+                className="w-5 h-5 bg-iron-black border border-iron-gray focus:outline-none focus:ring-2 focus:ring-iron-orange"
               />
               <span className="text-sm font-medium text-iron-white">I cook regularly</span>
             </label>

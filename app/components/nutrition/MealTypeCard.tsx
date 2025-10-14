@@ -59,7 +59,7 @@ export default function MealTypeCard({
   })
 
   return (
-    <div className="border border-iron-gray/30 overflow-hidden mb-4 hover:border-iron-orange/50 transition-colors">
+    <div className="border border-iron-gray overflow-hidden hover:border-iron-orange/50 transition-colors">
       {/* Header (Always Visible) */}
       <button
         onClick={handleToggle}
@@ -81,7 +81,7 @@ export default function MealTypeCard({
         {/* Right Side: Calories & Chevron */}
         <div className="flex items-center gap-3">
           <span className="text-iron-orange font-semibold">
-            {meal.totalCalories} cal
+            {Math.round(meal.totalCalories)} cal
           </span>
           <ChevronDown
             className={`w-5 h-5 text-iron-gray transition-transform duration-200 ${
@@ -117,11 +117,11 @@ export default function MealTypeCard({
               <span className="text-iron-gray">Total:</span>
               <div className="flex gap-4">
                 <span className="text-iron-orange font-semibold">
-                  {meal.totalCalories} cal
+                  {Math.round(meal.totalCalories)} cal
                 </span>
-                <span className="text-green-500">P: {meal.totalProtein}g</span>
-                <span className="text-blue-500">C: {meal.totalCarbs}g</span>
-                <span className="text-orange-500">F: {meal.totalFat}g</span>
+                <span className="text-green-500">P: {Math.round(meal.totalProtein)}g</span>
+                <span className="text-blue-500">C: {Math.round(meal.totalCarbs)}g</span>
+                <span className="text-orange-500">F: {Math.round(meal.totalFat)}g</span>
               </div>
             </div>
           </div>

@@ -5,12 +5,13 @@
  * Proper exit→enter transitions, no glitching, staggered animations
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { completeOnboarding } from '@/lib/api/onboarding'
 import { weightToKg, type UnitSystem } from '@/lib/utils/units'
+import { detectBrowserLanguage, type SupportedLanguage } from '@/lib/utils/language'
 import { Message } from '@/components/onboarding/Message'
 import { ButtonGroup } from '@/components/onboarding/ButtonGroup'
 import { Input } from '@/components/onboarding/Input'
@@ -40,6 +41,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('language')
 
   const [data, setData] = useState({
+    language: 'en' as SupportedLanguage,
     primary_goal: '',
     experience_level: '',
     workout_frequency: 0,
@@ -57,6 +59,12 @@ export default function OnboardingPage() {
     stress_level: 'medium',
     cooks_regularly: true,
   })
+
+  // Auto-detect browser language on mount
+  useEffect(() => {
+    const detectedLanguage = detectBrowserLanguage()
+    setData(prev => ({ ...prev, language: detectedLanguage }))
+  }, [])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -113,6 +121,7 @@ export default function OnboardingPage() {
         cooks_regularly: data.cooks_regularly,
         unit_system: data.unit_system,
         timezone: timezone,
+        language: data.language,
       }
 
       await completeOnboarding(payload)
@@ -139,12 +148,13 @@ export default function OnboardingPage() {
               <ButtonGroup
                 options={[
                   { label: 'English', value: 'en' },
+                  { label: 'Português 🇧🇷', value: 'pt' },
                   { label: 'Español (Coming Soon)', value: 'es' },
-                  { label: 'Português (Coming Soon)', value: 'pt' },
                 ]}
                 onSelect={(val) => {
-                  if (val !== 'en') return
-                  updateAndNext('language', val, 'goal')
+                  // Allow English and Portuguese, block others
+                  if (val !== 'en' && val !== 'pt') return
+                  updateAndNext('language', val as SupportedLanguage, 'goal')
                 }}
               />
             </div>

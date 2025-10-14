@@ -126,15 +126,16 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* CTA */}
+          {/* CTA Buttons */}
           <motion.div
+            className="flex flex-col sm:flex-row gap-4 items-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.4 }}
           >
             <Link
               href="/signup"
-              className="btn btn-primary text-base sm:text-lg md:text-xl px-8 sm:px-12 py-4 sm:py-5 inline-block"
+              className="btn btn-primary text-base sm:text-lg md:text-xl px-8 sm:px-12 py-4 sm:py-5 inline-block w-full sm:w-auto text-center"
             >
               <motion.span
                 className="inline-block"
@@ -142,6 +143,18 @@ export default function LandingPage() {
                 whileTap={{ scale: 0.95 }}
               >
                 GET STARTED →
+              </motion.span>
+            </Link>
+            <Link
+              href="/login"
+              className="btn btn-secondary text-base sm:text-lg md:text-xl px-8 sm:px-12 py-4 sm:py-5 inline-block w-full sm:w-auto text-center"
+            >
+              <motion.span
+                className="inline-block"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                SIGN IN
               </motion.span>
             </Link>
           </motion.div>

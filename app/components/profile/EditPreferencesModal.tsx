@@ -12,6 +12,19 @@ import { useState } from 'react'
 import { X, Loader2, Settings } from 'lucide-react'
 import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
 import { UNIT_SYSTEM_OPTIONS, TIMEZONE_OPTIONS } from '@/lib/constants/profile'
+import { getLanguageDisplayName, type SupportedLanguage } from '@/lib/utils/language'
+
+const LANGUAGE_OPTIONS: Array<{ value: SupportedLanguage; label: string }> = [
+  { value: 'en', label: 'English' },
+  { value: 'pt', label: 'Português (Portuguese)' },
+  { value: 'es', label: 'Español (Coming Soon)' },
+  { value: 'fr', label: 'Français (Coming Soon)' },
+  { value: 'de', label: 'Deutsch (Coming Soon)' },
+  { value: 'it', label: 'Italiano (Coming Soon)' },
+  { value: 'ja', label: '日本語 (Coming Soon)' },
+  { value: 'ko', label: '한국어 (Coming Soon)' },
+  { value: 'zh', label: '中文 (Coming Soon)' },
+]
 
 interface EditPreferencesModalProps {
   profile: FullUserProfile
@@ -28,6 +41,7 @@ export default function EditPreferencesModal({
   onSuccess,
   onError,
 }: EditPreferencesModalProps) {
+  const [language, setLanguage] = useState<SupportedLanguage>((profile.language as SupportedLanguage) || 'en')
   const [unitSystem, setUnitSystem] = useState(profile.unit_system || 'imperial')
   const [timezone, setTimezone] = useState(profile.timezone || 'America/New_York')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,6 +55,9 @@ export default function EditPreferencesModal({
     try {
       const updates: any = {}
 
+      if (language !== profile.language) {
+        updates.language = language
+      }
       if (unitSystem !== profile.unit_system) {
         updates.unit_system = unitSystem
       }
@@ -84,7 +101,7 @@ export default function EditPreferencesModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 rounded transition-colors"
+            className="p-2 hover:bg-iron-gray/20 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -93,6 +110,38 @@ export default function EditPreferencesModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Language */}
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-iron-white mb-2">
+              Language
+            </label>
+            <select
+              id="language"
+              value={language}
+              onChange={(e) => {
+                const value = e.target.value as SupportedLanguage
+                // Only allow en and pt for now
+                if (value === 'en' || value === 'pt') {
+                  setLanguage(value)
+                }
+              }}
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+            >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.value !== 'en' && option.value !== 'pt'}
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-iron-gray">
+              Portuguese food names available! More languages coming soon.
+            </p>
+          </div>
+
           {/* Unit System */}
           <div>
             <label htmlFor="unitSystem" className="block text-sm font-medium text-iron-white mb-2">
@@ -102,7 +151,7 @@ export default function EditPreferencesModal({
               id="unitSystem"
               value={unitSystem}
               onChange={(e) => setUnitSystem(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               {UNIT_SYSTEM_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -124,7 +173,7 @@ export default function EditPreferencesModal({
               id="timezone"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white rounded focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
             >
               {TIMEZONE_OPTIONS.map((tz) => (
                 <option key={tz.value} value={tz.value}>

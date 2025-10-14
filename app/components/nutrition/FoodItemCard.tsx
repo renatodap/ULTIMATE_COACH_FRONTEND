@@ -77,16 +77,16 @@ export default function FoodItemCard({ item, onEdit }: FoodItemCardProps) {
         {/* Macro Breakdown */}
         <div className="flex flex-wrap gap-3 text-sm">
           <span className="text-iron-orange font-semibold">
-            {calories} cal
+            {Math.round(calories)} cal
           </span>
           <span className="text-green-500">
-            P: {protein}g
+            P: {Math.round(protein)}g
           </span>
           <span className="text-blue-500">
-            C: {carbs}g
+            C: {Math.round(carbs)}g
           </span>
           <span className="text-orange-500">
-            F: {fat}g
+            F: {Math.round(fat)}g
           </span>
         </div>
       </button>

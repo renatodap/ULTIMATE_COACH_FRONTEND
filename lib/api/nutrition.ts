@@ -180,15 +180,78 @@ export async function createMeal(request: CreateMealRequest): Promise<MealAPI> {
 /**
  * Get daily nutrition data (stats + meals combined)
  * This is a convenience function that calls both endpoints
+ *
+ * IMPORTANT: Backend uses exclusive end_date filtering (.lt() not .lte()),
+ * so we must pass the NEXT day as end_date to get meals for the target date.
  */
 export async function getDailyNutrition(date: string) {
+  // Calculate next day for exclusive end date filtering
+  // Backend query: logged_at >= start_date AND logged_at < end_date
+  const startDate = new Date(date + 'T00:00:00')
+  const endDate = new Date(startDate)
+  endDate.setDate(endDate.getDate() + 1)
+  const endDateStr = endDate.toISOString().split('T')[0]
+
   const [stats, mealsResponse] = await Promise.all([
     getNutritionStats(date),
-    getMeals({ start_date: date, end_date: date })
+    getMeals({
+      start_date: date,
+      end_date: endDateStr  // Next day to make range inclusive via exclusive upper bound
+    })
   ])
 
   return {
     stats,
     meals: mealsResponse.meals
   }
+}
+
+/**
+ * Update a meal (DELETE + CREATE pattern since backend has no UPDATE endpoint)
+ *
+ * This function:
+ * 1. Fetches the current meal data
+ * 2. Deletes the old meal
+ * 3. Creates a new meal with updated data
+ *
+ * @param mealId - ID of meal to update
+ * @param updates - Partial meal data to update
+ * @returns The newly created meal
+ */
+export async function updateMeal(
+  mealId: string,
+  updates: Partial<CreateMealRequest>
+): Promise<MealAPI> {
+  // 1. Fetch current meal data
+  const currentMeal = await getMeal(mealId)
+
+  // 2. Merge current data with updates
+  const updatedMealData: CreateMealRequest = {
+    name: updates.name !== undefined ? updates.name : currentMeal.name,
+    meal_type: updates.meal_type || currentMeal.meal_type,
+    logged_at: updates.logged_at || currentMeal.logged_at,
+    notes: updates.notes !== undefined ? updates.notes : currentMeal.notes,
+    source: updates.source || currentMeal.source,
+    ai_confidence: updates.ai_confidence !== undefined ? updates.ai_confidence : currentMeal.ai_confidence,
+    // Use updated items if provided, otherwise map existing items
+    items: updates.items || currentMeal.items.map(item => ({
+      food_id: item.food_id,
+      quantity: item.quantity,
+      serving_id: item.serving_id,
+      grams: item.grams,
+      calories: item.calories,
+      protein_g: item.protein_g,
+      carbs_g: item.carbs_g,
+      fat_g: item.fat_g,
+      display_unit: item.display_unit,
+      display_label: item.display_label,
+      display_order: item.display_order
+    }))
+  }
+
+  // 3. Delete old meal
+  await deleteMeal(mealId)
+
+  // 4. Create new meal with updated data
+  return await createMeal(updatedMealData)
 }

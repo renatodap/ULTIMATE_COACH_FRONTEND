@@ -33,7 +33,7 @@ export default function DailySummaryCard({
   const isOverGoal = remaining < 0
 
   return (
-    <div className="card-glass border border-iron-gray/30 p-6 mb-6">
+    <div className="bg-iron-dark-gray border border-iron-gray p-6 mb-6">
       {/* Calorie Progress Section */}
       <div className="text-center mb-6">
         <p className="text-iron-gray text-xs uppercase tracking-wider mb-3">
@@ -50,8 +50,8 @@ export default function DailySummaryCard({
           </span>
         </div>
 
-        {/* Progress Bar - NO ROUNDED CORNERS, WHITE BORDER */}
-        <div className="h-3 bg-iron-gray/20 overflow-hidden mb-2 border-2 border-iron-white">
+        {/* Progress Bar */}
+        <div className="h-3 bg-iron-gray/20 overflow-hidden mb-2">
           <div
             className={`h-full transition-all duration-500 ${
               isOverGoal ? 'bg-red-500' : 'bg-iron-orange'

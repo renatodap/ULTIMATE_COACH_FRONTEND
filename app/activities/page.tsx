@@ -12,6 +12,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 import { getActivities, getDailySummary, deleteActivity } from '@/lib/api/activities'
 import DailySummaryCard from '@/app/components/activities/DailySummaryCard'
 import ActivityCard from '@/app/components/activities/ActivityCard'
@@ -51,6 +52,7 @@ const emptyStateVariants = {
 
 export default function ActivitiesPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [summary, setSummary] = useState<DailySummary | null>(null)
   const [activitiesByDate, setActivitiesByDate] = useState<Map<string, Activity[]>>(new Map())
   const [loading, setLoading] = useState(true)
@@ -86,7 +88,7 @@ export default function ActivitiesPage() {
       setActivitiesByDate(grouped)
     } catch (err) {
       console.error('Failed to load activities:', err)
-      setError('Failed to load activities. Please try again.')
+      setError(t('activities.failedToLoad'))
     } finally {
       setLoading(false)
     }
@@ -98,7 +100,7 @@ export default function ActivitiesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this activity? This action cannot be undone.')) return
+    if (!confirm(t('activities.deleteActivityConfirm'))) return
 
     try {
       await deleteActivity(id)
@@ -106,7 +108,7 @@ export default function ActivitiesPage() {
       await loadActivities()
     } catch (err) {
       console.error('Failed to delete activity:', err)
-      alert('Failed to delete activity. Please try again.')
+      alert(t('activities.failedToDelete'))
     }
   }
 
@@ -117,9 +119,9 @@ export default function ActivitiesPage() {
     yesterday.setDate(yesterday.getDate() - 1)
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today'
+      return t('activities.today')
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday'
+      return t('activities.yesterday')
     } else {
       return date.toLocaleDateString('en-US', {
         month: 'short',
@@ -132,7 +134,7 @@ export default function ActivitiesPage() {
   if (loading) {
     return (
       <>
-        <LoadingScreen message="Loading activities..." showBottomNav />
+        <LoadingScreen message={t('activities.loadingActivities')} showBottomNav />
         <BottomNav />
       </>
     )
@@ -146,12 +148,12 @@ export default function ActivitiesPage() {
       <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">Activity Tracker</h1>
+            <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">{t('activities.pageTitle')}</h1>
             <button
               onClick={() => router.push('/activities/log')}
               className="bg-iron-orange text-iron-black border-2 border-iron-orange px-4 py-2 text-sm font-bold uppercase tracking-wider hover:bg-iron-black hover:text-iron-orange transition active:scale-95"
             >
-              + Log
+              {t('activities.log')}
             </button>
           </div>
         </div>
