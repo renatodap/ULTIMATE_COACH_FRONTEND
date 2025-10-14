@@ -46,13 +46,13 @@ export function Input({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      exit={{ opacity: 0, y: -16 }}
       transition={{
         type: 'spring',
-        stiffness: 100,
-        damping: 15
+        stiffness: 220,
+        damping: 12
       }}
       className="mb-12"
     >
@@ -88,9 +88,9 @@ export function Input({
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.12 } }}
             whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 18 }}
             onClick={onSubmit}
             className="
               mt-6 w-full px-6 py-6 rounded-xl text-xl font-bold

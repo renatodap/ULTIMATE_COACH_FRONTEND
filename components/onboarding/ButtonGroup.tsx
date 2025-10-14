@@ -24,14 +24,14 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+      staggerChildren: 0.05,
+      delayChildren: 0.06
     }
   },
   exit: {
     opacity: 0,
     transition: {
-      staggerChildren: 0.05,
+      staggerChildren: 0.03,
       staggerDirection: -1
     }
   }
@@ -49,8 +49,8 @@ const buttonVariants = {
     scale: 1,
     transition: {
       type: 'spring' as const,
-      stiffness: 100,
-      damping: 15
+      stiffness: 220,
+      damping: 12
     }
   },
   exit: {
@@ -58,7 +58,7 @@ const buttonVariants = {
     y: -20,
     scale: 0.95,
     transition: {
-      duration: 0.3
+      duration: 0.2
     }
   }
 }
@@ -76,7 +76,7 @@ export function ButtonGroup({ options, onSelect, selected }: ButtonGroupProps) {
         <motion.button
           key={option.value}
           variants={buttonVariants}
-          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+          whileHover={{ scale: 1.02, transition: { duration: 0.12 } }}
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => onSelect(option.value)}

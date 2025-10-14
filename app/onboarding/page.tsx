@@ -91,7 +91,7 @@ export default function OnboardingPage() {
 
   const updateAndNext = useCallback((field: string, value: any, nextStep: Step) => {
     setData(prev => ({ ...prev, [field]: value }))
-    setTimeout(() => next(nextStep), 600) // Delay for exit animation
+    setTimeout(() => next(nextStep), 200) // Faster exit animation transition
   }, [next])
 
   // Prefill inputs when entering steps based on stored metric values
