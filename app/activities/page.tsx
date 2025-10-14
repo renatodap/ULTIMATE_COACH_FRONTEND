@@ -239,7 +239,6 @@ export default function ActivitiesPage() {
       {/* FAB - Floating Action Button */}
       <FAB
         href="/activities/log"
-        label="Log Activity"
       />
 
       {/* Bottom Navigation */}

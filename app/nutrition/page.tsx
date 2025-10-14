@@ -319,7 +319,6 @@ function NutritionPageContent() {
       {/* FAB - Floating Action Button */}
       <FAB
         href="/nutrition/log"
-        label="Log Meal"
       />
 
       {/* Bottom Navigation */}
