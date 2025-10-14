@@ -157,7 +157,7 @@ export default function DashboardPage() {
               {error || 'Something went wrong. Please try again.'}
             </p>
             <button
-              onClick={loadDashboard}
+              onClick={() => loadDashboard()}
               className="btn-primary px-6 py-3"
             >
               Retry
