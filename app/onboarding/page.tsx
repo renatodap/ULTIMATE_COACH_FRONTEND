@@ -358,7 +358,7 @@ export default function OnboardingPage() {
               ) : (
                 <Input
                   type="number"
-                  placeholder={data.unit_system === 'imperial' ? 'e.g., 70' : 'e.g., 178'}
+                  placeholder={'e.g., 178'}
                   value={heightInput}
                   onChange={(val) => {
                     setHeightInput(val)
