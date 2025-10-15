@@ -30,7 +30,7 @@ type Step =
   | 'experience'
   | 'frequency'
   | 'units'
-  | 'age'
+  | 'birth_date'
   | 'sex'
   | 'height'
   | 'weight'
@@ -54,7 +54,7 @@ export default function OnboardingPage() {
     experience_level: '',
     workout_frequency: 0,
     unit_system: 'imperial' as UnitSystem,
-    age: '',
+    birth_date: '',
     biological_sex: '',
     height_cm: 0,
     current_weight_kg: 0,
@@ -137,10 +137,15 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // Validate age before submission
-      const age = parseInt(data.age)
-      if (isNaN(age) || age < 13 || age > 120) {
-        throw new Error('Please enter a valid age between 13 and 120')
+      // Validate birth_date or derive age if provided
+      let derivedAge: number | null = null
+      if ((data as any).birth_date) {
+        const bd = new Date((data as any).birth_date)
+        const today = new Date()
+        derivedAge = Math.floor((today.getTime() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        if (derivedAge < 13 || derivedAge > 120) {
+          throw new Error('Please enter a valid birth date (age must be between 13 and 120)')
+        }
       }
 
       // Validate required fields
@@ -160,7 +165,7 @@ export default function OnboardingPage() {
         primary_goal: data.primary_goal as any,
         experience_level: data.experience_level as any,
         workout_frequency: data.workout_frequency,
-        age: age,
+        ...(((data as any).birth_date) ? { birth_date: (data as any).birth_date } : {}),
         biological_sex: data.biological_sex as any,
         height_cm: data.height_cm,
         current_weight_kg: data.current_weight_kg,
@@ -266,27 +271,30 @@ export default function OnboardingPage() {
                   { label: t('onboarding.imperial'), value: 'imperial', description: 'lbs, ft/in' },
                   { label: t('onboarding.metric'), value: 'metric', description: 'kg, cm' },
                 ]}
-                onSelect={(val) => updateAndNext('unit_system', val, 'age')}
+                onSelect={(val) => updateAndNext('unit_system', val, 'birth_date')}
               />
             </div>
           )}
 
-          {step === 'age' && (
-            <div key="age">
-              <Message text="How old are you?" />
+          {step === 'birth_date' && (
+            <div key="birth_date">
+              <Message text="What's your birth date?" />
               <Input
-                type="number"
-                placeholder="Age"
-                value={data.age}
-                onChange={(val) => setData(prev => ({ ...prev, age: val }))}
+                type="date"
+                placeholder="YYYY-MM-DD"
+                value={(data as any).birth_date}
+                onChange={(val) => setData(prev => ({ ...prev, birth_date: val }))}
                 onSubmit={() => {
-                  if (parseInt(data.age) >= 13 && parseInt(data.age) <= 120) {
-                    next('sex')
+                  const bdStr = (data as any).birth_date as string
+                  if (bdStr) {
+                    const bd = new Date(bdStr)
+                    const today = new Date()
+                    const ageYears = Math.floor((today.getTime() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                    if (ageYears >= 13 && ageYears <= 120) {
+                      next('sex')
+                    }
                   }
                 }}
-                min={13}
-                max={120}
-                unit="years"
               />
             </div>
           )}
