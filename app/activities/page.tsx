@@ -174,7 +174,7 @@ export default function ActivitiesPage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [t])
+  }, [t, selectedDate, viewMode])
 
   // Persist view mode and selected date
   useEffect(() => {
@@ -190,7 +190,6 @@ export default function ActivitiesPage() {
 
   // Lightweight polling for wearable sync jobs to auto-refresh page when done
   useEffect(() => {
-    let interval: any
     async function poll() {
       try {
         const status = await getWearableStatus()
@@ -206,8 +205,8 @@ export default function ActivitiesPage() {
       } catch {}
     }
     poll()
-    interval = setInterval(poll, 10000)
-    return () => clearInterval(interval)
+    const intervalId = setInterval(poll, 10000)
+    return () => clearInterval(intervalId)
   }, [syncInProgress, loadActivities])
 
   const handleEdit = (id: string) => {
