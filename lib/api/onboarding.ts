@@ -18,7 +18,9 @@ export interface OnboardingData {
   workout_frequency: number
 
   // Step 2: Physical Stats (in metric - backend canonical)
-  age: number
+  // Prefer birth_date; age is optional (derived server-side if birth_date provided)
+  birth_date?: string
+  age?: number
   biological_sex: 'male' | 'female'
   height_cm: number
   current_weight_kg: number
@@ -98,7 +100,9 @@ export async function getOnboardingStatus(): Promise<OnboardingStatus> {
  * Preview macro targets (for Step 6 before finalizing)
  */
 export async function previewTargets(params: {
-  age: number
+  // Accept either birth_date or age
+  birth_date?: string
+  age?: number
   biological_sex: 'male' | 'female'
   height_cm: number
   current_weight_kg: number
@@ -107,8 +111,17 @@ export async function previewTargets(params: {
   primary_goal: string
   experience_level?: string
 }): Promise<MacroTargets> {
+  // Derive age from birth_date if provided
+  let ageValue: number | undefined = params.age
+  if (!ageValue && params.birth_date) {
+    const bd = new Date(params.birth_date)
+    const today = new Date()
+    const years = Math.floor((today.getTime() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    ageValue = years
+  }
+
   const queryParams = new URLSearchParams({
-    age: params.age.toString(),
+    age: (ageValue ?? 30).toString(),
     biological_sex: params.biological_sex,
     height_cm: params.height_cm.toString(),
     current_weight_kg: params.current_weight_kg.toString(),
