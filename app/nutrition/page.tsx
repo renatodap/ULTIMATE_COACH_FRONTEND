@@ -20,7 +20,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import MealTypeCard from '../components/nutrition/MealTypeCard'
-import DateNavigation from '../components/nutrition/DateNavigation'
+import DateRangeControls from '@/app/components/ui/DateRangeControls'
+import SegmentedControl from '@/app/components/ui/SegmentedControl'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -242,13 +243,17 @@ function NutritionPageContent() {
         refreshing={refreshing}
       />
 
-      {/* Date Navigation - Keep below header */}
-      <div className="sticky top-16 z-[90] bg-iron-black border-b border-iron-gray/30">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <DateNavigation
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-          />
+      {/* Sticky Controls (mobile-first) */}
+      <div className="sticky top-16 z-[90] bg-iron-black/95 backdrop-blur border-b border-iron-gray/30">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex flex-col gap-3">
+            <SegmentedControl
+              options={[{ key: 'day', label: 'Day' }]}
+              value={'day'}
+              onChange={() => {}}
+            />
+            <DateRangeControls mode="day" date={selectedDate} onChange={handleDateChange} />
+          </div>
         </div>
       </div>
 

@@ -130,7 +130,8 @@ export default function ActivitiesPage() {
         // Week mode: fetch day summary (to get goal) and activities for the whole week
         const { start, end } = getWeekRange(selectedDate)
         fetches.push(getDailySummary({ target_date: selectedDate }))
-        fetches.push(getActivities({ start_date: start, end_date: end, limit: 200 }))
+        // Backend caps limit at 100; week range should comfortably fit under this cap
+        fetches.push(getActivities({ start_date: start, end_date: end, limit: 100 }))
       } else {
         // Recent mode: overall summary (today) and recent activities
         fetches.push(getDailySummary())
