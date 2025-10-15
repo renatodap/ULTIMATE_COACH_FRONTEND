@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from '@/lib/i18n'
 import { getActivities, getDailySummary, deleteActivity } from '@/lib/api/activities'
+import { getWearableStatus, triggerWearableSync } from '@/lib/api/wearables'
 import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import ActivityCard from '@/app/components/activities/ActivityCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -62,6 +63,7 @@ export default function ActivitiesPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [syncInProgress, setSyncInProgress] = useState(false)
 
   // View mode: 'day' (default) or 'recent'
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'recent'>(() => {
@@ -186,6 +188,28 @@ export default function ActivitiesPage() {
     loadActivities()
   }, [loadActivities, viewMode, selectedDate])
 
+  // Lightweight polling for wearable sync jobs to auto-refresh page when done
+  useEffect(() => {
+    let interval: any
+    async function poll() {
+      try {
+        const status = await getWearableStatus()
+        const job = status.latest_job
+        if (job && job.status === 'running') {
+          setSyncInProgress(true)
+        } else if (syncInProgress && job && (job.status === 'success' || job.status === 'error')) {
+          setSyncInProgress(false)
+          await loadActivities(true)
+        } else {
+          setSyncInProgress(false)
+        }
+      } catch {}
+    }
+    poll()
+    interval = setInterval(poll, 10000)
+    return () => clearInterval(interval)
+  }, [syncInProgress, loadActivities])
+
   const handleEdit = (id: string) => {
     // TODO: Implement edit functionality
     router.push(`/activities/${id}/edit`)
@@ -254,6 +278,11 @@ export default function ActivitiesPage() {
       {/* View toggle and date controls (mobile-first) */}
       <div className="sticky top-16 z-[6] bg-iron-black/95 backdrop-blur px-4 py-3 border-b border-iron-gray">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          {syncInProgress && (
+            <div className="w-full bg-iron-orange/10 border border-iron-orange/40 text-iron-white text-sm px-3 py-2 rounded-md">
+              Sync in progress… Your wearable activities will appear shortly.
+            </div>
+          )}
           {/* Segmented control */}
           <div className="grid grid-cols-3 p-1 rounded-lg bg-iron-dark-gray border border-iron-gray overflow-hidden">
             <button
