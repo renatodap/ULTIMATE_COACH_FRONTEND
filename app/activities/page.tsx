@@ -306,7 +306,7 @@ export default function ActivitiesPage() {
               }`}
               onClick={() => setViewMode('recent')}
             >
-              {t('activities.recent') || 'Recent'}
+              {(t as any)('activities.recent') || 'Recent'}
             </button>
           </div>
 
