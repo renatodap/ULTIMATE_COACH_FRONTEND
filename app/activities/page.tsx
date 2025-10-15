@@ -64,10 +64,10 @@ export default function ActivitiesPage() {
   const [error, setError] = useState<string | null>(null)
 
   // View mode: 'day' (default) or 'recent'
-  const [viewMode, setViewMode] = useState<'day' | 'recent'>(() => {
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'recent'>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('activitiesViewMode')
-      if (saved === 'day' || saved === 'recent') return saved
+      if (saved === 'day' || saved === 'recent' || saved === 'week') return saved
     }
     return 'day'
   })
@@ -85,6 +85,20 @@ export default function ActivitiesPage() {
     return `${yyyy}-${mm}-${dd}`
   })
 
+  const getWeekRange = (dateStr: string) => {
+    const d = new Date(dateStr)
+    // Start on Monday
+    const day = d.getDay() === 0 ? 7 : d.getDay() // 1..7 (Mon..Sun)
+    const start = new Date(d)
+    start.setDate(d.getDate() - (day - 1))
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    const toISODate = (dt: Date) => dt.toISOString().split('T')[0]
+    return { start: toISODate(start), end: toISODate(end) }
+  }
+
+  const [weeklySummary, setWeeklySummary] = useState<DailySummary | null>(null)
+
   const loadActivities = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -99,6 +113,11 @@ export default function ActivitiesPage() {
         // Day mode: fetch summary and activities for the selected date
         fetches.push(getDailySummary({ target_date: selectedDate }))
         fetches.push(getActivities({ start_date: selectedDate, end_date: selectedDate, limit: 100 }))
+      } else if (viewMode === 'week') {
+        // Week mode: fetch day summary (to get goal) and activities for the whole week
+        const { start, end } = getWeekRange(selectedDate)
+        fetches.push(getDailySummary({ target_date: selectedDate }))
+        fetches.push(getActivities({ start_date: start, end_date: end, limit: 200 }))
       } else {
         // Recent mode: overall summary (today) and recent activities
         fetches.push(getDailySummary())
@@ -119,6 +138,28 @@ export default function ActivitiesPage() {
       })
 
       setActivitiesByDate(grouped)
+
+      // Build weekly summary when in week mode
+      if (viewMode === 'week') {
+        const all: Activity[] = activitiesResponse.activities || []
+        const totalCalories = all.reduce((s, a) => s + (a.calories_burned || 0), 0)
+        const totalDuration = all.reduce((s, a) => s + (a.duration_minutes || 0), 0)
+        const count = all.length
+        const avgIntensity = count > 0 ? Number((all.reduce((s, a) => s + (a.intensity_mets || 0), 0) / count).toFixed(1)) : 0
+        const dailyGoal = summaryData?.daily_goal_calories || 0
+        const weeklyGoal = dailyGoal * 7
+        const goalPct = weeklyGoal > 0 ? Number(((totalCalories / weeklyGoal) * 100).toFixed(1)) : 0
+        setWeeklySummary({
+          total_calories_burned: totalCalories,
+          total_duration_minutes: totalDuration,
+          average_intensity: avgIntensity,
+          activity_count: count,
+          daily_goal_calories: weeklyGoal, // repurpose as weekly goal for card
+          goal_percentage: goalPct,
+        })
+      } else {
+        setWeeklySummary(null)
+      }
 
       if (isRefresh) {
         toast.success('Activities refreshed!')
@@ -214,7 +255,7 @@ export default function ActivitiesPage() {
       <div className="sticky top-16 z-[6] bg-iron-black/95 backdrop-blur px-4 py-3 border-b border-iron-gray">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           {/* Segmented control */}
-          <div className="grid grid-cols-2 p-1 rounded-lg bg-iron-dark-gray border border-iron-gray overflow-hidden">
+          <div className="grid grid-cols-3 p-1 rounded-lg bg-iron-dark-gray border border-iron-gray overflow-hidden">
             <button
               className={`py-2 text-sm font-medium rounded-md transition ${
                 viewMode === 'day' ? 'bg-iron-orange text-iron-white' : 'text-iron-white hover:bg-iron-gray/40'
@@ -222,6 +263,14 @@ export default function ActivitiesPage() {
               onClick={() => setViewMode('day')}
             >
               {t('activities.today')}
+            </button>
+            <button
+              className={`py-2 text-sm font-medium rounded-md transition ${
+                viewMode === 'week' ? 'bg-iron-orange text-iron-white' : 'text-iron-white hover:bg-iron-gray/40'
+              }`}
+              onClick={() => setViewMode('week')}
+            >
+              {t('activities.thisWeek') || 'This Week'}
             </button>
             <button
               className={`py-2 text-sm font-medium rounded-md transition ${
@@ -233,25 +282,25 @@ export default function ActivitiesPage() {
             </button>
           </div>
 
-          {/* Date chips (only in Day mode) */}
-          {viewMode === 'day' && (
+          {/* Date chips (Day + Week modes) */}
+          {(viewMode === 'day' || viewMode === 'week') && (
             <div className="flex items-center gap-2">
-              {/* Yesterday */}
+              {/* Previous span */}
               <button
                 className="px-3 py-2 rounded-full border border-iron-gray text-iron-white text-sm hover:border-iron-orange/60"
                 onClick={() => {
                   const d = new Date(selectedDate)
-                  d.setDate(d.getDate() - 1)
+                  d.setDate(d.getDate() - (viewMode === 'week' ? 7 : 1))
                   const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0')
                   setSelectedDate(`${yyyy}-${mm}-${dd}`)
                 }}
-                aria-label="Previous day"
+                aria-label={viewMode === 'week' ? 'Previous week' : 'Previous day'}
               >
                 <ChevronLeft className="w-4 h-4 inline mr-1" />
-                {t('activities.yesterday')}
+                {viewMode === 'week' ? (t('activities.prevWeek') || 'Prev Week') : t('activities.yesterday')}
               </button>
 
-              {/* Today */}
+              {/* Today / This Week */}
               <button
                 className={`px-3 py-2 rounded-full text-sm border ${
                   selectedDate === new Date().toISOString().split('T')[0]
@@ -263,21 +312,21 @@ export default function ActivitiesPage() {
                   setSelectedDate(`${yyyy}-${mm}-${dd}`)
                 }}
               >
-                {t('activities.today')}
+                {viewMode === 'week' ? (t('activities.thisWeek') || 'This Week') : t('activities.today')}
               </button>
 
-              {/* Tomorrow */}
+              {/* Next span */}
               <button
                 className="px-3 py-2 rounded-full border border-iron-gray text-iron-white text-sm hover:border-iron-orange/60"
                 onClick={() => {
                   const d = new Date(selectedDate)
-                  d.setDate(d.getDate() + 1)
+                  d.setDate(d.getDate() + (viewMode === 'week' ? 7 : 1))
                   const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0')
                   setSelectedDate(`${yyyy}-${mm}-${dd}`)
                 }}
-                aria-label="Next day"
+                aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
               >
-                {t('activities.tomorrow') || 'Tomorrow'}
+                {viewMode === 'week' ? (t('activities.nextWeek') || 'Next Week') : (t('activities.tomorrow') || 'Tomorrow')}
                 <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
 
@@ -308,14 +357,18 @@ export default function ActivitiesPage() {
           </div>
         )}
 
-        {/* Daily Summary - always show in Day mode; show when hasActivities in Recent */}
-        {summary && ((viewMode === 'day') || (viewMode === 'recent' && hasActivities)) && (
+        {/* Summary: Day uses summary; Week uses computed weeklySummary; Recent uses summary only when has activities */}
+        {((viewMode === 'day' && summary) || (viewMode === 'week' && weeklySummary) || (viewMode === 'recent' && hasActivities && summary)) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <DailySummaryCard type="activity" summary={summary} />
+            {viewMode === 'week' ? (
+              <DailySummaryCard type="activity" summary={weeklySummary as DailySummary} />
+            ) : (
+              <DailySummaryCard type="activity" summary={summary as DailySummary} />
+            )}
           </motion.div>
         )}
 
