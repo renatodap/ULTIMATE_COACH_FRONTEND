@@ -21,7 +21,8 @@ interface EnvConfig {
  */
 function validateEnv(): EnvConfig {
   const config = {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '',
+    // Default to Next.js proxy route when not explicitly configured
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/proxy',
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
@@ -31,9 +32,7 @@ function validateEnv(): EnvConfig {
   if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
     const missing: string[] = []
 
-    if (!config.NEXT_PUBLIC_API_BASE_URL) {
-      missing.push('NEXT_PUBLIC_API_BASE_URL')
-    }
+    // API base URL defaults to '/api/proxy' so it's always present
     if (!config.NEXT_PUBLIC_SUPABASE_URL) {
       missing.push('NEXT_PUBLIC_SUPABASE_URL')
     }
