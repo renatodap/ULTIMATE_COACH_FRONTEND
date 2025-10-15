@@ -100,7 +100,8 @@ export default function ProfilePage() {
 
   // Accordion state for collapsible sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['basic', 'macros']) // Expand basic info and macros by default
+    // Prioritize most used sections on mobile: Nutrition plan, Goals.
+    new Set(['macros', 'goals'])
   )
 
   // Modal states
@@ -203,17 +204,17 @@ export default function ProfilePage() {
 
     return (
       <motion.div
-        className="border border-iron-gray"
+        className="rounded-xl border border-iron-gray/40 bg-iron-dark-gray/50 shadow-[0_4px_20px_rgba(0,0,0,0.25)] backdrop-blur-sm"
         variants={sectionVariants}
       >
         <button
           onClick={() => toggleSection(id)}
-          className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-iron-gray/10 transition-colors"
+          className="w-full p-4 sm:p-6 flex items-center justify-between hover:bg-iron-gray/10 transition-colors rounded-xl"
           aria-expanded={isExpanded}
         >
           <div className="flex items-center gap-3">
             <Icon className="w-5 h-5 text-iron-orange" />
-            <h3 className="font-heading text-lg sm:text-xl text-iron-white uppercase">{title}</h3>
+            <h3 className="font-heading text-lg sm:text-xl text-iron-white uppercase tracking-wider">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
             {onEdit && (
@@ -257,7 +258,7 @@ export default function ProfilePage() {
               variants={contentVariants}
               className="overflow-hidden"
             >
-              <div className="p-4 sm:p-6 pt-0 border-t border-iron-gray/30">
+              <div className="p-4 sm:p-6 pt-0 border-t border-iron-gray/20">
                 {children}
               </div>
             </motion.div>
@@ -277,6 +278,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-iron-black text-iron-white pb-24">
+      {/* Subtle dynamic gradient background at top */}
+      <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-iron-orange/10 via-transparent to-transparent pointer-events-none" />
       {/* Header */}
       <header className="border-b border-iron-gray sticky top-0 bg-iron-black z-[100]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
@@ -309,11 +312,59 @@ export default function ProfilePage() {
       </header>
 
       <motion.main
-        className="max-w-4xl mx-auto px-4 py-6 space-y-4"
+        className="max-w-4xl mx-auto px-4 py-6 space-y-5"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
+        {/* Summary Card */}
+        <motion.div
+          variants={sectionVariants}
+          className="rounded-2xl border border-iron-gray/30 bg-iron-dark-gray/40 shadow-[0_8px_24px_rgba(0,0,0,0.35)] overflow-hidden"
+        >
+          <div className="p-5 flex items-center gap-4">
+            {/* Avatar */}
+            <div className="w-14 h-14 rounded-full bg-iron-orange/20 border border-iron-orange/30 flex items-center justify-center text-iron-orange font-heading text-xl">
+              {(profile.full_name || profile.email || 'U').slice(0,1).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-iron-gray uppercase tracking-wider">{t('profile.welcomeBack') || 'Welcome back'}</p>
+              <h2 className="text-lg sm:text-xl font-bold truncate">{profile.full_name || profile.email}</h2>
+              <p className="text-xs text-iron-gray mt-1">
+                {t('profile.primaryGoal')}: {formatGoal(profile.primary_goal)} • {t('profile.activityLevel')}: {formatActivityLevel(profile.activity_level)}
+              </p>
+            </div>
+            {/* Quick stat pill */}
+            <div className="hidden sm:flex flex-col items-end text-right">
+              <span className="text-xs text-iron-gray uppercase tracking-wider">{t('profile.dailyCalorieGoal')}</span>
+              <span className="text-xl font-heading text-iron-orange">{profile.daily_calorie_goal || '—'}</span>
+            </div>
+          </div>
+          {/* Highlights */}
+          <div className="grid grid-cols-3 gap-3 p-4 border-t border-iron-gray/20">
+            <div className="rounded-lg bg-iron-black/40 p-3 text-center">
+              <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.currentWeight')}</div>
+              <div className="text-lg font-heading">{
+                (profile.current_weight_kg ?? null) !== null
+                  ? displayWeight(profile.current_weight_kg!, profile.unit_system || 'metric').formatted
+                  : '—'
+              }</div>
+            </div>
+            <div className="rounded-lg bg-iron-black/40 p-3 text-center">
+              <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.goalWeight')}</div>
+              <div className="text-lg font-heading">{
+                (profile.goal_weight_kg ?? null) !== null
+                  ? displayWeight(profile.goal_weight_kg!, profile.unit_system || 'metric').formatted
+                  : '—'
+              }</div>
+            </div>
+            <div className="rounded-lg bg-iron-black/40 p-3 text-center">
+              <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.workoutFrequency')}</div>
+              <div className="text-lg font-heading">{profile.workout_frequency ? `${profile.workout_frequency}${t('profile.timesPerWeek')}` : '—'}</div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Basic Info Section (Always visible) */}
         <CollapsibleSection id="basic" title={t('profile.basicInfo')} icon={User}>
           <div className="space-y-2">
@@ -388,7 +439,7 @@ export default function ProfilePage() {
         <CollapsibleSection id="macros" title={t('profile.nutritionPlan')} icon={TrendingUp}>
           <div className="space-y-4">
             {/* Calorie Goal - Large Display */}
-            <div className="text-center p-4 bg-iron-gray/20 border border-iron-orange/30">
+            <div className="text-center p-5 bg-gradient-to-br from-iron-orange/10 to-transparent border border-iron-orange/30 rounded-lg">
               <div className="text-sm text-iron-gray mb-1 uppercase tracking-wider">{t('profile.dailyCalorieGoal')}</div>
               <div className="text-4xl font-heading text-iron-orange">
                 {profile.daily_calorie_goal || '—'}
@@ -398,17 +449,17 @@ export default function ProfilePage() {
 
             {/* Macros Grid */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/30">
+              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/20 rounded-lg">
                 <div className="text-xs text-iron-gray uppercase mb-1">Protein</div>
                 <div className="text-2xl font-heading text-iron-white">{profile.daily_protein_goal || '—'}</div>
                 <div className="text-xs text-iron-gray">g</div>
               </div>
-              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/30">
+              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/20 rounded-lg">
                 <div className="text-xs text-iron-gray uppercase mb-1">Carbs</div>
                 <div className="text-2xl font-heading text-iron-white">{profile.daily_carbs_goal || '—'}</div>
                 <div className="text-xs text-iron-gray">g</div>
               </div>
-              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/30">
+              <div className="text-center p-3 bg-iron-gray/10 border border-iron-gray/20 rounded-lg">
                 <div className="text-xs text-iron-gray uppercase mb-1">Fats</div>
                 <div className="text-2xl font-heading text-iron-white">{profile.daily_fat_goal || '—'}</div>
                 <div className="text-xs text-iron-gray">g</div>
@@ -510,7 +561,7 @@ export default function ProfilePage() {
         {/* Sign Out Button */}
         <motion.button
           onClick={handleSignOut}
-          className="w-full border-2 border-red-600 text-red-600 font-heading text-base sm:text-lg md:text-xl py-3 sm:py-4 uppercase tracking-wider hover:bg-red-600 hover:text-iron-white transition-colors flex items-center justify-center gap-2"
+          className="w-full border-2 border-red-600/80 text-red-500 font-heading text-base sm:text-lg md:text-xl py-3 sm:py-4 uppercase tracking-wider hover:bg-red-600 hover:text-iron-white transition-colors flex items-center justify-center gap-2 rounded-xl"
           variants={sectionVariants}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
