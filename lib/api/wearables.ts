@@ -14,3 +14,13 @@ export async function triggerWearableSync(provider: string, days = 7): Promise<{
   return apiClient.post(`/api/v1/wearables/${provider}/sync?days=${days}`)
 }
 
+export async function triggerWearableSyncInline(provider: string, days = 7): Promise<{ job: any; mode: string }> {
+  return apiClient.post(`/api/v1/wearables/${provider}/sync-inline?days=${days}`)
+}
+
+export async function connectWearable(provider: string, credentials: { email: string; password: string }) {
+  return apiClient.post(`/api/v1/wearables/${provider}/connect`, {
+    provider,
+    credentials,
+  })
+}

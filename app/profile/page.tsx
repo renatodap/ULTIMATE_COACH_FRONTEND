@@ -34,6 +34,7 @@ import {
   Target,
   ChevronDown,
   ChevronUp,
+  Link2,
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
@@ -282,32 +283,43 @@ export default function ProfilePage() {
       <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-iron-orange/10 via-transparent to-transparent pointer-events-none" />
       {/* Header */}
       <header className="border-b border-iron-gray sticky top-0 bg-iron-black z-[100]">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-iron-white uppercase tracking-wider">
             {t('profile.pageTitle')}
           </h1>
-          {profile && (
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-iron-gray uppercase tracking-wider">Units</label>
-              <select
-                value={profile.unit_system || 'metric'}
-                onChange={async (e) => {
-                  const nextUnits = e.target.value as 'metric' | 'imperial'
-                  try {
-                    const updated = await updateFullUserProfile({ unit_system: nextUnits })
-                    setProfile(updated)
-                    setToast({ type: 'success', message: `Switched to ${nextUnits} units` })
-                  } catch (err) {
-                    setToast({ type: 'error', message: 'Failed to update unit preference' })
-                  }
-                }}
-                className="px-3 py-2 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange text-xs"
-              >
-                <option value="metric">Metric</option>
-                <option value="imperial">Imperial</option>
-              </select>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {profile && (
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-iron-gray uppercase tracking-wider">Units</label>
+                <select
+                  value={profile.unit_system || 'metric'}
+                  onChange={async (e) => {
+                    const nextUnits = e.target.value as 'metric' | 'imperial'
+                    try {
+                      const updated = await updateFullUserProfile({ unit_system: nextUnits })
+                      setProfile(updated)
+                      setToast({ type: 'success', message: `Switched to ${nextUnits} units` })
+                    } catch (err) {
+                      setToast({ type: 'error', message: 'Failed to update unit preference' })
+                    }
+                  }}
+                  className="px-3 py-2 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange text-xs rounded-lg"
+                >
+                  <option value="metric">Metric</option>
+                  <option value="imperial">Imperial</option>
+                </select>
+              </div>
+            )}
+            <a
+              href="/profile/connected-apps"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-iron-gray text-iron-white text-xs hover:border-iron-orange/60"
+              aria-label="Connected Apps"
+            >
+              <Link2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Connected Apps</span>
+              <span className="sm:hidden">Apps</span>
+            </a>
+          </div>
         </div>
       </header>
 
