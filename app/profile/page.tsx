@@ -328,10 +328,10 @@ export default function ProfilePage() {
               {(profile.full_name || profile.email || 'U').slice(0,1).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-iron-gray uppercase tracking-wider">{t('profile.welcomeBack') || 'Welcome back'}</p>
+              <p className="text-sm text-iron-gray uppercase tracking-wider">{((t as any)('profile.welcomeBack')) || 'Welcome back'}</p>
               <h2 className="text-lg sm:text-xl font-bold truncate">{profile.full_name || profile.email}</h2>
               <p className="text-xs text-iron-gray mt-1">
-                {t('profile.primaryGoal')}: {formatGoal(profile.primary_goal)} • {t('profile.activityLevel')}: {formatActivityLevel(profile.activity_level)}
+                {((t as any)('profile.primaryGoal'))}: {formatGoal(profile.primary_goal)} • {((t as any)('profile.activityLevel'))}: {formatActivityLevel(profile.activity_level)}
               </p>
             </div>
             {/* Quick stat pill */}
