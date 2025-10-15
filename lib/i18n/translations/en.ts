@@ -241,6 +241,13 @@ export const en = {
     // Date headers
     today: 'Today',
     yesterday: 'Yesterday',
+    tomorrow: 'Tomorrow',
+
+    // Views
+    recent: 'Recent',
+    thisWeek: 'This Week',
+    prevWeek: 'Prev Week',
+    nextWeek: 'Next Week',
 
     // Metrics
     duration: 'Duration',
@@ -296,6 +303,7 @@ export const en = {
     preferences: 'Preferences',
     backToDashboard: 'Back to dashboard',
     signOut: 'Sign Out',
+    welcomeBack: 'Welcome back',
 
     // Sections
     basicInfo: 'Basic Information',

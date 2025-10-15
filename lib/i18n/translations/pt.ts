@@ -217,6 +217,13 @@ export const pt = {
     // Cabeçalhos de data
     today: 'Hoje',
     yesterday: 'Ontem',
+    tomorrow: 'Amanhã',
+
+    // Visões
+    recent: 'Recentes',
+    thisWeek: 'Esta Semana',
+    prevWeek: 'Semana Anterior',
+    nextWeek: 'Próxima Semana',
 
     // Métricas
     duration: 'Duração',
@@ -253,6 +260,7 @@ export const pt = {
     preferences: 'Preferências',
     backToDashboard: 'Voltar ao painel',
     signOut: 'Sair',
+    welcomeBack: 'Bem-vindo de volta',
 
     // Seções
     basicInfo: 'Informações Básicas',
