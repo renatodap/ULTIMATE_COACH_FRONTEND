@@ -298,7 +298,7 @@ export default function ActivitiesPage() {
               }`}
               onClick={() => setViewMode('week')}
             >
-              {t('activities.thisWeek') || 'This Week'}
+              {(t as any)('activities.thisWeek') || 'This Week'}
             </button>
             <button
               className={`py-2 text-sm font-medium rounded-md transition ${
@@ -325,7 +325,7 @@ export default function ActivitiesPage() {
                 aria-label={viewMode === 'week' ? 'Previous week' : 'Previous day'}
               >
                 <ChevronLeft className="w-4 h-4 inline mr-1" />
-                {viewMode === 'week' ? (t('activities.prevWeek') || 'Prev Week') : t('activities.yesterday')}
+                {viewMode === 'week' ? ((t as any)('activities.prevWeek') || 'Prev Week') : t('activities.yesterday')}
               </button>
 
               {/* Today / This Week */}
@@ -340,7 +340,7 @@ export default function ActivitiesPage() {
                   setSelectedDate(`${yyyy}-${mm}-${dd}`)
                 }}
               >
-                {viewMode === 'week' ? (t('activities.thisWeek') || 'This Week') : t('activities.today')}
+                {viewMode === 'week' ? ((t as any)('activities.thisWeek') || 'This Week') : t('activities.today')}
               </button>
 
               {/* Next span */}
@@ -354,7 +354,7 @@ export default function ActivitiesPage() {
                 }}
                 aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
               >
-                {viewMode === 'week' ? (t('activities.nextWeek') || 'Next Week') : (t('activities.tomorrow') || 'Tomorrow')}
+                {viewMode === 'week' ? ((t as any)('activities.nextWeek') || 'Next Week') : (t('activities.tomorrow') || 'Tomorrow')}
                 <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
 
