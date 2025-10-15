@@ -352,11 +352,11 @@ export default function ProfilePage() {
               <span className="text-xl font-heading text-iron-orange">{profile.daily_calorie_goal || '—'}</span>
             </div>
           </div>
-          {/* Highlights */}
-          <div className="grid grid-cols-3 gap-3 p-4 border-t border-iron-gray/20">
+          {/* Highlights (responsive grid) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border-t border-iron-gray/20">
             <div className="rounded-lg bg-iron-black/40 p-3 text-center">
               <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.currentWeight')}</div>
-              <div className="text-lg font-heading">{
+              <div className="text-base sm:text-lg font-heading">{
                 (profile.current_weight_kg ?? null) !== null
                   ? displayWeight(profile.current_weight_kg!, profile.unit_system || 'metric').formatted
                   : '—'
@@ -364,7 +364,7 @@ export default function ProfilePage() {
             </div>
             <div className="rounded-lg bg-iron-black/40 p-3 text-center">
               <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.goalWeight')}</div>
-              <div className="text-lg font-heading">{
+              <div className="text-base sm:text-lg font-heading">{
                 (profile.goal_weight_kg ?? null) !== null
                   ? displayWeight(profile.goal_weight_kg!, profile.unit_system || 'metric').formatted
                   : '—'
@@ -372,7 +372,7 @@ export default function ProfilePage() {
             </div>
             <div className="rounded-lg bg-iron-black/40 p-3 text-center">
               <div className="text-xs text-iron-gray uppercase mb-1">{t('profile.workoutFrequency')}</div>
-              <div className="text-lg font-heading">{profile.workout_frequency ? `${profile.workout_frequency}${t('profile.timesPerWeek')}` : '—'}</div>
+              <div className="text-base sm:text-lg font-heading">{profile.workout_frequency ? `${profile.workout_frequency}${t('profile.timesPerWeek')}` : '—'}</div>
             </div>
           </div>
         </motion.div>
