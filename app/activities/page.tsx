@@ -101,6 +101,17 @@ export default function ActivitiesPage() {
 
   const [weeklySummary, setWeeklySummary] = useState<DailySummary | null>(null)
 
+  // Helpers to format labels for mobile
+  const formatShortDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(today.getDate() - 1)
+    if (date.toDateString() === today.toDateString()) return 'Today'
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
   const loadActivities = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -282,40 +293,40 @@ export default function ActivitiesPage() {
               Sync in progress… Your wearable activities will appear shortly.
             </div>
           )}
-          {/* Segmented control */}
-          <div className="grid grid-cols-3 p-1 rounded-lg bg-iron-dark-gray border border-iron-gray overflow-hidden">
+          {/* Segmented control: short labels, mobile-friendly */}
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-iron-dark-gray border border-iron-gray overflow-hidden">
             <button
-              className={`py-2 text-sm font-medium rounded-md transition ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition ${
                 viewMode === 'day' ? 'bg-iron-orange text-iron-white' : 'text-iron-white hover:bg-iron-gray/40'
               }`}
               onClick={() => setViewMode('day')}
             >
-              {t('activities.today')}
+              Day
             </button>
             <button
-              className={`py-2 text-sm font-medium rounded-md transition ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition ${
                 viewMode === 'week' ? 'bg-iron-orange text-iron-white' : 'text-iron-white hover:bg-iron-gray/40'
               }`}
               onClick={() => setViewMode('week')}
             >
-              {(t as any)('activities.thisWeek') || 'This Week'}
+              Week
             </button>
             <button
-              className={`py-2 text-sm font-medium rounded-md transition ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition ${
                 viewMode === 'recent' ? 'bg-iron-orange text-iron-white' : 'text-iron-white hover:bg-iron-gray/40'
               }`}
               onClick={() => setViewMode('recent')}
             >
-              {(t as any)('activities.recent') || 'Recent'}
+              Recent
             </button>
           </div>
 
-          {/* Date chips (Day + Week modes) */}
+          {/* Date controls (compact, icon-first) */}
           {(viewMode === 'day' || viewMode === 'week') && (
             <div className="flex items-center gap-2">
-              {/* Previous span */}
+              {/* Previous */}
               <button
-                className="px-3 py-2 rounded-full border border-iron-gray text-iron-white text-sm hover:border-iron-orange/60"
+                className="p-2 rounded-full border border-iron-gray text-iron-white hover:border-iron-orange/60"
                 onClick={() => {
                   const d = new Date(selectedDate)
                   d.setDate(d.getDate() - (viewMode === 'week' ? 7 : 1))
@@ -324,28 +335,25 @@ export default function ActivitiesPage() {
                 }}
                 aria-label={viewMode === 'week' ? 'Previous week' : 'Previous day'}
               >
-                <ChevronLeft className="w-4 h-4 inline mr-1" />
-                {viewMode === 'week' ? ((t as any)('activities.prevWeek') || 'Prev Week') : t('activities.yesterday')}
+                <ChevronLeft className="w-5 h-5" />
               </button>
 
-              {/* Today / This Week */}
-              <button
-                className={`px-3 py-2 rounded-full text-sm border ${
-                  selectedDate === new Date().toISOString().split('T')[0]
-                    ? 'border-iron-orange bg-iron-orange/10 text-iron-white'
-                    : 'border-iron-gray text-iron-white hover:border-iron-orange/60'
-                }`}
-                onClick={() => {
-                  const d = new Date(); const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0')
-                  setSelectedDate(`${yyyy}-${mm}-${dd}`)
-                }}
-              >
-                {viewMode === 'week' ? ((t as any)('activities.thisWeek') || 'This Week') : t('activities.today')}
-              </button>
+              {/* Label */}
+              <div className="flex-1 text-center text-sm text-iron-white">
+                {viewMode === 'day' && (
+                  <span>{formatShortDate(selectedDate)}</span>
+                )}
+                {viewMode === 'week' && (() => {
+                  const { start, end } = getWeekRange(selectedDate)
+                  const startText = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  const endText = new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  return <span>{`${startText} – ${endText}`}</span>
+                })()}
+              </div>
 
-              {/* Next span */}
+              {/* Next */}
               <button
-                className="px-3 py-2 rounded-full border border-iron-gray text-iron-white text-sm hover:border-iron-orange/60"
+                className="p-2 rounded-full border border-iron-gray text-iron-white hover:border-iron-orange/60"
                 onClick={() => {
                   const d = new Date(selectedDate)
                   d.setDate(d.getDate() + (viewMode === 'week' ? 7 : 1))
@@ -354,19 +362,18 @@ export default function ActivitiesPage() {
                 }}
                 aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
               >
-                {viewMode === 'week' ? ((t as any)('activities.nextWeek') || 'Next Week') : (((t as any)('activities.tomorrow')) || 'Tomorrow')}
-                <ChevronRight className="w-4 h-4 inline ml-1" />
+                <ChevronRight className="w-5 h-5" />
               </button>
 
-              {/* Date picker */}
-              <div className="ml-auto">
+              {/* Date picker (icon + input) */}
+              <div className="ml-1">
                 <label className="sr-only" htmlFor="activity-date">Select date</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Calendar className="w-5 h-5 text-iron-white/70" />
                   <input
                     id="activity-date"
                     type="date"
-                    className="bg-iron-dark-gray border border-iron-gray rounded-lg px-3 py-2 text-iron-white text-sm focus:outline-none focus:border-iron-orange"
+                    className="bg-iron-dark-gray border border-iron-gray rounded-lg px-2 py-1 text-iron-white text-sm focus:outline-none focus:border-iron-orange"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                   />
