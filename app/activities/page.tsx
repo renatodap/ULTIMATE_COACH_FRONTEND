@@ -354,7 +354,7 @@ export default function ActivitiesPage() {
                 }}
                 aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
               >
-                {viewMode === 'week' ? ((t as any)('activities.nextWeek') || 'Next Week') : (t('activities.tomorrow') || 'Tomorrow')}
+                {viewMode === 'week' ? ((t as any)('activities.nextWeek') || 'Next Week') : (((t as any)('activities.tomorrow')) || 'Tomorrow')}
                 <ChevronRight className="w-4 h-4 inline ml-1" />
               </button>
 
