@@ -447,7 +447,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       severity: ErrorSeverity.ERROR,
       message: 'React component error',
       error,
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack || undefined,
       featureData: {
         errorInfo
       }
