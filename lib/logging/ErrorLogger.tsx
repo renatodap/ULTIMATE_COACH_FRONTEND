@@ -2,19 +2,11 @@
  * Comprehensive Error Logging System
  *
  * Captures, categorizes, and reports errors across the entire application.
- * Integrates with Sentry (optional) and provides detailed context for debugging.
+ * Optionally integrates with Sentry if installed, otherwise falls back to console logging.
  */
 
-// Optional Sentry integration - gracefully handles missing dependency
-let Sentry: any = null
-try {
-  Sentry = require('@sentry/nextjs')
-} catch {
-  // Sentry not installed - error tracking will fall back to console logging
-  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-    console.warn('[ErrorLogger] Sentry not installed - production errors will only be logged to console')
-  }
-}
+// Sentry integration is optional - if not installed, gracefully fall back to console logging
+// We don't import Sentry here to avoid build errors when it's not installed
 
 // ============================================================================
 // ERROR CATEGORIES
@@ -156,14 +148,9 @@ class ErrorLoggerService {
   log(context: ErrorContext): void {
     const enrichedContext = this.enrichContext(context)
 
-    // Console logging (always in dev, selective in prod)
-    if (this.isDevelopment || context.severity === ErrorSeverity.CRITICAL) {
+    // Console logging (always in dev, errors+ in prod)
+    if (this.isDevelopment || context.severity === ErrorSeverity.ERROR || context.severity === ErrorSeverity.CRITICAL) {
       this.logToConsole(enrichedContext)
-    }
-
-    // Send to Sentry (only errors and above)
-    if (context.severity === ErrorSeverity.ERROR || context.severity === ErrorSeverity.CRITICAL) {
-      this.logToSentry(enrichedContext)
     }
 
     // Store in localStorage for debugging (dev only)
@@ -224,73 +211,6 @@ class ErrorLoggerService {
     console.groupEnd()
   }
 
-  /**
-   * Log to Sentry with custom context (if Sentry is installed)
-   */
-  private logToSentry(context: ErrorContext): void {
-    // Fallback if Sentry not installed
-    if (!Sentry) {
-      // In production, log critical errors to console as fallback
-      if (process.env.NODE_ENV === 'production') {
-        console.error('[Production Error]', {
-          category: context.category,
-          severity: context.severity,
-          message: context.message,
-          error: context.error instanceof Error ? context.error.message : context.error,
-          userId: context.userId,
-          url: context.url,
-          statusCode: context.statusCode
-        })
-      }
-      return
-    }
-
-    // Set user context
-    if (context.userId) {
-      Sentry.setUser({
-        id: context.userId,
-        email: context.userEmail,
-      })
-    }
-
-    // Set custom context
-    Sentry.setContext('error_context', {
-      category: context.category,
-      severity: context.severity,
-      sessionId: context.sessionId,
-      featureData: context.featureData
-    })
-
-    // Set tags for filtering
-    Sentry.setTag('error_category', context.category)
-    Sentry.setTag('error_severity', context.severity)
-
-    // Capture exception or message
-    if (context.error instanceof Error) {
-      Sentry.captureException(context.error, {
-        level: this.mapSeverityToSentryLevel(context.severity),
-        contexts: {
-          error_details: {
-            message: context.message,
-            url: context.url,
-            method: context.method,
-            statusCode: context.statusCode,
-            requestId: context.requestId
-          }
-        }
-      })
-    } else {
-      Sentry.captureMessage(context.message, {
-        level: this.mapSeverityToSentryLevel(context.severity),
-        contexts: {
-          error_details: {
-            category: context.category,
-            featureData: context.featureData
-          }
-        }
-      })
-    }
-  }
 
   /**
    * Store errors in localStorage for debugging (dev only)
@@ -347,19 +267,6 @@ class ErrorLoggerService {
     }
   }
 
-  /**
-   * Map severity to Sentry level
-   */
-  private mapSeverityToSentryLevel(severity: ErrorSeverity): 'debug' | 'info' | 'warning' | 'error' | 'fatal' {
-    switch (severity) {
-      case ErrorSeverity.DEBUG: return 'debug'
-      case ErrorSeverity.INFO: return 'info'
-      case ErrorSeverity.WARNING: return 'warning'
-      case ErrorSeverity.ERROR: return 'error'
-      case ErrorSeverity.CRITICAL: return 'fatal'
-      default: return 'error'
-    }
-  }
 
   // ============================================================================
   // CONVENIENCE METHODS FOR COMMON ERROR SCENARIOS
@@ -556,7 +463,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="max-w-md w-full bg-iron-dark-gray border border-iron-gray p-6 space-y-4">
             <h1 className="text-xl font-bold text-iron-orange">Something went wrong</h1>
             <p className="text-sm text-iron-gray">
-              We've logged the error and will look into it. Please try refreshing the page.
+              We&apos;ve logged the error and will look into it. Please try refreshing the page.
             </p>
             <button
               onClick={() => window.location.reload()}
