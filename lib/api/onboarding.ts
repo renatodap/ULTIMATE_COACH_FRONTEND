@@ -102,6 +102,7 @@ export async function completeOnboarding(data: OnboardingData): Promise<Onboardi
       const accessToken = sessionData.session.access_token;
 
       const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       };
 
@@ -118,6 +119,7 @@ export async function completeOnboarding(data: OnboardingData): Promise<Onboardi
     console.log('[Onboarding] Submitting with token:', accessToken.substring(0, 20) + '...');
 
     const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${accessToken}`
     };
 

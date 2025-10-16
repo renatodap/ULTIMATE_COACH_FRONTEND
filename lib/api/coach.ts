@@ -133,7 +133,9 @@ export async function getUserConversations(): Promise<ConversationHistory[]> {
 export async function confirmLog(request: ConfirmLogRequest): Promise<{ success: boolean; message: string }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<{ success: boolean; message: string }>('/api/v1/coach/confirm-log', request, { headers });
 }

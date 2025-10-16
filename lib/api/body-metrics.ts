@@ -79,7 +79,9 @@ export async function createBodyMetric(
 ): Promise<BodyMetric> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<BodyMetric>('/api/v1/body-metrics', data, { headers });
 }
@@ -93,7 +95,9 @@ export async function updateBodyMetric(
 ): Promise<BodyMetric> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.patch<BodyMetric>(`/api/v1/body-metrics/${metricId}`, data, { headers });
 }

@@ -57,7 +57,9 @@ export async function createTemplate(
 ): Promise<ActivityTemplate> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<ActivityTemplate>('/api/v1/templates', data, { headers });
 }
@@ -71,7 +73,9 @@ export async function createTemplateFromActivity(
 ): Promise<ActivityTemplate> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<ActivityTemplate>(
     `/api/v1/templates/from-activity/${activityId}`,
@@ -89,7 +93,9 @@ export async function updateTemplate(
 ): Promise<ActivityTemplate> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.patch<ActivityTemplate>(`/api/v1/templates/${templateId}`, data, { headers });
 }
@@ -102,7 +108,9 @@ export async function deleteTemplate(
 ): Promise<SuccessResponse> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.delete<SuccessResponse>(`/api/v1/templates/${templateId}`, { headers });
 }
@@ -147,7 +155,9 @@ export async function getTemplateMatches(
 ): Promise<MatchSuggestions> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<MatchSuggestions>('/api/v1/templates/match', activityData, { headers });
 }
@@ -172,7 +182,9 @@ export async function applyTemplateToActivity(
   const endpoint = `/api/v1/templates/${templateId}/apply/${activityId}?${query}`
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<any>(endpoint, {}, { headers });
 }
@@ -185,7 +197,9 @@ export async function recordMatchDecision(
 ): Promise<SuccessResponse> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<SuccessResponse>('/api/v1/templates/match/decision', decision, { headers });
 }

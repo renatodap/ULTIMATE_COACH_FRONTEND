@@ -36,7 +36,9 @@ export async function listQuickMeals(): Promise<QuickMeal[]> {
 export async function createQuickMeal(request: CreateQuickMealRequest): Promise<QuickMeal> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<QuickMeal>('api/v1/quick-meals', request, { headers });
 }
@@ -50,7 +52,9 @@ export async function updateQuickMeal(
 ): Promise<QuickMeal> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.patch<QuickMeal>(`api/v1/quick-meals/${quickMealId}`, request, { headers });
 }
@@ -61,7 +65,9 @@ export async function updateQuickMeal(
 export async function deleteQuickMeal(quickMealId: string): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.delete(`api/v1/quick-meals/${quickMealId}`, { headers });
 }
@@ -72,7 +78,9 @@ export async function deleteQuickMeal(quickMealId: string): Promise<void> {
 export async function logQuickMeal(quickMealId: string): Promise<{ message: string }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post(`api/v1/quick-meals/${quickMealId}/log`, {}, { headers });
 }

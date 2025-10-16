@@ -75,11 +75,13 @@ export async function createActivity(
   const accessToken = sessionData?.session?.access_token
 
   // Defensive: Automatically add supabase JWT to Authorization header if available (for future-proofing direct REST calls or proxy)
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`
   }
-  
+
   return apiClient.post<Activity>('/api/v1/activities', data, { headers })
 }
 

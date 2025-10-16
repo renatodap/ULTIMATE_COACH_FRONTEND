@@ -99,7 +99,9 @@ export async function getCurrentUser(): Promise<FullUserProfile> {
 export async function updateCurrentUser(data: UpdateProfileData): Promise<FullUserProfile> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.patch<FullUserProfile>('api/v1/users/me', data, { headers });
 }
