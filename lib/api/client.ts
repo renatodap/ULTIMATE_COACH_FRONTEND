@@ -12,7 +12,7 @@
 
 import { env } from '../env'
 import { supabase } from '@/lib/supabase'
-import { ErrorLogger, ErrorSeverity, ErrorCategory } from '@/lib/logging/ErrorLogger'
+import { ErrorLogger, ErrorSeverity, ErrorCategory } from '@/lib/logging/ErrorLogger.tsx'
 
 const API_BASE_URL = env.NEXT_PUBLIC_API_BASE_URL
 
