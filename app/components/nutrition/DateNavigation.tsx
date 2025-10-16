@@ -8,10 +8,23 @@
  *
  * Design Pattern:
  * [← Previous] | OCTOBER 13, 2025 | [Next →]
+ *
+ * TIMEZONE HANDLING:
+ * - Uses user's timezone from context for all date operations
+ * - Correctly handles date boundaries across timezones
+ * - "Today" is relative to user's timezone, not UTC or browser time
  */
 
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import {
+  getTodayInTimezone,
+  addDaysInTimezone,
+  isToday,
+  formatDateDisplay
+} from '@/lib/utils/timezone'
+import { toZonedTime } from 'date-fns-tz'
 
 interface DateNavigationProps {
   selectedDate: string // ISO date string (YYYY-MM-DD)
@@ -24,48 +37,50 @@ export default function DateNavigation({
   onDateChange,
   className = ''
 }: DateNavigationProps) {
-  const date = new Date(selectedDate + 'T00:00:00') // Force local timezone
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const { timezone } = useTimezone()
 
-  // Check if selected date is today
-  const isToday = date.toDateString() === today.toDateString()
+  // Get today in user's timezone
+  const todayStr = getTodayInTimezone(timezone)
 
-  // Format date for display
-  const formatDateDisplay = () => {
+  // Check if selected date is today in user's timezone
+  const isTodaySelected = isToday(selectedDate, timezone)
+
+  // Format date for display (with timezone awareness)
+  const formatDateLabel = (): string => {
+    const date = toZonedTime(new Date(selectedDate + 'T00:00:00'), timezone)
+    const today = toZonedTime(new Date(), timezone)
+
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
-      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+      timeZone: timezone
     }
     return date.toLocaleDateString('en-US', options).toUpperCase()
   }
 
-  // Navigate to previous day
+  // Navigate to previous day (in user's timezone)
   const handlePreviousDay = () => {
-    const newDate = new Date(date)
-    newDate.setDate(newDate.getDate() - 1)
-    onDateChange(newDate.toISOString().split('T')[0])
+    const previousDay = addDaysInTimezone(selectedDate, -1, timezone)
+    onDateChange(previousDay)
   }
 
-  // Navigate to next day
+  // Navigate to next day (in user's timezone)
   const handleNextDay = () => {
-    const newDate = new Date(date)
-    newDate.setDate(newDate.getDate() + 1)
-    onDateChange(newDate.toISOString().split('T')[0])
+    const nextDay = addDaysInTimezone(selectedDate, 1, timezone)
+    onDateChange(nextDay)
   }
 
-  // Navigate to today
+  // Navigate to today (in user's timezone)
   const handleToday = () => {
-    onDateChange(today.toISOString().split('T')[0])
+    onDateChange(todayStr)
   }
 
-  // Check if next day would be in the future
-  const isNextDayFuture = () => {
-    const nextDay = new Date(date)
-    nextDay.setDate(nextDay.getDate() + 1)
-    return nextDay > today
+  // Check if next day would be in the future (in user's timezone)
+  const isNextDayFuture = (): boolean => {
+    const nextDay = addDaysInTimezone(selectedDate, 1, timezone)
+    return nextDay > todayStr
   }
 
   return (
@@ -90,10 +105,10 @@ export default function DateNavigation({
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-iron-gray group-hover:text-iron-orange transition-colors" />
             <span className="text-sm font-bold text-iron-white tracking-wider truncate">
-              {formatDateDisplay()}
+              {formatDateLabel()}
             </span>
           </div>
-          {!isToday && (
+          {!isTodaySelected && (
             <span className="text-xs text-iron-gray group-hover:text-iron-orange uppercase tracking-wider mt-0.5">
               Jump to Today
             </span>

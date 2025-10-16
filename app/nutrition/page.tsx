@@ -32,6 +32,7 @@ import { getDailyNutrition, deleteMeal } from '@/lib/api/nutrition'
 import { transformDailyNutrition } from '@/lib/utils/nutrition-transformer'
 import type { DailyNutrition } from '@/lib/types/nutrition'
 import { useTranslation } from '@/lib/i18n'
+import { useTimezone } from '@/lib/context/TimezoneContext'
 
 // Animation variants
 const summaryVariants = {
@@ -86,6 +87,7 @@ function NutritionPageContent() {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { timezone } = useTimezone()
 
   // Check authentication and onboarding status
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
@@ -113,7 +115,7 @@ function NutritionPageContent() {
       }
       setError(null)
 
-      const { stats, meals } = await getDailyNutrition(selectedDate)
+      const { stats, meals } = await getDailyNutrition(selectedDate, timezone)
       const transformed = transformDailyNutrition(stats, meals)
       setNutritionData(transformed)
 
@@ -128,7 +130,7 @@ function NutritionPageContent() {
       setDataLoading(false)
       setRefreshing(false)
     }
-  }, [selectedDate])
+  }, [selectedDate, timezone])
 
   // Fetch nutrition data only after auth is confirmed
   useEffect(() => {

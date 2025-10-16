@@ -14,6 +14,8 @@ import ExerciseDetailsList from './ExerciseDetailsList'
 import CreateTemplateModal from '@/app/components/templates/CreateTemplateModal'
 import type { Activity } from '@/lib/types/activities'
 import type { ActivityTemplate } from '@/lib/types/templates'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatTimeInTimezone } from '@/lib/utils/timezone'
 
 interface ActivityCardProps {
   activity: Activity
@@ -24,18 +26,16 @@ interface ActivityCardProps {
 export default function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const { timezone } = useTimezone()
 
   const hasExercises =
     activity.category === 'strength_training' &&
     activity.metrics?.exercises &&
     activity.metrics.exercises.length > 0
 
+  // Format time in user's timezone (convert from UTC)
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
+    return formatTimeInTimezone(timestamp, timezone)
   }
 
   const handleTemplateSuccess = (template: ActivityTemplate) => {

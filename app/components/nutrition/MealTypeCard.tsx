@@ -10,7 +10,7 @@
  * - Collapsible/expandable
  * - Meal icon based on type
  * - Shows total calories
- * - Shows time logged
+ * - Shows time logged (in user's timezone)
  * - Edit/delete meal actions
  * - Contains FoodItemCard components
  */
@@ -19,6 +19,8 @@ import { useState } from 'react'
 import { ChevronDown, Edit2, Trash2 } from 'lucide-react'
 import type { Meal, FoodItem } from '@/lib/types/nutrition'
 import FoodItemCard from './FoodItemCard'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatTimeInTimezone } from '@/lib/utils/timezone'
 
 interface MealTypeCardProps {
   meal: Meal
@@ -47,16 +49,16 @@ export default function MealTypeCard({
   onEditFoodItem,
 }: MealTypeCardProps) {
   const [internalIsExpanded, setInternalIsExpanded] = useState(true)
+  const { timezone } = useTimezone()
 
   // Use controlled state if provided, otherwise use internal state
   const isExpanded = controlledIsExpanded ?? internalIsExpanded
   const handleToggle = onToggle ?? (() => setInternalIsExpanded(!internalIsExpanded))
 
   const config = mealConfig[meal.mealType]
-  const time = new Date(meal.loggedAt).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+
+  // Format time in user's timezone (convert from UTC)
+  const time = formatTimeInTimezone(meal.loggedAt, timezone)
 
   return (
     <div className="border border-iron-gray overflow-hidden hover:border-iron-orange/50 transition-colors">

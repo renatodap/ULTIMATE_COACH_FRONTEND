@@ -25,6 +25,8 @@ import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import type { Activity, DailySummary } from '@/lib/types/activities'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { getTodayInTimezone, formatDateInTimezone, formatRelativeDate } from '@/lib/utils/timezone'
 
 // Animation variants
 const cardVariants = {
@@ -58,6 +60,7 @@ const emptyStateVariants = {
 export default function ActivitiesPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const { timezone } = useTimezone()
   const [summary, setSummary] = useState<DailySummary | null>(null)
   const [activitiesByDate, setActivitiesByDate] = useState<Map<string, Activity[]>>(new Map())
   const [loading, setLoading] = useState(true)
@@ -74,17 +77,14 @@ export default function ActivitiesPage() {
     return 'day'
   })
 
-  // Selected day for 'day' mode, default to today (YYYY-MM-DD)
+  // Selected day for 'day' mode, default to today in user's timezone (YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const today = new Date()
-    const yyyy = today.getFullYear()
-    const mm = String(today.getMonth() + 1).padStart(2, '0')
-    const dd = String(today.getDate()).padStart(2, '0')
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('activitiesSelectedDate')
       if (saved) return saved
     }
-    return `${yyyy}-${mm}-${dd}`
+    // Use timezone-aware today
+    return getTodayInTimezone(timezone)
   })
 
   const getWeekRange = (dateStr: string) => {
@@ -141,10 +141,13 @@ export default function ActivitiesPage() {
       const [summaryData, activitiesResponse] = await Promise.all(fetches)
       setSummary(summaryData)
 
-      // Group activities by date (Recent: many dates, Day: single date)
+      // Group activities by date in user's timezone (CRITICAL: Use timezone-aware grouping)
+      // Before: Used UTC date from ISO string (wrong for non-UTC users)
+      // After: Convert UTC timestamp to user's timezone date
       const grouped = new Map<string, Activity[]>()
       activitiesResponse.activities.forEach((activity: Activity) => {
-        const date = new Date(activity.start_time).toISOString().split('T')[0]
+        // Convert UTC start_time to user's timezone date (YYYY-MM-DD)
+        const date = formatDateInTimezone(activity.start_time, timezone)
         if (!grouped.has(date)) {
           grouped.set(date, [])
         }
@@ -246,22 +249,18 @@ export default function ActivitiesPage() {
     loadActivities(true)
   }
 
+  // Format date header with timezone awareness (Today, Yesterday, or date)
   const formatDateHeader = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
+    // Use timezone-aware relative date formatting
+    const relativeDateStr = formatRelativeDate(dateStr, timezone)
 
-    if (date.toDateString() === today.toDateString()) {
+    // Translate "Today" and "Yesterday"
+    if (relativeDateStr === 'Today') {
       return t('activities.today')
-    } else if (date.toDateString() === yesterday.toDateString()) {
+    } else if (relativeDateStr === 'Yesterday') {
       return t('activities.yesterday')
     } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
-      })
+      return relativeDateStr
     }
   }
 

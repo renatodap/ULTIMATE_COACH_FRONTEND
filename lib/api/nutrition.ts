@@ -190,22 +190,29 @@ export async function createMeal(request: CreateMealRequest): Promise<MealAPI> {
  * Get daily nutrition data (stats + meals combined)
  * This is a convenience function that calls both endpoints
  *
- * IMPORTANT: Backend uses exclusive end_date filtering (.lt() not .lte()),
- * so we must pass the NEXT day as end_date to get meals for the target date.
+ * TIMEZONE HANDLING:
+ * - Takes date in user's timezone (YYYY-MM-DD)
+ * - Converts to UTC timestamps for backend API
+ * - Backend stores all timestamps as UTC
+ * - Backend query: logged_at >= start_date AND logged_at < end_date (exclusive end)
+ *
+ * Example: User in Tokyo (UTC+9) queries for Oct 14
+ * - start_date: '2025-10-13T15:00:00.000Z' (Oct 13 3PM UTC = Oct 14 midnight Tokyo)
+ * - end_date: '2025-10-14T15:00:00.000Z' (Oct 14 3PM UTC = Oct 15 midnight Tokyo)
  */
-export async function getDailyNutrition(date: string) {
-  // Calculate next day for exclusive end date filtering
-  // Backend query: logged_at >= start_date AND logged_at < end_date
-  const startDate = new Date(date + 'T00:00:00')
-  const endDate = new Date(startDate)
-  endDate.setDate(endDate.getDate() + 1)
-  const endDateStr = endDate.toISOString().split('T')[0]
+export async function getDailyNutrition(date: string, timezone: string) {
+  // Import timezone utilities dynamically to avoid circular dependency
+  const { getStartOfDayUTC, getEndOfDayUTC, getTodayInTimezone } = await import('@/lib/utils/timezone')
+
+  // Calculate start and end of day in user's timezone, converted to UTC
+  const startDateUTC = getStartOfDayUTC(date, timezone)
+  const endDateUTC = getEndOfDayUTC(date, timezone)
 
   const [stats, mealsResponse] = await Promise.all([
     getNutritionStats(date),
     getMeals({
-      start_date: date,
-      end_date: endDateStr  // Next day to make range inclusive via exclusive upper bound
+      start_date: startDateUTC,
+      end_date: endDateUTC
     })
   ])
 
