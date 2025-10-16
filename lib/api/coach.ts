@@ -106,7 +106,9 @@ export interface ConfirmLogRequest {
 export async function sendCoachMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<SendMessageResponse>('/api/v1/coach/message', request, { headers });
 }
