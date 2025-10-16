@@ -2,6 +2,9 @@
  * TypeScript Types for Coach Components
  */
 
+// Import and re-export types from canonical source
+export type { LogPreview } from '@/lib/api/coach'
+
 // Message types
 export interface Message {
   id: string;
