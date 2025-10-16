@@ -107,7 +107,7 @@ export default function ProgressTrackerCard({
           </button>
 
           {/* Progress bar to goal */}
-          {weight.progress_percentage !== null && weight.goal_weight && (
+          {weight.progress_percentage !== null && weight.goal_weight && weight.remaining_kg !== null && (
             <div className="mt-3">
               <div className="h-2 bg-iron-gray/20 overflow-hidden">
                 <div
