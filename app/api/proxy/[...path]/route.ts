@@ -57,6 +57,15 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
       headers.set('cookie', cookieHeader)
     }
 
+    // If Authorization is missing, attempt to derive from Supabase auth cookies
+    if (!headers.get('authorization') && cookieHeader) {
+      // Common Supabase cookie names when using @supabase/ssr helpers
+      const accessMatch = cookieHeader.match(/sb-access-token=([^;]+)/)
+      if (accessMatch?.[1]) {
+        headers.set('authorization', `Bearer ${decodeURIComponent(accessMatch[1])}`)
+      }
+    }
+
     // Build request options
     const requestOptions: RequestInit = {
       method,

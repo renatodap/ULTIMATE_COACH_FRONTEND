@@ -10,6 +10,7 @@
  */
 
 import { env } from '../env'
+import { supabase } from '@/lib/supabase'
 
 const API_BASE_URL = env.NEXT_PUBLIC_API_BASE_URL
 
@@ -64,6 +65,35 @@ class ApiClient {
     // Remove leading slash if present to avoid double slashes
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
     return `${this.baseUrl}/${cleanEndpoint}`
+  }
+
+  /**
+   * Attach Authorization header from Supabase session when available.
+   * Falls back gracefully if not in browser or no session yet.
+   */
+  private async withAuthHeaders(initHeaders: HeadersInit | undefined): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      ...(initHeaders as Record<string, string> | undefined),
+    }
+
+    // If caller already set Authorization, respect it
+    if (headers && (headers['Authorization'] || headers['authorization'])) {
+      return headers
+    }
+
+    try {
+      if (typeof window !== 'undefined' && supabase) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData?.session?.access_token
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`
+        }
+      }
+    } catch (_) {
+      // Ignore token attachment failures; backend will still handle 401s cleanly
+    }
+
+    return headers
   }
 
   /**
@@ -131,12 +161,13 @@ class ApiClient {
   async get<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    const headers = await this.withAuthHeaders(options.headers)
     const response = await fetch(url, {
       method: 'GET',
       credentials: 'include', // Include httpOnly cookies
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...headers,
       },
       ...options,
     })
@@ -155,12 +186,13 @@ class ApiClient {
     const url = this.buildUrl(endpoint)
 
     try {
+      const headers = await this.withAuthHeaders(options.headers)
       const response = await fetch(url, {
         method: 'POST',
         credentials: 'include', // Include httpOnly cookies
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...headers,
         },
         body: body ? JSON.stringify(body) : undefined,
         ...options,
@@ -196,12 +228,13 @@ class ApiClient {
   ): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    const headers = await this.withAuthHeaders(options.headers)
     const response = await fetch(url, {
       method: 'PATCH',
       credentials: 'include', // Include httpOnly cookies
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
       ...options,
@@ -220,12 +253,13 @@ class ApiClient {
   ): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    const headers = await this.withAuthHeaders(options.headers)
     const response = await fetch(url, {
       method: 'PUT',
       credentials: 'include', // Include httpOnly cookies
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
       ...options,
@@ -240,12 +274,13 @@ class ApiClient {
   async delete<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    const headers = await this.withAuthHeaders(options.headers)
     const response = await fetch(url, {
       method: 'DELETE',
       credentials: 'include', // Include httpOnly cookies
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...headers,
       },
       ...options,
     })
@@ -263,10 +298,12 @@ class ApiClient {
   ): Promise<T> {
     const url = this.buildUrl(endpoint)
 
+    const headers = await this.withAuthHeaders(options.headers)
     const response = await fetch(url, {
       method: 'POST',
       credentials: 'include', // Include httpOnly cookies
       // Don't set Content-Type header - browser will set it with boundary
+      headers,
       body: formData,
       ...options,
     })
