@@ -61,48 +61,8 @@ export interface MessageMetadata {
   toolsUsed?: string[];
 }
 
-// Log preview types
-export interface LogPreview {
-  id?: string;
-  type: 'nutrition' | 'workout' | 'measurement';
-  data: NutritionLogData | WorkoutLogData | MeasurementLogData;
-  confidence?: number;
-}
-
-export interface NutritionLogData {
-  foodName: string;
-  amount: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  time?: Date;
-}
-
-export interface WorkoutLogData {
-  activityType: string;
-  exercises?: Array<{
-    name: string;
-    sets: number;
-    reps: number;
-    weight?: string;
-    notes?: string;
-  }>;
-  duration?: number; // minutes
-  intensity?: 'low' | 'moderate' | 'high';
-  caloriesBurned?: number;
-  notes?: string;
-}
-
-export interface MeasurementLogData {
-  type: 'weight' | 'body_fat' | 'measurements';
-  value: number;
-  unit: string;
-  date: Date;
-  notes?: string;
-}
+// Log preview types - imported from @/lib/api/coach
+// See: lib/api/coach.ts for LogPreview, NutritionLogData, WorkoutLogData, MeasurementLogData
 
 // Quick action types
 export interface QuickAction {
@@ -120,26 +80,8 @@ export interface LoadingState {
   progress?: number; // 0-100 for progress bar
 }
 
-// API request/response types
-export interface SendMessageRequest {
-  message: string;
-  conversation_id?: string;
-  image_base64?: string;
-}
-
-export interface SendMessageResponse {
-  success: boolean;
-  conversation_id: string;
-  message_id: string;
-  message: string;
-  is_log_preview: boolean;
-  log_preview?: LogPreview;
-  tokens_used?: number;
-  cost_usd?: number;
-  model?: string;
-  tools_used?: string[];
-  error?: string;
-}
+// API request/response types - imported from @/lib/api/coach
+// See: lib/api/coach.ts for SendMessageRequest, SendMessageResponse
 
 // Component props types
 export interface CoachChatProps {

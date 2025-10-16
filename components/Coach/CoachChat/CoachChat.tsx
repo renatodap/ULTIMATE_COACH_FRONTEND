@@ -9,12 +9,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Message,
   LoadingState,
-  LogPreview,
   QuickAction,
-  SendMessageRequest,
-  SendMessageResponse,
   CoachChatProps
 } from './CoachChat.types';
+import {
+  LogPreview,
+  SendMessageRequest,
+  SendMessageResponse
+} from '@/lib/api/coach';
 import { getSmartLoadingMessage, scrollToBottom, isScrolledToBottom, hapticFeedback } from '../shared/utils';
 import { MessageBubble } from '../Message/MessageBubble';
 import { LoadingIndicator } from '../Loading/LoadingIndicator';
