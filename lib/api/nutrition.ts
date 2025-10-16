@@ -181,7 +181,9 @@ export interface CreateMealRequest {
 export async function createMeal(request: CreateMealRequest): Promise<MealAPI> {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post<MealAPI>('api/v1/meals', request, { headers });
 }
