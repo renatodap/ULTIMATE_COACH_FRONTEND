@@ -77,31 +77,6 @@ export default function QuickActionsGrid({ onLogWeight }: QuickActionsGridProps)
           </motion.button>
         ))}
       </div>
-
-      {/* Additional Metrics Actions */}
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <motion.button
-          onClick={onLogWeight}
-          className="card-glass border-2 border-iron-gray/30 p-4 min-h-[120px] flex flex-col items-center justify-center gap-2 hover:border-purple-500 hover:bg-purple-500/10 active:scale-95 transition-all"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <div className="text-4xl">📏</div>
-          <p className="text-xs uppercase tracking-wider text-iron-white font-bold">Log Height</p>
-        </motion.button>
-
-        <motion.button
-          onClick={onLogWeight}
-          className="card-glass border-2 border-iron-gray/30 p-4 min-h-[120px] flex flex-col items-center justify-center gap-2 hover:border-yellow-500 hover:bg-yellow-500/10 active:scale-95 transition-all"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <div className="text-4xl">💧</div>
-          <p className="text-xs uppercase tracking-wider text-iron-white font-bold">Body Fat %</p>
-        </motion.button>
-      </div>
     </>
   )
 }

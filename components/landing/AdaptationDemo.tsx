@@ -1,102 +1,69 @@
-'use client'
-
 /**
- * AdaptationDemo - Shows daily auto-adjustment
- * Numbers morph based on different activity levels
+ * Adaptation Demo Component
+ *
+ * Shows before/after of daily adaptive adjustments
  */
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+'use client'
 
-const scenarios = [
-  {
-    day: 'Monday',
-    activity: 'Rest Day',
-    calories: 2200,
-    icon: '😴',
-    color: 'text-iron-gray',
-  },
-  {
-    day: 'Tuesday',
-    activity: 'Leg Day',
-    calories: 2700,
-    icon: '🏋️',
-    color: 'text-iron-orange',
-  },
-  {
-    day: 'Wednesday',
-    activity: 'Cardio',
-    calories: 2500,
-    icon: '🏃',
-    color: 'text-iron-white',
-  },
-]
+import { motion } from 'framer-motion'
 
 export default function AdaptationDemo() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % scenarios.length)
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const current = scenarios[currentIndex]
-
   return (
-    <div className="bg-iron-dark-gray border border-iron-gray p-6 space-y-6">
-      {/* Day & Activity */}
-      <div className="flex items-center justify-between">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center gap-3"
-          >
-            <span className="text-3xl">{current.icon}</span>
-            <div>
-              <p className="text-xs text-iron-gray uppercase tracking-wider">
-                {current.day}
-              </p>
-              <p className={`text-lg font-bold ${current.color}`}>
-                {current.activity}
-              </p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+    <div className="card-glass p-6 sm:p-8 border-2 border-iron-gray space-y-6">
+      {/* Before */}
+      <div>
+        <p className="text-iron-gray text-xs uppercase tracking-wider mb-3">Yesterday&apos;s Plan</p>
+        <div className="bg-iron-dark-gray border border-iron-gray p-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-iron-white">Calorie Target</span>
+            <span className="text-iron-orange font-bold">2,200</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-iron-white">Protein</span>
+            <span className="text-iron-white">180g</span>
+          </div>
+        </div>
       </div>
 
-      {/* Calorie Display - Morphing Number */}
-      <div className="bg-iron-black border-l-4 border-iron-orange p-6">
-        <p className="text-xs text-iron-gray uppercase tracking-wider mb-2">
-          Your Daily Target
-        </p>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={current.calories}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4 }}
-            className="text-5xl font-black text-iron-orange"
-          >
-            {current.calories.toLocaleString()}
-          </motion.p>
-        </AnimatePresence>
-        <p className="text-xs text-iron-gray uppercase tracking-wider mt-2">
-          calories
-        </p>
+      {/* Arrow */}
+      <div className="flex items-center justify-center">
+        <motion.div
+          className="text-iron-orange text-3xl"
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          ↓
+        </motion.div>
       </div>
 
-      {/* Note */}
-      <p className="text-xs text-iron-gray text-center uppercase tracking-wider">
-        Auto-adjusted based on today&apos;s activity
-      </p>
+      {/* After */}
+      <div>
+        <p className="text-iron-gray text-xs uppercase tracking-wider mb-3">Today&apos;s Adaptation</p>
+        <div className="bg-iron-orange bg-opacity-10 border border-iron-orange p-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-iron-white">Calorie Target</span>
+            <motion.span
+              className="text-iron-orange font-bold"
+              initial={{ scale: 1 }}
+              whileInView={{ scale: [1, 1.2, 1] }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              2,450
+            </motion.span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-iron-white">Protein</span>
+            <span className="text-iron-white">190g</span>
+          </div>
+          <div className="mt-2 pt-2 border-t border-iron-orange/30">
+            <p className="text-iron-gray text-xs">
+              ↑ Increased for extra training session
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

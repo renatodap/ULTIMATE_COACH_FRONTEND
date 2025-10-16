@@ -1,25 +1,21 @@
-'use client'
-
 /**
- * RotatingTextExample - Cycles through different ways of logging the same food
- * Shows how AI understands any phrasing
+ * Rotating Text Example Component
+ *
+ * Shows rotating examples of natural language meal logging
  */
+
+'use client'
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const examples = [
-  { input: 'I had 3 eggs for breakfast', color: 'text-iron-white' },
-  { input: 'Ate eggs this morning', color: 'text-iron-white' },
-  { input: 'Had some protein', color: 'text-iron-white' },
-  { input: 'Three eggs 🍳', color: 'text-iron-white' },
-  { input: '3x eggs', color: 'text-iron-white' },
+  'Chicken and rice for lunch',
+  'had 2 eggs this morning',
+  'ate a protein bar',
+  '500g chicken breast',
+  'just had a big salad',
 ]
-
-const result = {
-  text: '→ 3 eggs (18g protein)',
-  color: 'text-iron-orange',
-}
 
 export default function RotatingTextExample() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -27,37 +23,35 @@ export default function RotatingTextExample() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % examples.length)
-    }, 2500)
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [])
 
   return (
-    <div className="space-y-3">
-      {/* Input - rotating */}
-      <div className="bg-iron-dark-gray border border-iron-gray p-4 min-h-[60px] flex items-center">
+    <div className="card-glass p-6 sm:p-8 border-2 border-iron-gray min-h-[200px] flex items-center justify-center">
+      <div className="w-full">
+        <p className="text-iron-gray text-sm mb-4 uppercase tracking-wider">You say:</p>
         <AnimatePresence mode="wait">
-          <motion.span
+          <motion.p
             key={currentIndex}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className={`text-sm ${examples[currentIndex].color}`}
+            className="text-iron-white text-xl sm:text-2xl font-medium"
           >
-            {examples[currentIndex].input}
-          </motion.span>
+            &quot;{examples[currentIndex]}&quot;
+          </motion.p>
         </AnimatePresence>
-      </div>
-
-      {/* Arrow */}
-      <div className="text-center text-iron-orange text-2xl">↓</div>
-
-      {/* Result - constant */}
-      <div className="bg-iron-orange/10 border border-iron-orange p-4">
-        <span className={`text-sm font-bold ${result.color}`}>
-          {result.text}
-        </span>
+        <motion.div
+          className="mt-6 flex items-center gap-2"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="w-2 h-2 rounded-full bg-iron-orange" />
+          <p className="text-iron-gray text-sm">AI processing...</p>
+        </motion.div>
       </div>
     </div>
   )

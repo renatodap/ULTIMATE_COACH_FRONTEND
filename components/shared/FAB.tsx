@@ -50,7 +50,7 @@ export function FAB({
     <motion.button
       onClick={handleClick}
       className={`
-        fixed bottom-24 right-6 z-[200]
+        fixed bottom-24 right-6 z-50
         w-[60px] h-[60px]
         ${variantStyles[variant]}
         border-2 border-iron-black
@@ -113,7 +113,7 @@ export function FABFullWidth({
       onClick={onClick}
       disabled={disabled}
       className={`
-        fixed bottom-20 left-4 right-4 z-[200]
+        fixed bottom-20 left-4 right-4 z-50
         h-[60px]
         ${variantStyles[variant]}
         text-iron-white

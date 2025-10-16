@@ -14,9 +14,9 @@
  * - Real-time data from API
  */
 
-import { useState, useEffect, Suspense, useCallback } from 'react'
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import MealTypeCard from '../components/nutrition/MealTypeCard'
@@ -28,9 +28,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { FAB } from '@/components/shared/FAB'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
-import { getDailyNutrition, deleteMeal } from '@/lib/api/nutrition'
-import { transformDailyNutrition } from '@/lib/utils/nutrition-transformer'
-import type { DailyNutrition } from '@/lib/types/nutrition'
+import { useNutritionData } from '@/lib/hooks/useNutritionData'
 import { useTranslation } from '@/lib/i18n'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 
@@ -92,57 +90,37 @@ function NutritionPageContent() {
   // Check authentication and onboarding status
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
 
-  const [nutritionData, setNutritionData] = useState<DailyNutrition | null>(null)
-  const [dataLoading, setDataLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Get date from URL or default to today
-  const selectedDate = searchParams?.get('date') || new Date().toISOString().split('T')[0]
+  // Use nutrition data hook
+  const {
+    data: nutritionData,
+    loading: dataLoading,
+    refreshing,
+    error,
+    selectedDate,
+    setSelectedDate,
+    refresh,
+    deleteMealAndRefresh
+  } = useNutritionData({
+    timezone,
+    initialDate: searchParams?.get('date') || undefined,
+    skip: authLoading || !onboardingComplete,
+    onSuccess: () => {
+      // Optional: Add any success handling here
+    },
+    onError: (err) => {
+      toast.error(err.message)
+    }
+  })
 
   // Update URL when date changes
   const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate)
     router.push(`/nutrition?date=${newDate}`)
   }
 
-  // Fetch nutrition data function (with refresh support)
-  const loadNutritionData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true)
-      } else {
-        setDataLoading(true)
-      }
-      setError(null)
-
-      const { stats, meals } = await getDailyNutrition(selectedDate, timezone)
-      const transformed = transformDailyNutrition(stats, meals)
-      setNutritionData(transformed)
-
-      if (isRefresh) {
-        toast.success('Nutrition data refreshed!')
-      }
-    } catch (err) {
-      console.error('Failed to load nutrition data:', err)
-      setError('Failed to load nutrition data')
-      toast.error('Failed to load nutrition data')
-    } finally {
-      setDataLoading(false)
-      setRefreshing(false)
-    }
-  }, [selectedDate, timezone])
-
-  // Fetch nutrition data only after auth is confirmed
-  useEffect(() => {
-    if (authLoading || !onboardingComplete) {
-      return // Wait for auth check to complete
-    }
-
-    loadNutritionData()
-  }, [selectedDate, authLoading, onboardingComplete, loadNutritionData])
-
   const handleRefresh = () => {
-    loadNutritionData(true)
+    refresh()
+    toast.success('Nutrition data refreshed!')
   }
 
   const handleEditMeal = (mealId: string) => {
@@ -157,10 +135,8 @@ function NutritionPageContent() {
     const toastId = toast.loading('Deleting meal...')
 
     try {
-      await deleteMeal(mealId)
+      await deleteMealAndRefresh(mealId)
       toast.success('Meal deleted!', { id: toastId })
-      // Refresh data after deletion
-      await loadNutritionData()
     } catch (err) {
       console.error('Failed to delete meal:', err)
       toast.error('Failed to delete meal', { id: toastId })

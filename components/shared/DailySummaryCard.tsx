@@ -42,54 +42,63 @@ type UnifiedSummaryProps =
 
 const ActivityCardContent = ({ summary }: { summary: ActivitySummary }) => {
   const progressPercentage = Math.min(summary.goal_percentage, 100)
+  const hours = Math.floor(summary.total_duration_minutes / 60)
+  const minutes = summary.total_duration_minutes % 60
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-iron-white">Today&apos;s Activity</h2>
-        <span className="text-sm text-iron-gray">
-          {summary.activity_count} {summary.activity_count === 1 ? 'activity' : 'activities'}
+      {/* Header - Mobile-first */}
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-xs text-iron-gray uppercase tracking-wider">
+          📊 Today's Activity
+        </p>
+        <span className="text-xs text-iron-gray font-bold uppercase tracking-wider">
+          {summary.activity_count} {summary.activity_count === 1 ? 'Workout' : 'Workouts'}
         </span>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex items-baseline justify-between mb-2">
-          <span className="text-2xl font-bold text-iron-white">
-            🔥 {summary.total_calories_burned} kcal
+      {/* BIG NUMBER - Mobile-friendly */}
+      <div className="text-center mb-6">
+        <div className="mb-3">
+          <span className="text-6xl md:text-7xl font-bold text-iron-orange">
+            {summary.total_calories_burned}
           </span>
-          <span className="text-sm text-iron-gray">burned today</span>
+          <p className="text-xl md:text-2xl text-iron-gray uppercase tracking-widest mt-2">
+            KCAL BURNED
+          </p>
         </div>
-        <div className="w-full h-2 bg-iron-black rounded-full overflow-hidden">
+
+        {/* Progress Bar */}
+        <div className="h-3 bg-iron-black overflow-hidden mb-2">
           <div
             className="h-full bg-iron-orange transition-all duration-300"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-iron-gray">Goal: {summary.daily_goal_calories} kcal</span>
-          <span className="text-xs font-medium text-iron-orange">{summary.goal_percentage.toFixed(0)}%</span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-iron-gray uppercase tracking-wider">
+            Goal: {summary.daily_goal_calories} kcal
+          </span>
+          <span className="text-xs font-bold text-iron-orange uppercase tracking-wider">
+            {summary.goal_percentage.toFixed(0)}%
+          </span>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="flex flex-col">
-          <span className="text-xs text-iron-gray mb-1">⏱️ Duration</span>
-          <span className="text-lg font-semibold text-iron-white">
-            {Math.floor(summary.total_duration_minutes / 60)}h {summary.total_duration_minutes % 60}m
-          </span>
+      {/* Stats Grid - Simplified */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-iron-black border border-iron-gray/30 p-4 text-center">
+          <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">⏱️ Duration</p>
+          <p className="text-2xl font-bold text-iron-white">
+            {hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}
+          </p>
         </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-iron-gray mb-1">⚡ Avg Intensity</span>
-          <span className="text-lg font-semibold text-iron-white">{summary.average_intensity.toFixed(1)} METs</span>
-        </div>
-        <div className="flex flex-col sm:col-span-1 col-span-2">
-          <span className="text-xs text-iron-gray mb-1">🎯 Progress</span>
-          <span className="text-lg font-semibold text-iron-white">
-            {summary.total_calories_burned}/{summary.daily_goal_calories}
-          </span>
+        <div className="bg-iron-black border border-iron-gray/30 p-4 text-center">
+          <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">⚡ Intensity</p>
+          <p className="text-2xl font-bold text-iron-white">
+            {summary.average_intensity.toFixed(1)}
+          </p>
+          <p className="text-xs text-iron-gray">METs</p>
         </div>
       </div>
     </>
@@ -101,57 +110,74 @@ const NutritionCardContent = ({ summary }: { summary: NutritionSummary }) => {
   const remaining = calculateRemaining(summary.totalCalories, summary.calorieGoal)
   const isOverGoal = remaining < 0
 
+  const proteinPct = Math.min((summary.totalProtein / summary.proteinGoal) * 100, 100)
+  const carbsPct = Math.min((summary.totalCarbs / summary.carbsGoal) * 100, 100)
+  const fatPct = Math.min((summary.totalFat / summary.fatGoal) * 100, 100)
+
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-iron-white">Today&apos;s Nutrition</h2>
+      {/* Header with goal status */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-iron-gray uppercase tracking-wider">📊 Today&apos;s Nutrition</p>
+        <span className={`text-xs font-bold uppercase tracking-wider ${isOverGoal ? 'text-red-500' : 'text-iron-orange'}`}>
+          {isOverGoal ? `+${Math.abs(remaining)}` : `-${remaining}`} cal
+        </span>
       </div>
 
-      {/* Calorie Progress Section */}
-      <div className="text-center mb-6">
-        <div className="mb-4">
-          <span className="text-5xl font-bold text-iron-orange">
-            {Math.round(summary.totalCalories).toLocaleString()}
+      {/* BIG NUMBER - Mobile-friendly */}
+      <div className="text-center mb-3">
+        <div className="mb-2">
+          <span className="text-5xl md:text-6xl font-bold text-iron-orange">
+            {Math.round(summary.totalCalories)}
           </span>
-          <span className="text-2xl text-iron-gray ml-2">
-            / {Math.round(summary.calorieGoal).toLocaleString()}
-          </span>
+          <p className="text-sm text-iron-gray uppercase tracking-widest mt-1">
+            of {Math.round(summary.calorieGoal)} kcal
+          </p>
         </div>
-        <div className="h-3 bg-iron-gray/20 rounded-full overflow-hidden mb-2">
+
+        {/* Progress Bar */}
+        <div className="h-2 bg-iron-black overflow-hidden">
           <div
-            className={`h-full transition-all duration-500 ${isOverGoal ? 'bg-red-500' : 'bg-iron-orange'
-              }`}
+            className={`h-full transition-all duration-300 ${isOverGoal ? 'bg-red-500' : 'bg-iron-orange'}`}
             style={{ width: `${Math.min(caloriePercentage, 100)}%` }}
           />
         </div>
-        <p className={`text-sm uppercase tracking-wider ${isOverGoal ? 'text-red-500' : 'text-iron-gray'}`}>
-          {isOverGoal
-            ? `${Math.abs(remaining)} calories over goal`
-            : `${remaining} calories remaining`}
-        </p>
       </div>
 
-      {/* Macro Breakdown Grid */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-iron-gray/30">
-        <MacroProgressCircle
-          label="Protein"
-          current={summary.totalProtein}
-          target={summary.proteinGoal}
-          color="success"
-        />
-        <MacroProgressCircle
-          label="Carbs"
-          current={summary.totalCarbs}
-          target={summary.carbsGoal}
-          color="info"
-        />
-        <MacroProgressCircle
-          label="Fats"
-          current={summary.totalFat}
-          target={summary.fatGoal}
-          color="warning"
-        />
+      {/* Compact Macros - 3 column grid */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Protein */}
+        <div className="bg-iron-dark-gray border border-iron-gray p-4 text-center">
+          <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Protein</p>
+          <p className="text-2xl font-bold text-iron-white">
+            {Math.round(summary.totalProtein)}g
+          </p>
+          <div className="h-1 bg-iron-black mt-1">
+            <div className="h-full bg-green-500" style={{ width: `${proteinPct}%` }} />
+          </div>
+        </div>
+
+        {/* Carbs */}
+        <div className="bg-iron-dark-gray border border-iron-gray p-4 text-center">
+          <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Carbs</p>
+          <p className="text-2xl font-bold text-iron-white">
+            {Math.round(summary.totalCarbs)}g
+          </p>
+          <div className="h-1 bg-iron-black mt-1">
+            <div className="h-full bg-blue-500" style={{ width: `${carbsPct}%` }} />
+          </div>
+        </div>
+
+        {/* Fat */}
+        <div className="bg-iron-dark-gray border border-iron-gray p-4 text-center">
+          <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Fat</p>
+          <p className="text-2xl font-bold text-iron-white">
+            {Math.round(summary.totalFat)}g
+          </p>
+          <div className="h-1 bg-iron-black mt-1">
+            <div className="h-full bg-yellow-500" style={{ width: `${fatPct}%` }} />
+          </div>
+        </div>
       </div>
     </>
   )
@@ -161,7 +187,7 @@ const NutritionCardContent = ({ summary }: { summary: NutritionSummary }) => {
 
 export default function DailySummaryCard({ type, summary }: UnifiedSummaryProps) {
   return (
-    <div className="bg-iron-dark-gray rounded-xl p-6 border border-iron-gray shadow-sm">
+    <div className="card-glass border border-iron-gray/30 p-6 accent-edge">
       {type === 'activity' && <ActivityCardContent summary={summary} />}
       {type === 'nutrition' && <NutritionCardContent summary={summary} />}
     </div>

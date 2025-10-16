@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Lock, MessageCircle, ArrowRight, Check } from "lucide-react";
+import { Sparkles, Lock, MessageCircle, ArrowRight, Check, ArrowLeft } from "lucide-react";
 
 /**
- * Premium Cinematic Consultation Experience
+ * AI Consultation - Iron Design
  *
  * Flow:
- * 1. Key entry screen (cinematic reveal)
- * 2. Validating animation (premium loading)
- * 3. Chat interface (flowing, premium feel)
+ * 1. Key entry (sharp, minimal)
+ * 2. Validating (loading state)
+ * 3. Chat interface (mobile-first)
+ * 4. Generating program (animated)
+ * 5. Complete (redirect to dashboard)
  */
 
-type ConsultationState = "key_entry" | "validating" | "chat" | "error";
+type ConsultationState = "key_entry" | "validating" | "chat" | "generating_program" | "complete" | "error";
 
 interface Message {
   id: string;
@@ -23,6 +26,7 @@ interface Message {
 }
 
 export default function ConsultationPage() {
+  const router = useRouter();
   const [state, setState] = useState<ConsultationState>("key_entry");
   const [consultationKey, setConsultationKey] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -32,6 +36,7 @@ export default function ConsultationPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const [currentSection, setCurrentSection] = useState("Training Background");
+  const [programId, setProgramId] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +63,6 @@ export default function ConsultationPage() {
     setErrorMessage("");
 
     try {
-      // TODO: Replace with actual API endpoint
       const response = await fetch("/api/consultation/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,7 +112,6 @@ export default function ConsultationPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API endpoint
       const response = await fetch("/api/consultation/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,8 +158,43 @@ export default function ConsultationPage() {
     return sections[section] || section;
   };
 
+  const handleCompleteConsultation = async () => {
+    if (!sessionId) return;
+
+    setState("generating_program");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/consultation/${sessionId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.program_generated) {
+        setProgramId(data.program_id);
+        setState("complete");
+
+        // Redirect to dashboard after 3 seconds
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 3000);
+      } else {
+        setErrorMessage(data.message || "Failed to complete consultation");
+        setState("chat");
+      }
+    } catch (error) {
+      console.error("Error completing consultation:", error);
+      setErrorMessage("Failed to complete consultation. Please try again.");
+      setState("chat");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-iron-black">
       <AnimatePresence mode="wait">
         {/* Key Entry Screen */}
         {state === "key_entry" && (
@@ -168,100 +206,100 @@ export default function ConsultationPage() {
             className="min-h-screen flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               className="max-w-md w-full"
             >
-              {/* Premium Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex justify-center mb-8"
-              >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm font-medium text-amber-200">
-                    Premium Consultation
+              {/* Badge */}
+              <div className="flex justify-center mb-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-iron-orange">
+                  <Sparkles className="w-4 h-4 text-iron-black" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-iron-black">
+                    AI Consultation
                   </span>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Main Card */}
-              <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <div className="flex justify-center mb-6">
-                    <div className="p-4 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl border border-blue-500/30">
-                      <Lock className="w-8 h-8 text-blue-400" />
+              <div className="card-glass border-2 border-iron-gray p-6">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 bg-iron-dark-gray border-2 border-iron-gray">
+                    <Lock className="w-8 h-8 text-iron-orange" />
+                  </div>
+                </div>
+
+                <h1 className="text-2xl font-bold text-center mb-2 text-iron-white uppercase tracking-wider">
+                  Get Your 2-Week Program
+                </h1>
+
+                <p className="text-iron-gray text-center mb-4 text-sm">
+                  Enter your consultation key to receive a personalized program.
+                </p>
+
+                {/* Benefits */}
+                <div className="mb-6 p-4 bg-iron-dark-gray border border-iron-gray">
+                  <div className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-iron-orange mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-iron-gray space-y-1">
+                      <p className="font-bold uppercase tracking-wider text-iron-white">What You Get:</p>
+                      <p>✓ 2-week periodized training plan</p>
+                      <p>✓ Daily meal plans with recipes</p>
+                      <p>✓ Tailored to your schedule & equipment</p>
                     </div>
                   </div>
+                </div>
 
-                  <h1 className="text-3xl font-bold text-center mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    AI-Powered Consultation
-                  </h1>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-iron-gray mb-2">
+                      Consultation Key
+                    </label>
+                    <input
+                      type="text"
+                      value={consultationKey}
+                      onChange={(e) =>
+                        setConsultationKey(e.target.value.toUpperCase())
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleStartConsultation();
+                      }}
+                      placeholder="SHARP-2025-XXXXXXXXX"
+                      className="input font-mono"
+                      autoFocus
+                    />
+                  </div>
 
-                  <p className="text-slate-400 text-center mb-8">
-                    Enter your consultation key to unlock a personalized fitness
-                    and nutrition plan built just for you.
-                  </p>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Consultation Key
-                      </label>
-                      <input
-                        type="text"
-                        value={consultationKey}
-                        onChange={(e) =>
-                          setConsultationKey(e.target.value.toUpperCase())
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleStartConsultation();
-                        }}
-                        placeholder="SHARP-2025-XXXXXXXXX"
-                        className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono tracking-wider"
-                        autoFocus
-                      />
-                    </div>
-
-                    {errorMessage && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
-                      >
-                        {errorMessage}
-                      </motion.div>
-                    )}
-
-                    <button
-                      onClick={handleStartConsultation}
-                      disabled={!consultationKey.trim()}
-                      className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-slate-700 disabled:to-slate-700 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25"
+                  {errorMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 bg-red-900/20 border border-red-500 text-red-400 text-xs"
                     >
-                      <span>Start Consultation</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
+                      {errorMessage}
+                    </motion.div>
+                  )}
 
-                  <div className="mt-8 pt-6 border-t border-slate-800">
-                    <p className="text-xs text-slate-500 text-center">
-                      Don&apos;t have a key?{" "}
-                      <a
-                        href="mailto:persimmonautomation@gmail.com?subject=Consultation%20Key%20Request"
-                        className="text-blue-400 hover:text-blue-300 underline"
-                      >
-                        Contact us to request access
-                      </a>
-                    </p>
-                  </div>
-                </motion.div>
+                  <button
+                    onClick={handleStartConsultation}
+                    disabled={!consultationKey.trim()}
+                    className="btn btn-primary w-full flex items-center justify-center gap-2 tap-target active-press"
+                  >
+                    <span>Start</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-iron-gray">
+                  <p className="text-xs text-iron-gray text-center">
+                    Don&apos;t have a key?{" "}
+                    <a
+                      href="mailto:persimmonautomation@gmail.com?subject=SHARPENED%20Consultation%20Key%20Request&body=Hi%2C%0A%0AI%20would%20like%20to%20request%20access%20to%20the%20SHARPENED%20AI%20Consultation%20feature.%0A%0AName%3A%20%0AEmail%3A%20%0AReason%20for%20request%3A%20%0A%0AThank%20you!"
+                      className="text-iron-orange hover:underline"
+                    >
+                      Request access
+                    </a>
+                  </p>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -276,25 +314,21 @@ export default function ConsultationPage() {
             exit={{ opacity: 0 }}
             className="min-h-screen flex items-center justify-center p-4"
           >
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className="text-center"
-            >
+            <div className="text-center">
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="inline-block p-4 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full border border-blue-500/30 mb-6"
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="inline-block p-4 bg-iron-dark-gray border-2 border-iron-orange mb-6"
               >
-                <Sparkles className="w-12 h-12 text-blue-400" />
+                <Sparkles className="w-12 h-12 text-iron-orange" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-white mb-2">
+              <h2 className="text-xl font-bold text-iron-white uppercase tracking-wider mb-2">
                 Validating Key
               </h2>
-              <p className="text-slate-400">
-                Preparing your personalized consultation...
+              <p className="text-iron-gray text-sm">
+                Preparing your consultation...
               </p>
-            </motion.div>
+            </div>
           </motion.div>
         )}
 
@@ -307,22 +341,18 @@ export default function ConsultationPage() {
             exit={{ opacity: 0 }}
             className="min-h-screen flex items-center justify-center p-4"
           >
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className="max-w-md w-full bg-slate-900/50 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 text-center"
-            >
-              <div className="inline-block p-4 bg-red-500/10 rounded-full mb-4">
+            <div className="max-w-md w-full card-glass border-2 border-red-500 p-6 text-center">
+              <div className="inline-block p-4 bg-red-900/20 border-2 border-red-500 mb-4">
                 <Lock className="w-12 h-12 text-red-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">
+              <h2 className="text-xl font-bold text-iron-white uppercase tracking-wider mb-2">
                 Invalid Key
               </h2>
-              <p className="text-slate-400 mb-4">{errorMessage}</p>
-              <p className="text-sm text-slate-500">
+              <p className="text-iron-gray mb-4 text-sm">{errorMessage}</p>
+              <p className="text-xs text-iron-gray">
                 Returning to key entry...
               </p>
-            </motion.div>
+            </div>
           </motion.div>
         )}
 
@@ -336,73 +366,75 @@ export default function ConsultationPage() {
             className="h-screen flex flex-col"
           >
             {/* Header */}
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-xl"
-            >
+            <div className="border-b-2 border-iron-gray bg-iron-black">
               <div className="max-w-4xl mx-auto px-4 py-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
-                      <MessageCircle className="w-5 h-5 text-blue-400" />
+                    <button
+                      onClick={() => router.push('/dashboard')}
+                      className="p-2 bg-iron-dark-gray border border-iron-gray hover:bg-iron-gray transition-colors tap-target"
+                      aria-label="Back to dashboard"
+                    >
+                      <ArrowLeft className="w-5 h-5 text-iron-white" />
+                    </button>
+                    <div className="p-2 bg-iron-orange">
+                      <MessageCircle className="w-5 h-5 text-iron-black" />
                     </div>
                     <div>
-                      <h2 className="font-semibold text-white">
-                        AI Coach Consultation
+                      <h2 className="font-bold text-iron-white uppercase tracking-wider text-sm">
+                        AI Coach
                       </h2>
-                      <p className="text-xs text-slate-400">{currentSection}</p>
+                      <p className="text-xs text-iron-gray uppercase tracking-wide">{currentSection}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-bold text-iron-white">
                       {progress}%
                     </div>
-                    <div className="text-xs text-slate-400">Complete</div>
+                    <div className="text-xs text-iron-gray uppercase tracking-wide">Complete</div>
                   </div>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1 bg-iron-dark-gray">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.5 }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    className="h-full bg-iron-orange"
                   />
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto">
-              <div className="max-w-4xl mx-auto px-4 py-8">
+              <div className="max-w-4xl mx-auto px-4 py-6">
                 <AnimatePresence initial={false}>
-                  {messages.map((message, index) => (
+                  {messages.map((message) => (
                     <motion.div
                       key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`mb-6 flex ${
+                      className={`mb-4 flex ${
                         message.role === "user" ? "justify-end" : "justify-start"
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] ${
+                        className={`max-w-[85%] sm:max-w-[75%] p-4 border ${
                           message.role === "user"
-                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-                            : "bg-slate-800/50 backdrop-blur-xl border border-slate-700 text-slate-100"
-                        } rounded-2xl px-6 py-4 shadow-lg`}
+                            ? "bg-iron-orange text-iron-black border-iron-orange"
+                            : "card-glass border-iron-gray text-iron-white"
+                        }`}
                       >
-                        <p className="whitespace-pre-wrap leading-relaxed">
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">
                           {message.content}
                         </p>
                         <p
-                          className={`text-xs mt-2 ${
+                          className={`text-xs mt-2 uppercase tracking-wider ${
                             message.role === "user"
-                              ? "text-blue-100"
-                              : "text-slate-500"
+                              ? "text-iron-black/70"
+                              : "text-iron-gray"
                           }`}
                         >
                           {message.timestamp.toLocaleTimeString([], {
@@ -419,36 +451,36 @@ export default function ConsultationPage() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex justify-start mb-6"
+                    className="flex justify-start mb-4"
                   >
-                    <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl px-6 py-4">
+                    <div className="card-glass border border-iron-gray p-4">
                       <div className="flex gap-2">
                         <motion.div
                           animate={{ opacity: [0.3, 1, 0.3] }}
                           transition={{
-                            duration: 1.5,
+                            duration: 1.2,
                             repeat: Infinity,
                             delay: 0,
                           }}
-                          className="w-2 h-2 bg-blue-400 rounded-full"
+                          className="w-2 h-2 bg-iron-orange"
                         />
                         <motion.div
                           animate={{ opacity: [0.3, 1, 0.3] }}
                           transition={{
-                            duration: 1.5,
+                            duration: 1.2,
                             repeat: Infinity,
                             delay: 0.2,
                           }}
-                          className="w-2 h-2 bg-blue-400 rounded-full"
+                          className="w-2 h-2 bg-iron-orange"
                         />
                         <motion.div
                           animate={{ opacity: [0.3, 1, 0.3] }}
                           transition={{
-                            duration: 1.5,
+                            duration: 1.2,
                             repeat: Infinity,
                             delay: 0.4,
                           }}
-                          className="w-2 h-2 bg-blue-400 rounded-full"
+                          className="w-2 h-2 bg-iron-orange"
                         />
                       </div>
                     </div>
@@ -460,11 +492,7 @@ export default function ConsultationPage() {
             </div>
 
             {/* Input */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl"
-            >
+            <div className="border-t-2 border-iron-gray bg-iron-black safe-bottom">
               <div className="max-w-4xl mx-auto px-4 py-4">
                 <div className="flex gap-3">
                   <input
@@ -480,12 +508,12 @@ export default function ConsultationPage() {
                     }}
                     placeholder="Type your response..."
                     disabled={isLoading}
-                    className="flex-1 px-4 py-3 bg-slate-950/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
+                    className="input flex-1"
                   />
                   <button
                     onClick={handleSendMessage}
                     disabled={!inputMessage.trim() || isLoading}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:from-slate-700 disabled:to-slate-700 text-white font-semibold rounded-xl transition-all transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                    className="btn btn-primary px-6 tap-target active-press"
                   >
                     <ArrowRight className="w-5 h-5" />
                   </button>
@@ -495,13 +523,120 @@ export default function ConsultationPage() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
+                    className="mt-3 p-3 bg-red-900/20 border border-red-500 text-red-400 text-xs"
                   >
                     {errorMessage}
                   </motion.div>
                 )}
               </div>
-            </motion.div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Generating Program State */}
+        {state === "generating_program" && (
+          <motion.div
+            key="generating-program"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen flex items-center justify-center p-4"
+          >
+            <div className="max-w-md w-full text-center">
+              <motion.div
+                animate={{
+                  rotate: 360,
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                }}
+                className="inline-block p-6 bg-iron-dark-gray border-2 border-iron-orange mb-6"
+              >
+                <Sparkles className="w-16 h-16 text-iron-orange" />
+              </motion.div>
+              <h2 className="text-2xl font-bold text-iron-white uppercase tracking-wider mb-3">
+                Generating Program
+              </h2>
+              <p className="text-iron-gray mb-6 text-sm">
+                Creating your personalized 2-week plan...
+              </p>
+              <div className="space-y-2 text-xs text-iron-gray uppercase tracking-wide">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4 text-iron-orange" />
+                  <span>Analyzing consultation data</span>
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4 text-iron-orange" />
+                  <span>Building training plan</span>
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.5 }}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4 text-iron-orange" />
+                  <span>Creating meal plans</span>
+                </motion.p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Complete State */}
+        {state === "complete" && (
+          <motion.div
+            key="complete"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen flex items-center justify-center p-4"
+          >
+            <div className="max-w-md w-full text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="inline-block p-6 bg-iron-dark-gray border-2 border-iron-orange mb-6"
+              >
+                <Check className="w-16 h-16 text-iron-orange" />
+              </motion.div>
+              <h2 className="text-2xl font-bold text-iron-white uppercase tracking-wider mb-3">
+                Program Ready
+              </h2>
+              <p className="text-iron-gray mb-2 text-sm">
+                Your 2-week program has been generated.
+              </p>
+              <p className="text-xs text-iron-gray uppercase tracking-wide mb-8">
+                Redirecting to dashboard...
+              </p>
+
+              <div className="card-glass border border-iron-gray p-6">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-3 bg-iron-orange">
+                    <Check className="w-6 h-6 text-iron-black" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="text-iron-white font-bold uppercase tracking-wider">Ready to Start</p>
+                    <p className="text-iron-gray text-xs">
+                      Your program is on your dashboard
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

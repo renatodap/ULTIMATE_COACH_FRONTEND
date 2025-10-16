@@ -1,91 +1,65 @@
-'use client'
-
 /**
- * MemoryTimeline - Shows permanent memory across time
- * Demonstrates "tell once, remember forever"
+ * Memory Timeline Component
+ *
+ * Visualizes permanent memory with timeline of remembered items
  */
+
+'use client'
 
 import { motion } from 'framer-motion'
 
-const memories = [
-  {
-    date: 'Day 1',
-    text: 'Allergic to dairy',
-    icon: '🧀',
-    delay: 0,
-  },
-  {
-    date: 'Day 5',
-    text: 'Knee injury - avoid impact',
-    icon: '🦵',
-    delay: 0.1,
-  },
-  {
-    date: 'Day 12',
-    text: 'Vegetarian diet',
-    icon: '🥗',
-    delay: 0.2,
-  },
-  {
-    date: 'Day 30',
-    text: 'All remembered, forever',
-    icon: '🧠',
-    delay: 0.3,
-  },
+interface MemoryItem {
+  label: string
+  date: string
+  icon: string
+}
+
+const memories: MemoryItem[] = [
+  { label: 'Allergic to peanuts', date: 'Week 1', icon: '🥜' },
+  { label: 'Prefers morning workouts', date: 'Week 2', icon: '🌅' },
+  { label: 'Dislikes fish', date: 'Week 3', icon: '🐟' },
+  { label: 'Knee injury (left)', date: 'Week 4', icon: '🦵' },
 ]
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -30 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.4 },
-  },
-}
 
 export default function MemoryTimeline() {
   return (
-    <motion.div
-      className="space-y-4"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {memories.map((memory, index) => (
-        <motion.div
-          key={index}
-          variants={itemVariants}
-          className="flex items-start gap-4"
-        >
-          {/* Timeline dot */}
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-iron-orange border-2 border-iron-orange flex items-center justify-center text-2xl">
-              {memory.icon}
-            </div>
-            {index < memories.length - 1 && (
-              <div className="w-0.5 h-8 bg-iron-gray" />
-            )}
-          </div>
+    <div className="card-glass p-6 sm:p-8 border-2 border-iron-orange">
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-iron-gray text-xs uppercase tracking-wider">
+          <span className="text-iron-orange">●</span>
+          <span>Memory Timeline</span>
+        </div>
 
-          {/* Content */}
-          <div className="flex-1 pt-2">
-            <p className="text-xs text-iron-gray uppercase tracking-wider mb-1">
-              {memory.date}
-            </p>
-            <p className="text-iron-white font-medium">{memory.text}</p>
-          </div>
-        </motion.div>
-      ))}
-    </motion.div>
+        <div className="space-y-4">
+          {memories.map((memory, index) => (
+            <motion.div
+              key={index}
+              className="flex items-start gap-4"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="text-2xl">{memory.icon}</div>
+              <div className="flex-1">
+                <p className="text-iron-white font-medium">{memory.label}</p>
+                <p className="text-iron-gray text-xs">{memory.date}</p>
+              </div>
+              <motion.div
+                className="w-2 h-2 rounded-full bg-iron-orange"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+              />
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="pt-4 border-t border-iron-gray">
+          <p className="text-iron-gray text-xs text-center">
+            AI remembers everything, forever
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

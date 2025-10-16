@@ -7,28 +7,19 @@
  * Mobile-first, sharp design, NO rounded corners
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
-import { getDashboardSummary } from '@/lib/api/dashboard'
-import { getFullUserProfile } from '@/lib/api/profile'
-import type { DashboardSummary } from '@/lib/types/dashboard'
+import { useDashboardData } from '@/lib/hooks/useDashboardData'
 
 // Components
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen, SkeletonCard, SkeletonGrid } from '@/components/shared/LoadingScreen'
 import DashboardHeader from '@/app/components/dashboard/DashboardHeader'
-import TodayOverviewCard from '@/app/components/dashboard/TodayOverviewCard'
-import WeightProgressCard from '@/app/components/dashboard/WeightProgressCard'
-import MacroSummaryCard from '@/app/components/dashboard/MacroSummaryCard'
-import ActivitySummaryCard from '@/app/components/dashboard/ActivitySummaryCard'
-import QuickActionsGrid from '@/app/components/dashboard/QuickActionsGrid'
-import WeeklyStatsCard from '@/app/components/dashboard/WeeklyStatsCard'
-import RecentActivityFeed from '@/app/components/dashboard/RecentActivityFeed'
+import HeroCard from '@/app/components/dashboard/HeroCard'
+import ProgressTrackerCard from '@/app/components/dashboard/ProgressTrackerCard'
+import SmartActionsGrid from '@/app/components/dashboard/SmartActionsGrid'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
-import TimePeriodSelector, { TimePeriod } from '@/app/components/dashboard/TimePeriodSelector'
-import SwipeableContent from '@/app/components/dashboard/SwipeableContent'
-import PlanTile from '@/app/components/dashboard/PlanTile'
 
 // Animation variants
 const containerVariants = {
@@ -52,79 +43,28 @@ const cardVariants = {
 
 export default function DashboardPage() {
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
-  const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  // Use the new dashboard data hook
+  const {
+    data: dashboardData,
+    loading,
+    refreshing,
+    error,
+    unitSystem,
+    consultationCompleted,
+    refresh,
+    load
+  } = useDashboardData({ skip: authLoading || !onboardingComplete })
+
   const [weightModalOpen, setWeightModalOpen] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('today')
-  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric')
-
-  useEffect(() => {
-    // Load dashboard regardless of onboarding status
-    // Middleware already handles authentication
-    // If onboarding not complete, user will be redirected by useOnboardingCheck
-    if (!authLoading) {
-      ;(async () => {
-        try {
-          const profile = await getFullUserProfile()
-          setUnitSystem((profile.unit_system as any) || 'metric')
-        } catch {}
-        loadDashboard()
-      })()
-    }
-  }, [authLoading])
-
-  const loadDashboard = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true)
-      } else {
-        setLoading(true)
-      }
-      setError(null)
-      const data = await getDashboardSummary()
-      setDashboardData(data)
-    } catch (err) {
-      console.error('Failed to load dashboard:', err)
-      setError('Failed to load dashboard. Please try again.')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
 
   const handleWeightLogged = () => {
     // Refresh dashboard data after logging weight
-    loadDashboard()
+    refresh()
   }
 
   const handleRefresh = () => {
-    loadDashboard(true)
-  }
-
-  const handleTimePeriodChange = (period: TimePeriod) => {
-    setTimePeriod(period)
-    // TODO: Fetch data for the selected period
-    // For now, just update the UI
-  }
-
-  const handleSwipeLeft = () => {
-    // Swipe left = next period (today -> week -> month)
-    const periods: TimePeriod[] = ['today', 'week', 'month']
-    const currentIndex = periods.indexOf(timePeriod)
-    if (currentIndex < periods.length - 1) {
-      setTimePeriod(periods[currentIndex + 1])
-    }
-  }
-
-  const handleSwipeRight = () => {
-    // Swipe right = previous period (month -> week -> today)
-    const periods: TimePeriod[] = ['today', 'week', 'month']
-    const currentIndex = periods.indexOf(timePeriod)
-    if (currentIndex > 0) {
-      setTimePeriod(periods[currentIndex - 1])
-    }
+    refresh()
   }
 
   // Show loading state while checking authentication
@@ -166,7 +106,7 @@ export default function DashboardPage() {
               {error || 'Something went wrong. Please try again.'}
             </p>
             <button
-              onClick={() => loadDashboard()}
+              onClick={() => load()}
               className="btn-primary px-6 py-3"
             >
               Retry
@@ -191,74 +131,37 @@ export default function DashboardPage() {
         refreshing={refreshing}
       />
 
-      {/* Time Period Selector with Swipe */}
-      <div className="max-w-4xl mx-auto px-4 pt-2">
-        <TimePeriodSelector
-          currentPeriod={timePeriod}
-          onChange={handleTimePeriodChange}
-        />
-        {/* Swipe Hint - auto-dismissing gesture affordance */}
-        <p className="text-center mt-2 swipe-hint pointer-events-none">
-          ← Swipe for week/month →
-        </p>
-      </div>
-
-      {/* Swipeable Main Content */}
-      <SwipeableContent
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeRight={handleSwipeRight}
+      {/* Main Content */}
+      <motion.div
+        className="max-w-4xl mx-auto px-4 py-6 space-y-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        <motion.div
-          key={timePeriod} // Re-animate when period changes
-          className="max-w-4xl mx-auto px-4 py-6 space-y-4"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-        {/* Today's Overview */}
+        {/* Hero Card - Today At A Glance */}
         <motion.div variants={cardVariants}>
-          <TodayOverviewCard
+          <HeroCard
             nutrition={dashboardData.nutrition}
             activity={dashboardData.activity}
             netCalories={dashboardData.net_calories}
           />
         </motion.div>
 
-        {/* Weight & Macros - Side by side on tablet+ */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={cardVariants}>
-          <WeightProgressCard
+        {/* Smart Actions - Time-aware with Coach */}
+        <motion.div variants={cardVariants}>
+          <SmartActionsGrid onLogWeight={() => setWeightModalOpen(true)} />
+        </motion.div>
+
+        {/* Progress Tracker */}
+        <motion.div variants={cardVariants}>
+          <ProgressTrackerCard
             weight={dashboardData.weight}
+            weekly={dashboardData.weekly}
+            unitSystem={unitSystem}
             onLogWeight={() => setWeightModalOpen(true)}
           />
-          <MacroSummaryCard nutrition={dashboardData.nutrition} />
         </motion.div>
-
-        {/* Plan Tile */}
-        <motion.div variants={cardVariants}>
-          <PlanTile />
-        </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div variants={cardVariants}>
-          <QuickActionsGrid onLogWeight={() => setWeightModalOpen(true)} />
-        </motion.div>
-
-        {/* Activity Summary */}
-        <motion.div variants={cardVariants}>
-          <ActivitySummaryCard activity={dashboardData.activity} />
-        </motion.div>
-
-        {/* Weekly Stats */}
-        <motion.div variants={cardVariants}>
-          <WeeklyStatsCard weekly={dashboardData.weekly} />
-        </motion.div>
-
-        {/* Recent Activity Feed */}
-        <motion.div variants={cardVariants}>
-          <RecentActivityFeed />
-        </motion.div>
-        </motion.div>
-      </SwipeableContent>
+      </motion.div>
 
       {/* Bottom Navigation */}
       <BottomNav />
