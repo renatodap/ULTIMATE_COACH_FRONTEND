@@ -633,8 +633,11 @@ export default function LogMealPage() {
             </div>
 
             {/* Quantity Input */}
+            {/* TODO i18n: Add translations for amountGrams, numberOfServings, servingHelperText */}
             <div className="mb-4">
-              <label className="block text-sm text-iron-gray mb-2">{t('nutrition.quantity')}</label>
+              <label className="block text-sm text-iron-gray mb-2">
+                {modalUnit === 'grams' ? t('nutrition.amountGrams') : t('nutrition.numberOfServings')}
+              </label>
               <input
                 type="number"
                 value={modalQuantity}
@@ -643,6 +646,11 @@ export default function LogMealPage() {
                 min="0"
                 step={modalUnit === 'grams' ? '1' : '0.1'}
               />
+              {modalUnit === 'serving' && (
+                <div className="mt-2 text-xs text-iron-gray">
+                  {t('nutrition.servingHelperText')}
+                </div>
+              )}
             </div>
 
             {/* Serving Selection */}
