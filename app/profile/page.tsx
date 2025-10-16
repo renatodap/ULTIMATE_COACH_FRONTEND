@@ -42,6 +42,8 @@ import { getFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
 import { logout } from '@/lib/api/auth'
 import { updateFullUserProfile } from '@/lib/api/profile'
 import { displayWeight, displayHeight } from '@/lib/utils/units'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatDateDisplay } from '@/lib/utils/timezone'
 import EditPhysicalStatsModal from '@/app/components/profile/EditPhysicalStatsModal'
 import EditGoalsModal from '@/app/components/profile/EditGoalsModal'
 import EditDietaryModal from '@/app/components/profile/EditDietaryModal'
@@ -95,6 +97,7 @@ const contentVariants = {
 export default function ProfilePage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const { timezone } = useTimezone()
   const [profile, setProfile] = useState<FullUserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -382,11 +385,11 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <DataRow label={t('profile.name')} value={profile.full_name} />
             <DataRow label={t('profile.email')} value={profile.email} />
-            <DataRow label={t('profile.memberSince')} value={profile.created_at ? new Date(profile.created_at).toLocaleDateString() : t('profile.unknown')} />
+            <DataRow label={t('profile.memberSince')} value={profile.created_at ? formatDateDisplay(profile.created_at, timezone, true) : t('profile.unknown')} />
             {profile.onboarding_completed && (
               <DataRow
                 label={t('profile.onboardingCompleted')}
-                value={profile.onboarding_completed_at ? new Date(profile.onboarding_completed_at).toLocaleDateString() : t('profile.yes')}
+                value={profile.onboarding_completed_at ? formatDateDisplay(profile.onboarding_completed_at, timezone, true) : t('profile.yes')}
               />
             )}
           </div>
@@ -483,7 +486,7 @@ export default function ProfilePage() {
               <DataRow label={t('profile.estimatedTDEE')} value={profile.estimated_tdee ? `${profile.estimated_tdee} ${t('profile.cal')}` : undefined} />
               <DataRow
                 label={t('profile.macrosLastCalculated')}
-                value={profile.macros_last_calculated_at ? new Date(profile.macros_last_calculated_at).toLocaleDateString() : undefined}
+                value={profile.macros_last_calculated_at ? formatDateDisplay(profile.macros_last_calculated_at, timezone, true) : undefined}
               />
             </div>
           </div>
@@ -541,7 +544,7 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-sm text-iron-gray">
                   {profile.consultation_completed_at
-                    ? `${t('profile.completedOn')} ${new Date(profile.consultation_completed_at).toLocaleDateString()}`
+                    ? `${t('profile.completedOn')} ${formatDateDisplay(profile.consultation_completed_at, timezone, true)}`
                     : t('profile.youHaveCompleted')}
                 </p>
               </div>

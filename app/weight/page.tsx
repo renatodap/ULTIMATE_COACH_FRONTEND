@@ -15,9 +15,12 @@ import { BottomNav } from '@/components/BottomNav'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
 import { getFullUserProfile } from '@/lib/api/profile'
 import { displayWeight, type UnitSystem } from '@/lib/utils/units'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatDateInTimezone, formatTimeInTimezone, formatRelativeDate } from '@/lib/utils/timezone'
 
 export default function WeightHistoryPage() {
   const router = useRouter()
+  const { timezone } = useTimezone()
   const [metrics, setMetrics] = useState<BodyMetric[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,31 +64,14 @@ export default function WeightHistoryPage() {
   }
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today'
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday'
-    }
-
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
-    })
+    // Use timezone-aware relative date formatting
+    const dateInTimezone = formatDateInTimezone(dateStr, timezone)
+    return formatRelativeDate(dateInTimezone, timezone)
   }
 
   const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
+    // Use timezone-aware time formatting
+    return formatTimeInTimezone(dateStr, timezone)
   }
 
   // Loading state

@@ -12,6 +12,8 @@ import type { WeightProgressSummary } from '@/lib/types/dashboard'
 import { displayWeight, displayHeight } from '@/lib/utils/units'
 import { useEffect, useState } from 'react'
 import { getFullUserProfile } from '@/lib/api/profile'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatDateInTimezone } from '@/lib/utils/timezone'
 
 interface WeightProgressCardProps {
   weight: WeightProgressSummary
@@ -20,6 +22,7 @@ interface WeightProgressCardProps {
 
 export default function WeightProgressCard({ weight, onLogWeight }: WeightProgressCardProps) {
   const router = useRouter()
+  const { timezone } = useTimezone()
   const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric')
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function WeightProgressCard({ weight, onLogWeight }: WeightProgre
           {weight.latest_recorded_at && (
             <div className="mb-4 bg-iron-black border border-iron-gray/30 p-4">
               <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Last Logged</p>
-              <p className="text-xs text-iron-white">{new Date(weight.latest_recorded_at).toLocaleDateString()}</p>
+              <p className="text-xs text-iron-white">{formatDateInTimezone(weight.latest_recorded_at, timezone)}</p>
             </div>
           )}
 

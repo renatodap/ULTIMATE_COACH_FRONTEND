@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatDateInTimezone, formatRelativeDate, addDaysInTimezone } from '@/lib/utils/timezone'
 
 type Mode = 'day' | 'week'
 
@@ -29,32 +31,29 @@ function getWeekRange(dateStr: string) {
   return { start: toISODate(start), end: toISODate(end) }
 }
 
-function formatLabel(mode: Mode, dateStr: string) {
-  const d = new Date(dateStr)
+function formatLabel(mode: Mode, dateStr: string, timezone: string) {
   if (mode === 'day') {
-    const today = new Date()
-    const yest = new Date()
-    yest.setDate(today.getDate() - 1)
-    if (d.toDateString() === today.toDateString()) return 'Today'
-    if (d.toDateString() === yest.toDateString()) return 'Yesterday'
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    // Use timezone-aware relative date formatting
+    return formatRelativeDate(dateStr, timezone)
   }
+  // For week mode, format start and end dates
   const { start, end } = getWeekRange(dateStr)
-  const s = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const e = new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${s} – ${e}`
+  const startFormatted = formatDateInTimezone(start, timezone)
+  const endFormatted = formatDateInTimezone(end, timezone)
+  return `${startFormatted} – ${endFormatted}`
 }
 
 export default function DateRangeControls({ mode, date, onChange, className }: DateRangeControlsProps) {
+  const { timezone } = useTimezone()
   return (
     <div className={`flex items-center gap-2 ${className || ''}`}>
       {/* Previous */}
       <button
         className="p-2 rounded-full border border-iron-gray text-iron-white hover:border-iron-orange/60"
         onClick={() => {
-          const d = new Date(date)
-          d.setDate(d.getDate() - (mode === 'week' ? 7 : 1))
-          onChange(toISODate(d))
+          const days = mode === 'week' ? 7 : 1
+          const newDate = addDaysInTimezone(date, -days, timezone)
+          onChange(newDate)
         }}
         aria-label={mode === 'week' ? 'Previous week' : 'Previous day'}
       >
@@ -63,16 +62,16 @@ export default function DateRangeControls({ mode, date, onChange, className }: D
 
       {/* Label */}
       <div className="flex-1 text-center text-sm text-iron-white">
-        {formatLabel(mode, date)}
+        {formatLabel(mode, date, timezone)}
       </div>
 
       {/* Next */}
       <button
         className="p-2 rounded-full border border-iron-gray text-iron-white hover:border-iron-orange/60"
         onClick={() => {
-          const d = new Date(date)
-          d.setDate(d.getDate() + (mode === 'week' ? 7 : 1))
-          onChange(toISODate(d))
+          const days = mode === 'week' ? 7 : 1
+          const newDate = addDaysInTimezone(date, days, timezone)
+          onChange(newDate)
         }}
         aria-label={mode === 'week' ? 'Next week' : 'Next day'}
       >

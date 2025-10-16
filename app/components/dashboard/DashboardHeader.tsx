@@ -9,6 +9,8 @@
  */
 
 import { motion } from 'framer-motion'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz'
 
 interface DashboardHeaderProps {
   displayName?: string | null
@@ -18,16 +20,16 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({ displayName, date, onRefresh, refreshing = false }: DashboardHeaderProps) {
-  // Format date: "Monday, Oct 13"
-  const dateObj = new Date(date)
-  const formattedDate = dateObj.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric'
-  })
+  const { timezone } = useTimezone()
 
-  // Get greeting based on time
-  const hour = new Date().getHours()
+  // Format date: "Monday, Oct 13" in user's timezone
+  // date is YYYY-MM-DD format from backend
+  const dateObj = toZonedTime(new Date(date + 'T00:00:00'), timezone)
+  const formattedDate = formatInTimeZone(dateObj, timezone, 'EEEE, MMM d')
+
+  // Get greeting based on current time in user's timezone
+  const currentTime = toZonedTime(new Date(), timezone)
+  const hour = currentTime.getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
 
   return (
