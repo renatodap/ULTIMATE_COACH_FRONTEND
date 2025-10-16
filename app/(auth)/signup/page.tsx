@@ -39,16 +39,31 @@ export default function SignupPage() {
     }
 
     try {
-      await signup({
+      const response = await signup({
         email,
         password,
         full_name: fullName || undefined,
       })
+
+      // CRITICAL: Sync Supabase client session if tokens exist
+      // Note: Tokens may not exist if email confirmation is required
+      if (response.session?.access_token && response.session?.refresh_token) {
+        console.log('[Signup] Syncing Supabase session with backend tokens...')
+        await supabase.auth.setSession({
+          access_token: response.session.access_token,
+          refresh_token: response.session.refresh_token,
+        })
+        console.log('[Signup] Supabase session synced successfully')
+      } else {
+        console.log('[Signup] No session tokens (email confirmation required)')
+      }
+
       // After successful signup, require email verification before login
       // Redirect to login with a banner prompting email confirmation
       const params = new URLSearchParams({ verifyEmail: '1', email })
       router.push(`/login?${params.toString()}`)
     } catch (err) {
+      console.error('[Signup] Signup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
       setLoading(false)

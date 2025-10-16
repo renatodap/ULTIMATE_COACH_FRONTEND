@@ -91,12 +91,27 @@ export async function completeOnboarding(data: OnboardingData): Promise<Onboardi
       throw new Error('Session expired. Please log in again.');
     }
 
-    if (!sessionData?.session?.access_token) {
-      console.error('[Onboarding] No access token in session');
-      throw new Error('Authentication required. Please log in again.');
+    let accessToken = sessionData?.session?.access_token;
+
+    // Fallback: Try to refresh session if no access token
+    if (!accessToken) {
+      console.log('[Onboarding] No session found, attempting to refresh...');
+      const { data: refreshedData, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.error('[Onboarding] Session refresh error:', refreshError);
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      if (!refreshedData?.session?.access_token) {
+        console.error('[Onboarding] No access token after refresh');
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      accessToken = refreshedData.session.access_token;
+      console.log('[Onboarding] Session refreshed successfully');
     }
 
-    const accessToken = sessionData.session.access_token;
     console.log('[Onboarding] Submitting with token:', accessToken.substring(0, 20) + '...');
 
     const headers: Record<string, string> = {

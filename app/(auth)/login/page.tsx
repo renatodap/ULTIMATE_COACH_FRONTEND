@@ -58,6 +58,19 @@ function LoginPageContent() {
     try {
       const response = await login({ email, password })
 
+      // CRITICAL: Sync Supabase client session with backend tokens
+      // This ensures getSession() works in onboarding and other pages
+      if (response.session?.access_token && response.session?.refresh_token) {
+        console.log('[Login] Syncing Supabase session with backend tokens...')
+        await supabase.auth.setSession({
+          access_token: response.session.access_token,
+          refresh_token: response.session.refresh_token,
+        })
+        console.log('[Login] Supabase session synced successfully')
+      } else {
+        console.warn('[Login] No session tokens in response, skipping Supabase sync')
+      }
+
       // Use window.location.href for hard redirect to ensure cookies are loaded
       // router.push() can fail because middleware checks cookies before they're set
       if (!response.user.onboarding_completed) {
@@ -67,6 +80,7 @@ function LoginPageContent() {
       }
     } catch (err: any) {
       // Log error silently for debugging
+      console.error('[Login] Login error:', err)
 
       // Show detailed error message
       if (err?.type === 'NetworkError') {
