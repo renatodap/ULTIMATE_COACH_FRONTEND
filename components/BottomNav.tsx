@@ -8,12 +8,13 @@
  */
 
 import { usePathname, useRouter } from 'next/navigation'
+import { FEATURE_PLAN_IN_NAV } from '@/lib/constants/features'
 
 export function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
 
-  const tabs = [
+  const baseTabs = [
     {
       name: 'Home',
       path: '/dashboard',
@@ -23,43 +24,61 @@ export function BottomNav() {
         </svg>
       ),
     },
-    {
-      name: 'Activities',
-      path: '/activities',
-      icon: (
+  ] as const
+
+  const activitiesTab = {
+    name: 'Activities',
+    path: '/activities',
+    icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
-    },
-    {
-      name: 'Coach',
-      path: '/coach',
-      icon: (
+  }
+
+  const planTab = {
+    name: 'Plan',
+    path: '/plan/day/today',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M5 11h14M5 19h14M5 11v8m14-8v8" />
+      </svg>
+    ),
+  }
+
+  const coachTab = {
+    name: 'Coach',
+    path: '/coach',
+    icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
         </svg>
       ),
-    },
-    {
-      name: 'Nutrition',
-      path: '/nutrition',
-      icon: (
+  }
+
+  const nutritionTab = {
+    name: 'Nutrition',
+    path: '/nutrition',
+    icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeWidth={2} strokeLinecap="square" strokeLinejoin="miter" d="M21 15a2 2 0 01-2 2H5a2 2 0 01-2-2m18 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v6m18 0H3" />
         </svg>
       ),
-    },
-    {
-      name: 'Profile',
-      path: '/profile',
-      icon: (
+  }
+
+  const profileTab = {
+    name: 'Profile',
+    path: '/profile',
+    icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
-    },
-  ]
+  }
+
+  const tabs = FEATURE_PLAN_IN_NAV
+    ? [baseTabs[0], planTab, coachTab, profileTab]
+    : [baseTabs[0], activitiesTab, coachTab, nutritionTab, profileTab]
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {

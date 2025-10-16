@@ -9,7 +9,7 @@ import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface InputProps {
-  type?: 'text' | 'number'
+  type?: 'text' | 'number' | 'date'
   placeholder?: string
   value: string
   onChange: (value: string) => void

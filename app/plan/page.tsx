@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { getCurrentProgram, getOverridesToday } from '@/lib/api/planning'
+import { FEATURE_PLAN_ENABLED } from '@/lib/constants/features'
 
 export default function PlanSummaryPage() {
   const [program, setProgram] = useState<any>(null)
@@ -14,6 +15,12 @@ export default function PlanSummaryPage() {
 
   return (
     <div className="space-y-4">
+      {!FEATURE_PLAN_ENABLED && (
+        <div className="p-3 rounded-md bg-iron-black border border-iron-gray/30 text-iron-gray">
+          <div className="text-sm font-semibold">Plans are coming soon</div>
+          <div className="text-xs mt-1">This preview shows how your plan will appear once enabled.</div>
+        </div>
+      )}
       {overrides?.length > 0 && (
         <div className="p-3 rounded-md bg-amber-900/30 border border-amber-700 text-amber-200">
           <strong>Today adjusted:</strong> {overrides.map((o: any) => o.reason_code).join(', ')}
@@ -39,4 +46,3 @@ function Tile({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-

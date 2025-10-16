@@ -28,6 +28,7 @@ import RecentActivityFeed from '@/app/components/dashboard/RecentActivityFeed'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
 import TimePeriodSelector, { TimePeriod } from '@/app/components/dashboard/TimePeriodSelector'
 import SwipeableContent from '@/app/components/dashboard/SwipeableContent'
+import PlanTile from '@/app/components/dashboard/PlanTile'
 
 // Animation variants
 const containerVariants = {
@@ -230,6 +231,11 @@ export default function DashboardPage() {
             onLogWeight={() => setWeightModalOpen(true)}
           />
           <MacroSummaryCard nutrition={dashboardData.nutrition} />
+        </motion.div>
+
+        {/* Plan Tile */}
+        <motion.div variants={cardVariants}>
+          <PlanTile />
         </motion.div>
 
         {/* Quick Actions */}
