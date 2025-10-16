@@ -161,6 +161,12 @@ export default function OnboardingPage() {
         console.warn('Failed to detect timezone, using default:', e)
       }
 
+      // Safety check: goal weight must be within 50% of current weight (backend rule)
+      const weightDiff = Math.abs(data.goal_weight_kg - data.current_weight_kg)
+      if (data.current_weight_kg > 0 && weightDiff > data.current_weight_kg * 0.5) {
+        throw new Error('Goal weight must be within 50% of current weight')
+      }
+
       const payload = {
         primary_goal: data.primary_goal as any,
         experience_level: data.experience_level as any,
@@ -180,7 +186,6 @@ export default function OnboardingPage() {
         cooks_regularly: data.cooks_regularly,
         unit_system: data.unit_system,
         timezone: timezone,
-        language: data.language,
       }
 
       await completeOnboarding(payload)
@@ -188,7 +193,9 @@ export default function OnboardingPage() {
       next('complete')
       setTimeout(() => router.push('/profile'), 2000)
     } catch (err: any) {
-      setError(err.message || 'Failed to complete onboarding')
+      // Try to surface meaningful backend error details
+      const detail = err?.detail || err?.message || (typeof err === 'string' ? err : '')
+      setError(detail || 'Failed to complete onboarding')
       setLoading(false)
     }
   }
