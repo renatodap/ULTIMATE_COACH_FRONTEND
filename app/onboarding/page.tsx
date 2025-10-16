@@ -461,7 +461,7 @@ export default function OnboardingPage() {
               <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
                 {/* Primary Goal */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">What's your primary goal?</label>
+                  <label className="block text-neutral-300 text-lg mb-3">What&apos;s your primary goal?</label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: t('onboarding.loseWeight'), value: 'lose_weight' },

@@ -40,31 +40,13 @@ export function LogPreviewCard({ preview, onConfirm, onCancel }: LogPreviewCardP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Only handle nutrition logs
-  if (preview.type !== 'nutrition') {
-    return (
-      <div className="bg-iron-dark-gray border border-iron-gray rounded-lg p-6 max-w-md w-full">
-        <p className="text-iron-white text-center">
-          This log type is not yet supported
-        </p>
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onCancel}
-            className="flex-1 bg-iron-gray hover:bg-iron-gray/80 text-iron-white font-medium py-3.5 rounded-lg transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const data = preview.data as NutritionLogData
-  const mealIcon = MEAL_ICONS[data.meal_type]
-  const mealLabel = MEAL_LABELS[data.meal_type]
-
-  // Fetch nutrition data for all foods
+  // Fetch nutrition data for all foods - moved to top level before early return
   useEffect(() => {
+    // Skip if not nutrition log
+    if (preview.type !== 'nutrition') return
+
+    const data = preview.data as NutritionLogData
+
     async function lookupFoods() {
       setLoading(true)
       setError(null)
@@ -131,7 +113,30 @@ export function LogPreviewCard({ preview, onConfirm, onCancel }: LogPreviewCardP
     }
 
     lookupFoods()
-  }, [data.foods])
+  }, [preview.type, preview.data])
+
+  // Only handle nutrition logs
+  if (preview.type !== 'nutrition') {
+    return (
+      <div className="bg-iron-dark-gray border border-iron-gray rounded-lg p-6 max-w-md w-full">
+        <p className="text-iron-white text-center">
+          This log type is not yet supported
+        </p>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onCancel}
+            className="flex-1 bg-iron-gray hover:bg-iron-gray/80 text-iron-white font-medium py-3.5 rounded-lg transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const data = preview.data as NutritionLogData
+  const mealIcon = MEAL_ICONS[data.meal_type]
+  const mealLabel = MEAL_LABELS[data.meal_type]
 
   // Calculate totals
   const totalCalories = foodsWithNutrition.reduce((sum, f) => sum + f.calories, 0)

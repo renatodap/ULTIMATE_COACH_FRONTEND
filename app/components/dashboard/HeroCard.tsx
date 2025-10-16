@@ -136,7 +136,7 @@ export default function HeroCard({ nutrition, activity, netCalories }: HeroCardP
             <div className="p-6 space-y-6">
               {/* Macros Section */}
               <div>
-                <p className="text-xs text-iron-gray mb-4 uppercase tracking-wider">Today's Macros</p>
+                <p className="text-xs text-iron-gray mb-4 uppercase tracking-wider">Today&apos;s Macros</p>
                 <div className="grid grid-cols-3 gap-3">
                   {/* Protein */}
                   <div className="bg-iron-black/50 border border-iron-gray/30 p-3 text-center">
@@ -200,7 +200,7 @@ export default function HeroCard({ nutrition, activity, netCalories }: HeroCardP
               {/* Activity Section */}
               {activity.activity_count > 0 && (
                 <div>
-                  <p className="text-xs text-iron-gray mb-3 uppercase tracking-wider">Today's Activity</p>
+                  <p className="text-xs text-iron-gray mb-3 uppercase tracking-wider">Today&apos;s Activity</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-iron-black/50 border border-iron-gray/30 p-3">
                       <p className="text-xs text-iron-gray mb-1 uppercase tracking-wider">Duration</p>

@@ -50,7 +50,7 @@ const ActivityCardContent = ({ summary }: { summary: ActivitySummary }) => {
       {/* Header - Mobile-first */}
       <div className="flex items-center justify-between mb-6">
         <p className="text-xs text-iron-gray uppercase tracking-wider">
-          📊 Today's Activity
+          📊 Today&apos;s Activity
         </p>
         <span className="text-xs text-iron-gray font-bold uppercase tracking-wider">
           {summary.activity_count} {summary.activity_count === 1 ? 'Workout' : 'Workouts'}
