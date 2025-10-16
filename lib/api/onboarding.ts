@@ -82,11 +82,36 @@ export interface OnboardingStatus {
  * Complete onboarding and get personalized targets
  */
 export async function completeOnboarding(data: OnboardingData): Promise<OnboardingResponse> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData?.session?.access_token;
-  const headers: Record<string, string> = {};
-  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-  return apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
+  try {
+    // Get current session - this will also refresh if needed
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('[Onboarding] Session error:', sessionError);
+      throw new Error('Session expired. Please log in again.');
+    }
+
+    if (!sessionData?.session?.access_token) {
+      console.error('[Onboarding] No access token in session');
+      throw new Error('Authentication required. Please log in again.');
+    }
+
+    const accessToken = sessionData.session.access_token;
+    console.log('[Onboarding] Submitting with token:', accessToken.substring(0, 20) + '...');
+
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${accessToken}`
+    };
+
+    return await apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
+  } catch (error: any) {
+    console.error('[Onboarding] Complete onboarding error:', error);
+    // Re-throw with better error message
+    if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+      throw new Error('Session expired. Please log in again.');
+    }
+    throw error;
+  }
 }
 
 /**

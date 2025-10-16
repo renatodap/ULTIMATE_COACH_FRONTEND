@@ -57,13 +57,41 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
       headers.set('cookie', cookieHeader)
     }
 
-    // If Authorization is missing, attempt to derive from Supabase auth cookies
+    // If Authorization is missing, attempt to derive from cookies
     if (!headers.get('authorization') && cookieHeader) {
-      // Common Supabase cookie names when using @supabase/ssr helpers
-      const accessMatch = cookieHeader.match(/sb-access-token=([^;]+)/)
-      if (accessMatch?.[1]) {
-        headers.set('authorization', `Bearer ${decodeURIComponent(accessMatch[1])}`)
+      // Try multiple cookie names in order of preference
+      // 1. Backend's expected cookie name
+      const accessTokenMatch = cookieHeader.match(/access_token=([^;]+)/)
+      if (accessTokenMatch?.[1]) {
+        try {
+          const token = decodeURIComponent(accessTokenMatch[1])
+          headers.set('authorization', `Bearer ${token}`)
+          console.log('[API Proxy] Using access_token cookie for authorization')
+        } catch (err) {
+          console.error('[API Proxy] Failed to decode access_token:', err)
+        }
       }
+      // 2. Supabase cookie name (fallback)
+      else {
+        const sbAccessMatch = cookieHeader.match(/sb-access-token=([^;]+)/)
+        if (sbAccessMatch?.[1]) {
+          try {
+            const token = decodeURIComponent(sbAccessMatch[1])
+            headers.set('authorization', `Bearer ${token}`)
+            console.log('[API Proxy] Using sb-access-token cookie for authorization')
+          } catch (err) {
+            console.error('[API Proxy] Failed to decode sb-access-token:', err)
+          }
+        }
+      }
+    }
+
+    // Log auth status for debugging
+    if (headers.get('authorization')) {
+      const authHeader = headers.get('authorization') || ''
+      console.log('[API Proxy] Authorization header present:', authHeader.substring(0, 30) + '...')
+    } else {
+      console.warn('[API Proxy] No Authorization header - request may fail if auth required')
     }
 
     // Build request options

@@ -188,14 +188,34 @@ export default function OnboardingPage() {
         timezone: timezone,
       }
 
+      console.log('[Onboarding] Submitting payload:', {
+        ...payload,
+        // Log a summary without sensitive data
+        birth_date: payload.birth_date ? 'provided' : 'not provided',
+        height_cm: payload.height_cm,
+        current_weight_kg: payload.current_weight_kg,
+      })
+
       await completeOnboarding(payload)
 
       next('complete')
       setTimeout(() => router.push('/profile'), 2000)
     } catch (err: any) {
+      console.error('[Onboarding] Submit error:', err)
+
+      // Handle authentication errors specifically
+      if (err?.message?.includes('Session expired') ||
+          err?.message?.includes('Authentication required') ||
+          err?.message?.includes('bearer token') ||
+          err?.status === 401) {
+        setError('Your session has expired. Please log in again.')
+        setTimeout(() => router.push('/login'), 2000)
+        return
+      }
+
       // Try to surface meaningful backend error details
       const detail = err?.detail || err?.message || (typeof err === 'string' ? err : '')
-      setError(detail || 'Failed to complete onboarding')
+      setError(detail || 'Failed to complete onboarding. Please try again.')
       setLoading(false)
     }
   }
