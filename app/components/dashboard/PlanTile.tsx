@@ -8,8 +8,10 @@ export default function PlanTile() {
   const [overrides, setOverrides] = useState<any[]>([])
   const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') || 'demo-user' : 'demo-user'
   useEffect(() => {
-    getCurrentProgram(userId, false).then((res)=>setProgram(res.program)).catch(()=>{})
-    getOverridesToday(userId).then((res)=>setOverrides(res.overrides||[])).catch(()=>{})
+    // TEMPORARILY DISABLED: Backend endpoints not ready (missing programs, day_overrides tables)
+    // TODO: Re-enable when tables are created
+    // getCurrentProgram(userId, false).then((res)=>setProgram(res.program)).catch(()=>{})
+    // getOverridesToday(userId).then((res)=>setOverrides(res.overrides||[])).catch(()=>{})
   }, [])
   return (
     <div className="card-glass border border-iron-gray/30 p-4">

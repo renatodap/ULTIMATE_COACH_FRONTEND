@@ -17,8 +17,10 @@ export default function DayPage() {
   const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') || 'demo-user' : 'demo-user'
 
   useEffect(() => {
-    getCalendarFull(userId, dateISO, 'day').then((res) => setEvents(res.events)).catch(() => {})
-    getOverridesToday(userId).then((res) => setOverrides(res.overrides || [])).catch(() => {})
+    // TEMPORARILY DISABLED: Backend endpoints not ready (missing programs, day_overrides tables)
+    // TODO: Re-enable when tables are created
+    // getCalendarFull(userId, dateISO, 'day').then((res) => setEvents(res.events)).catch(() => {})
+    // getOverridesToday(userId).then((res) => setOverrides(res.overrides || [])).catch(() => {})
   }, [dateISO])
 
   return (
