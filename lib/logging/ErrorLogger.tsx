@@ -2,10 +2,19 @@
  * Comprehensive Error Logging System
  *
  * Captures, categorizes, and reports errors across the entire application.
- * Integrates with Sentry and provides detailed context for debugging.
+ * Integrates with Sentry (optional) and provides detailed context for debugging.
  */
 
-import * as Sentry from '@sentry/nextjs'
+// Optional Sentry integration - gracefully handles missing dependency
+let Sentry: any = null
+try {
+  Sentry = require('@sentry/nextjs')
+} catch {
+  // Sentry not installed - error tracking will fall back to console logging
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+    console.warn('[ErrorLogger] Sentry not installed - production errors will only be logged to console')
+  }
+}
 
 // ============================================================================
 // ERROR CATEGORIES
@@ -216,9 +225,26 @@ class ErrorLoggerService {
   }
 
   /**
-   * Log to Sentry with custom context
+   * Log to Sentry with custom context (if Sentry is installed)
    */
   private logToSentry(context: ErrorContext): void {
+    // Fallback if Sentry not installed
+    if (!Sentry) {
+      // In production, log critical errors to console as fallback
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[Production Error]', {
+          category: context.category,
+          severity: context.severity,
+          message: context.message,
+          error: context.error instanceof Error ? context.error.message : context.error,
+          userId: context.userId,
+          url: context.url,
+          statusCode: context.statusCode
+        })
+      }
+      return
+    }
+
     // Set user context
     if (context.userId) {
       Sentry.setUser({
@@ -324,7 +350,7 @@ class ErrorLoggerService {
   /**
    * Map severity to Sentry level
    */
-  private mapSeverityToSentryLevel(severity: ErrorSeverity): Sentry.SeverityLevel {
+  private mapSeverityToSentryLevel(severity: ErrorSeverity): 'debug' | 'info' | 'warning' | 'error' | 'fatal' {
     switch (severity) {
       case ErrorSeverity.DEBUG: return 'debug'
       case ErrorSeverity.INFO: return 'info'
