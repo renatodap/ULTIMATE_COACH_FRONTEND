@@ -36,16 +36,17 @@ export interface LogPreview {
   confidence?: number
 }
 
+export interface FoodItem {
+  name: string
+  quantity_g: number
+  estimated?: boolean
+}
+
 export interface NutritionLogData {
-  foodName: string
-  amount: number
-  unit: string
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'
-  time?: Date
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  foods: FoodItem[]
+  notes?: string
+  logged_at?: string
 }
 
 export interface WorkoutLogData {
@@ -93,9 +94,8 @@ export interface Message {
 }
 
 export interface ConfirmLogRequest {
-  conversation_id: string
-  log_preview_id?: string
-  data: any
+  quick_entry_id: string
+  edits?: Record<string, any>
 }
 
 // ========== API Functions ==========

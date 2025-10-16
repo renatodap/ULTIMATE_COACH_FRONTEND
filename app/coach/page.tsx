@@ -228,32 +228,57 @@ export default function CoachPage() {
   }, [inputValue, loading.isLoading, conversationId])
 
   // Handle log preview confirmation
-  const handleLogConfirm = useCallback(async (logData: any) => {
+  const handleLogConfirm = useCallback(async (foodsWithNutrition: any[]) => {
+    if (!logPreview) return
+
     setLogPreview(null)
     hapticFeedback('medium')
 
     const toastId = toast.loading('Saving log...')
 
     try {
-      if (conversationId) {
-        await confirmLog({
-          conversation_id: conversationId,
-          data: logData
-        })
+      // Transform enriched foods → items array for backend
+      const items = foodsWithNutrition.map((food, index) => ({
+        food_id: food.food_id || null,  // null if food not found in database
+        quantity: food.quantity_g,
+        serving_id: null,  // Always null for coach-detected logs (uses grams)
+        grams: food.quantity_g,
+        calories: Math.round(food.calories),
+        protein_g: Math.round(food.protein_g * 10) / 10,
+        carbs_g: Math.round(food.carbs_g * 10) / 10,
+        fat_g: Math.round(food.fat_g * 10) / 10,
+        display_unit: 'g',
+        display_label: null,
+        display_order: index
+      }))
 
-        toast.success('Log saved successfully!', { id: toastId })
+      // Get quick_entry_id from log_preview
+      const quick_entry_id = (logPreview as any).quick_entry_id
 
-        // Add success message
-        const successMessage: Message = {
-          id: `success_${Date.now()}`,
-          role: 'assistant',
-          content: 'Successfully logged!',
-          timestamp: new Date(),
-          type: 'text'
-        }
-
-        setMessages(prev => [...prev, successMessage])
+      if (!quick_entry_id) {
+        throw new Error('Missing quick_entry_id in log preview')
       }
+
+      // Send to backend with items in edits
+      await confirmLog({
+        quick_entry_id: quick_entry_id,
+        edits: {
+          items: items  // Override the items array in structured_data
+        }
+      })
+
+      toast.success('Log saved successfully!', { id: toastId })
+
+      // Add success message
+      const successMessage: Message = {
+        id: `success_${Date.now()}`,
+        role: 'assistant',
+        content: 'Successfully logged!',
+        timestamp: new Date(),
+        type: 'text'
+      }
+
+      setMessages(prev => [...prev, successMessage])
     } catch (err: any) {
       console.error('Failed to confirm log:', err)
       toast.error('Failed to save log', { id: toastId })
@@ -267,7 +292,7 @@ export default function CoachPage() {
       }
       setMessages(prev => [...prev, errorMsg])
     }
-  }, [conversationId])
+  }, [logPreview])
 
   // Handle log preview cancellation
   const handleLogCancel = useCallback(() => {
