@@ -45,23 +45,29 @@ export default function SignupPage() {
         full_name: fullName || undefined,
       })
 
-      // CRITICAL: Sync Supabase client session if tokens exist
-      // Note: Tokens may not exist if email confirmation is required
+      // CRITICAL: Check if tokens exist to determine flow
+      // Tokens exist = Email confirmation disabled or already confirmed → Go to onboarding
+      // No tokens = Email confirmation required → Go to login
       if (response.session?.access_token && response.session?.refresh_token) {
-        console.log('[Signup] Syncing Supabase session with backend tokens...')
+        console.log('[Signup] Tokens received - syncing session and going to onboarding...')
+
+        // Sync Supabase client session with backend tokens
         await supabase.auth.setSession({
           access_token: response.session.access_token,
           refresh_token: response.session.refresh_token,
         })
         console.log('[Signup] Supabase session synced successfully')
-      } else {
-        console.log('[Signup] No session tokens (email confirmation required)')
-      }
 
-      // After successful signup, require email verification before login
-      // Redirect to login with a banner prompting email confirmation
-      const params = new URLSearchParams({ verifyEmail: '1', email })
-      router.push(`/login?${params.toString()}`)
+        // Redirect directly to onboarding (user is authenticated!)
+        window.location.href = '/onboarding'
+      } else {
+        // No tokens - email confirmation is required
+        console.log('[Signup] No session tokens (email confirmation required) - redirecting to login')
+
+        // Redirect to login with a banner prompting email confirmation
+        const params = new URLSearchParams({ verifyEmail: '1', email })
+        router.push(`/login?${params.toString()}`)
+      }
     } catch (err) {
       console.error('[Signup] Signup error:', err)
       setError(err instanceof Error ? err.message : 'Failed to create account')

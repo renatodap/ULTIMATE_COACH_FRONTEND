@@ -83,35 +83,38 @@ export interface OnboardingStatus {
  */
 export async function completeOnboarding(data: OnboardingData): Promise<OnboardingResponse> {
   try {
-    // Get current session - this will also refresh if needed
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log('[Onboarding] Starting submission - refreshing session for maximum validity...');
 
-    if (sessionError) {
-      console.error('[Onboarding] Session error:', sessionError);
-      throw new Error('Session expired. Please log in again.');
-    }
+    // CRITICAL: ALWAYS refresh session before submitting to get a fresh 60-min token
+    // This prevents expiry errors even if user spent 30+ minutes on onboarding
+    const { data: refreshedData, error: refreshError } = await supabase.auth.refreshSession();
 
-    let accessToken = sessionData?.session?.access_token;
+    if (refreshError) {
+      console.error('[Onboarding] Session refresh error:', refreshError);
 
-    // Fallback: Try to refresh session if no access token
-    if (!accessToken) {
-      console.log('[Onboarding] No session found, attempting to refresh...');
-      const { data: refreshedData, error: refreshError } = await supabase.auth.refreshSession();
-
-      if (refreshError) {
-        console.error('[Onboarding] Session refresh error:', refreshError);
+      // Fallback: Try to get existing session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
         throw new Error('Session expired. Please log in again.');
       }
 
-      if (!refreshedData?.session?.access_token) {
-        console.error('[Onboarding] No access token after refresh');
-        throw new Error('Authentication required. Please log in again.');
-      }
+      console.warn('[Onboarding] Using existing session after refresh failed');
+      const accessToken = sessionData.session.access_token;
 
-      accessToken = refreshedData.session.access_token;
-      console.log('[Onboarding] Session refreshed successfully');
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${accessToken}`
+      };
+
+      return await apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
     }
 
+    if (!refreshedData?.session?.access_token) {
+      console.error('[Onboarding] No access token after refresh');
+      throw new Error('Authentication required. Please log in again.');
+    }
+
+    const accessToken = refreshedData.session.access_token;
+    console.log('[Onboarding] Session refreshed successfully - token valid for 60 more minutes');
     console.log('[Onboarding] Submitting with token:', accessToken.substring(0, 20) + '...');
 
     const headers: Record<string, string> = {
