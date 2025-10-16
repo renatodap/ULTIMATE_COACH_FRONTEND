@@ -7,10 +7,12 @@
  * - Request/response logging
  * - Type safety
  * - Automatic retry logic
+ * - Comprehensive error tracking via ErrorLogger
  */
 
 import { env } from '../env'
 import { supabase } from '@/lib/supabase'
+import { ErrorLogger, ErrorSeverity, ErrorCategory } from '@/lib/logging/ErrorLogger'
 
 const API_BASE_URL = env.NEXT_PUBLIC_API_BASE_URL
 
@@ -99,15 +101,37 @@ class ApiClient {
   /**
    * Process API response and handle errors
    */
-  private async processResponse<T>(response: Response): Promise<T> {
+  private async processResponse<T>(response: Response, requestData?: { method: string; body?: any }): Promise<T> {
     // Try to parse JSON response
     let data: any
     const contentType = response.headers.get('content-type')
 
-    if (contentType?.includes('application/json')) {
-      data = await response.json()
-    } else {
-      data = await response.text()
+    try {
+      if (contentType?.includes('application/json')) {
+        data = await response.json()
+      } else {
+        data = await response.text()
+      }
+    } catch (parseError) {
+      // Log parsing error
+      ErrorLogger.log({
+        category: ErrorCategory.API_RESPONSE,
+        severity: ErrorSeverity.ERROR,
+        message: 'Failed to parse API response',
+        error: parseError,
+        url: response.url,
+        statusCode: response.status,
+        featureData: {
+          contentType,
+          method: requestData?.method
+        }
+      })
+      throw new ApiRequestError(
+        'Failed to parse response from server',
+        response.status,
+        'Response parsing failed',
+        'ParseError'
+      )
     }
 
     // If response is not ok, throw an error
@@ -115,10 +139,36 @@ class ApiClient {
       const errorMessage = data?.detail || data?.message || 'Request failed'
       const errorType = data?.type || 'ApiError'
 
+      // Determine severity based on status code
+      const severity = response.status >= 500
+        ? ErrorSeverity.CRITICAL
+        : response.status === 401 || response.status === 403
+        ? ErrorSeverity.WARNING
+        : ErrorSeverity.ERROR
+
+      // Log comprehensive error details
+      ErrorLogger.apiError(
+        requestData?.method || 'UNKNOWN',
+        response.url,
+        response.status,
+        new Error(errorMessage),
+        requestData?.body,
+        data
+      )
+
       // CRITICAL: Handle 401 Unauthorized - Session expired or invalid
       if (response.status === 401) {
-        console.warn('[API] 401 Unauthorized - Session expired. Redirecting to login...')
-        
+        ErrorLogger.log({
+          category: ErrorCategory.AUTH_SESSION,
+          severity: ErrorSeverity.WARNING,
+          message: 'Session expired or invalid',
+          url: response.url,
+          statusCode: 401,
+          featureData: {
+            currentPath: typeof window !== 'undefined' ? window.location.pathname : undefined
+          }
+        })
+
         // Only redirect if we're in the browser (not during SSR)
         if (typeof window !== 'undefined') {
           // Don't redirect if we're already on the login page (prevents infinite loop)
@@ -128,20 +178,7 @@ class ApiClient {
             // Redirect to login page
             window.location.href = '/login'
           }
-          // If already on login/signup, just let the error propagate
-          // The page will handle showing the login form
         }
-      }
-
-      // Log error in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[API Error]', {
-          status: response.status,
-          statusText: response.statusText,
-          detail: errorMessage,
-          type: errorType,
-          url: response.url,
-        })
       }
 
       throw new ApiRequestError(
@@ -150,6 +187,18 @@ class ApiClient {
         errorMessage,
         errorType
       )
+    }
+
+    // Log successful requests in development (debug level)
+    if (process.env.NODE_ENV === 'development') {
+      ErrorLogger.log({
+        category: ErrorCategory.API_REQUEST,
+        severity: ErrorSeverity.DEBUG,
+        message: `API request successful: ${requestData?.method} ${response.url}`,
+        url: response.url,
+        statusCode: response.status,
+        method: requestData?.method
+      })
     }
 
     return data as T
@@ -172,7 +221,7 @@ class ApiClient {
       ...options,
     })
 
-    return this.processResponse<T>(response)
+    return this.processResponse<T>(response, { method: 'GET' })
   }
 
   /**
@@ -198,14 +247,21 @@ class ApiClient {
         ...options,
       })
 
-      return this.processResponse<T>(response)
+      return this.processResponse<T>(response, { method: 'POST', body })
     } catch (error) {
       // Handle network errors (including CORS failures)
       if (error instanceof TypeError) {
-        console.error('[API Network Error]', {
+        ErrorLogger.log({
+          category: ErrorCategory.NETWORK,
+          severity: ErrorSeverity.CRITICAL,
+          message: 'Network error - unable to connect to server',
+          error,
           url,
-          error: error.message,
-          hint: 'This may be a CORS issue or network connectivity problem',
+          method: 'POST',
+          featureData: {
+            hint: 'This may be a CORS issue or network connectivity problem',
+            body: body ? JSON.stringify(body).substring(0, 200) : undefined
+          }
         })
         throw new ApiRequestError(
           'Unable to connect to server. This may be a CORS or network issue.',
@@ -240,7 +296,7 @@ class ApiClient {
       ...options,
     })
 
-    return this.processResponse<T>(response)
+    return this.processResponse<T>(response, { method: 'PATCH', body })
   }
 
   /**
@@ -265,7 +321,7 @@ class ApiClient {
       ...options,
     })
 
-    return this.processResponse<T>(response)
+    return this.processResponse<T>(response, { method: 'PUT', body })
   }
 
   /**
@@ -285,7 +341,7 @@ class ApiClient {
       ...options,
     })
 
-    return this.processResponse<T>(response)
+    return this.processResponse<T>(response, { method: 'DELETE' })
   }
 
   /**
@@ -308,7 +364,7 @@ class ApiClient {
       ...options,
     })
 
-    return this.processResponse<T>(response)
+    return this.processResponse<T>(response, { method: 'POST (upload)' })
   }
 }
 
