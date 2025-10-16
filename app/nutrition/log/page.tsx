@@ -636,7 +636,7 @@ export default function LogMealPage() {
             {/* TODO i18n: Add translations for amountGrams, numberOfServings, servingHelperText */}
             <div className="mb-4">
               <label className="block text-sm text-iron-gray mb-2">
-                {modalUnit === 'grams' ? t('nutrition.amountGrams') : t('nutrition.numberOfServings')}
+                {modalUnit === 'grams' ? 'Amount (grams)' : 'Number of servings'}
               </label>
               <input
                 type="number"
@@ -648,7 +648,7 @@ export default function LogMealPage() {
               />
               {modalUnit === 'serving' && (
                 <div className="mt-2 text-xs text-iron-gray">
-                  {t('nutrition.servingHelperText')}
+                  Choose serving size below and enter the quantity
                 </div>
               )}
             </div>
