@@ -573,7 +573,7 @@ export default function OnboardingPage() {
                     ].map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => updateData({ secondary_goal: option.value })}
+                        onClick={() => updateData({ secondary_goal: option.value as '' | 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance' })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.secondary_goal === option.value
                             ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
