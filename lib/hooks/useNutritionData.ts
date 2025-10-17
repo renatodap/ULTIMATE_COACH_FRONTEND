@@ -147,7 +147,7 @@ export function useNutritionData(
       // DEBUG: Log transformed data
       console.log('[useNutritionData] Transformed data:', {
         meals_count: transformed.meals.length,
-        total_calories: transformed.stats.calories_consumed
+        total_calories: transformed.totalCalories
       })
 
       // Fire success callback
