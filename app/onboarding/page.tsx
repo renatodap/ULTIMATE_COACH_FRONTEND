@@ -48,7 +48,7 @@ export default function OnboardingPage() {
     goal_weight_kg: 0,
     // Goals & Experience (Screen 2)
     primary_goal: '',
-    secondary_goal: '' as string,
+    secondary_goal: '' as '' | 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance',
     experience_level: '',
     workout_frequency: 0,
     activity_level: '',
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
 
       const payload = {
         primary_goal: data.primary_goal as any,
-        secondary_goal: data.secondary_goal || undefined,
+        secondary_goal: (data.secondary_goal === '' ? undefined : data.secondary_goal) as 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance' | undefined,
         experience_level: data.experience_level as any,
         workout_frequency: data.workout_frequency,
         training_modalities: data.training_modalities.length > 0 ? data.training_modalities : undefined,
