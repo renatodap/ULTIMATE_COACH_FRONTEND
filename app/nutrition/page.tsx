@@ -240,7 +240,7 @@ function NutritionPageContent() {
       {nutritionData && (
         <StickyMiniSummary
           type="nutrition"
-          totalCalories={nutritionData.total_calories}
+          totalCalories={nutritionData.totalCalories}
           calorieGoal={nutritionData.calorie_goal}
           protein={nutritionData.total_protein_g}
           carbs={nutritionData.total_carbs_g}
