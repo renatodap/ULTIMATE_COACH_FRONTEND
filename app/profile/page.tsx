@@ -279,24 +279,6 @@ export default function ProfilePage() {
     )
   }
 
-  // Helper function to calculate age from birth_date
-  const calculateAge = (birthDate: string | undefined | null): number | null => {
-    if (!birthDate) return null
-
-    try {
-      const bd = new Date(birthDate)
-      const today = new Date()
-      const age = Math.floor((today.getTime() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
-      // Sanity check (age should be between 13 and 120)
-      if (age < 13 || age > 120) return null
-
-      return age
-    } catch (error) {
-      console.error('Error calculating age:', error)
-      return null
-    }
-  }
 
   // Helper component for data row
   const DataRow = ({ label, value }: { label: string; value: string | number | undefined | null }) => (
@@ -431,12 +413,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <DataRow
               label={t('profile.age')}
-              value={(() => {
-                // Calculate age from birth_date if available, otherwise fall back to stored age
-                const calculatedAge = calculateAge(profile.birth_date)
-                const displayAge = calculatedAge ?? profile.age
-                return displayAge ? `${displayAge} ${t('profile.years')}` : undefined
-              })()}
+              value={profile.age ? `${profile.age} ${t('profile.years')}` : undefined}
             />
             <DataRow
               label={t('profile.sex')}
@@ -714,6 +691,15 @@ export default function ProfilePage() {
             isOpen={showPreferencesModal}
             onClose={() => setShowPreferencesModal(false)}
             onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditTrainingModalitiesModal
+            isOpen={showTrainingModalitiesModal}
+            onClose={() => setShowTrainingModalitiesModal(false)}
+            onSuccess={() => {
+              loadProfile()
+              setToast({ message: 'Training modalities updated', type: 'success' })
+            }}
             onError={handleUpdateError}
           />
         </>
