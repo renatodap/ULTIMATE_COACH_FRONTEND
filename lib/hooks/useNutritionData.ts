@@ -118,12 +118,37 @@ export function useNutritionData(
       }
       setError(null)
 
+      // DEBUG: Log request parameters
+      console.log('[useNutritionData] Fetching data:', {
+        selectedDate,
+        timezone,
+        isRefresh
+      })
+
       // Fetch daily nutrition data (stats + meals)
       const { stats, meals } = await getDailyNutrition(selectedDate, timezone)
+
+      // DEBUG: Log API response
+      console.log('[useNutritionData] API response:', {
+        stats_calories: stats.calories_consumed,
+        meals_count: meals.length,
+        meals_sample: meals.slice(0, 2).map(m => ({
+          id: m.id,
+          meal_type: m.meal_type,
+          logged_at: m.logged_at,
+          calories: m.total_calories
+        }))
+      })
 
       // Transform API response to frontend format
       const transformed = transformDailyNutrition(stats, meals)
       setData(transformed)
+
+      // DEBUG: Log transformed data
+      console.log('[useNutritionData] Transformed data:', {
+        meals_count: transformed.meals.length,
+        total_calories: transformed.stats.calories_consumed
+      })
 
       // Fire success callback
       if (onSuccess) {
@@ -134,7 +159,7 @@ export function useNutritionData(
         ? err.message
         : 'Failed to load nutrition data'
 
-      console.error('Nutrition data load error:', err)
+      console.error('[useNutritionData] ERROR:', err)
       setError(errorMessage)
 
       // Fire error callback

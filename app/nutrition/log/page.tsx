@@ -604,7 +604,7 @@ export default function LogMealPage() {
                 <button
                   onClick={() => {
                     setModalUnit('grams')
-                    setModalQuantity(100)
+                    setModalQuantity(100) // Default for grams mode
                   }}
                   className={`flex-1 py-2 px-4 font-medium transition-colors ${
                     modalUnit === 'grams'
@@ -618,7 +618,7 @@ export default function LogMealPage() {
                   <button
                     onClick={() => {
                       setModalUnit('serving')
-                      setModalQuantity(1)
+                      setModalQuantity(1) // CRITICAL: Always reset to 1 for serving mode
                     }}
                     className={`flex-1 py-2 px-4 font-medium transition-colors ${
                       modalUnit === 'serving'
@@ -636,19 +636,33 @@ export default function LogMealPage() {
             {/* TODO i18n: Add translations for amountGrams, numberOfServings, servingHelperText */}
             <div className="mb-4">
               <label className="block text-sm text-iron-gray mb-2">
-                {modalUnit === 'grams' ? 'Amount (grams)' : 'Number of servings'}
+                {modalUnit === 'grams' ? 'Amount (grams)' : 'How many servings?'}
               </label>
               <input
                 type="number"
                 value={modalQuantity}
-                onChange={(e) => setModalQuantity(Number(e.target.value))}
+                onChange={(e) => {
+                  const newQuantity = Number(e.target.value)
+                  // Validate serving mode: max 20 servings (prevent calorie explosion bug)
+                  if (modalUnit === 'serving' && newQuantity > 20) {
+                    // Show warning but allow (will be caught by backend)
+                    console.warn('Warning: Quantity > 20 servings may be incorrect')
+                  }
+                  setModalQuantity(newQuantity)
+                }}
                 className="w-full bg-iron-dark-gray border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
                 min="0"
+                max={modalUnit === 'serving' ? 20 : undefined}
                 step={modalUnit === 'grams' ? '1' : '0.1'}
               />
-              {modalUnit === 'serving' && (
+              {modalUnit === 'serving' && modalQuantity > 10 && (
+                <div className="mt-2 text-xs text-red-400">
+                  ⚠️ Are you sure? {modalQuantity} servings = {modalQuantity * (modalServing?.grams_per_serving || 0)}g
+                </div>
+              )}
+              {modalUnit === 'serving' && modalQuantity <= 10 && (
                 <div className="mt-2 text-xs text-iron-gray">
-                  Choose serving size below and enter the quantity
+                  Choose serving size below and enter how many
                 </div>
               )}
             </div>
@@ -662,6 +676,8 @@ export default function LogMealPage() {
                   onChange={(e) => {
                     const serving = selectedFood.servings?.find(s => s.id === e.target.value)
                     setModalServing(serving || null)
+                    // CRITICAL FIX: Reset quantity to 1 when serving changes
+                    setModalQuantity(1)
                   }}
                   className="w-full bg-iron-dark-gray border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
                 >
