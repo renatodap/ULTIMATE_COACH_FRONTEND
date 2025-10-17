@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { completeOnboarding } from '@/lib/api/onboarding'
+import { getCurrentUser } from '@/lib/api/users'
 import {
   weightToKg,
   weightFromKg,
@@ -65,6 +66,39 @@ export default function OnboardingPage() {
     const detectedLanguage = detectBrowserLanguage()
     setData(prev => ({ ...prev, language: detectedLanguage }))
   }, [])
+
+  // Check if user already completed onboarding - redirect if yes
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      try {
+        const user = await getCurrentUser()
+
+        // If onboarding already completed, redirect to dashboard
+        if (user.onboarding_completed) {
+          console.log('[Onboarding] User already completed onboarding, redirecting to dashboard')
+          router.push('/dashboard')
+          return
+        }
+
+        // User hasn't completed onboarding yet - allow access
+        setCheckingOnboarding(false)
+      } catch (error: any) {
+        // If 401 (not authenticated), redirect to login
+        if (error?.status === 401 || error?.message?.includes('401')) {
+          console.log('[Onboarding] User not authenticated, redirecting to login')
+          router.push('/login')
+          return
+        }
+
+        // For other errors, allow access (better UX than blocking)
+        console.error('[Onboarding] Error checking status:', error)
+        setCheckingOnboarding(false)
+      }
+    }
+
+    checkOnboardingStatus()
+  }, [router])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -197,8 +231,20 @@ export default function OnboardingPage() {
     }
   }
 
+  // Show loading state while checking onboarding status
+  if (checkingOnboarding) {
+    return (
+      <div className="min-h-screen bg-neutral-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4 shadow-lg shadow-primary/50" />
+          <p className="text-neutral-300 text-lg">Checking your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-neutral-black px-6 py-12 flex items-center justify-center">
+    <div className="min-h-screen bg-neutral-black px-4 sm:px-6 md:px-8 py-8 sm:py-12 flex items-center justify-center">
       <div className="max-w-4xl w-full">
         <AnimatePresence mode="wait">
           {/* Language Selection */}
@@ -242,12 +288,12 @@ export default function OnboardingPage() {
               <div className="space-y-6 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
                 {/* Birth Date */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Birth Date</label>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Birth Date</label>
                   <input
                     type="date"
                     value={data.birth_date}
                     onChange={(e) => updateData({ birth_date: e.target.value })}
-                    className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-base sm:text-lg bg-neutral-900/50 text-neutral-white border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
                   />
                   {validationErrors.birth_date && (
                     <p className="text-error text-sm mt-2">{validationErrors.birth_date}</p>
@@ -256,8 +302,8 @@ export default function OnboardingPage() {
 
                 {/* Biological Sex */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">
-                    Biological Sex <span className="text-neutral-500 text-sm">(for accurate calorie calculation)</span>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                    Biological Sex <span className="text-neutral-500 text-xs sm:text-sm">(for accurate calorie calculation)</span>
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
@@ -284,7 +330,7 @@ export default function OnboardingPage() {
 
                 {/* Unit System Toggle */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Preferred Units</label>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Preferred Units</label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: t('onboarding.imperial'), value: 'imperial', desc: 'lbs, ft/in' },
@@ -308,7 +354,7 @@ export default function OnboardingPage() {
 
                 {/* Height */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
                     Height {data.unit_system === 'imperial' ? '(feet and inches)' : '(cm)'}
                   </label>
                   {data.unit_system === 'imperial' ? (
@@ -372,7 +418,7 @@ export default function OnboardingPage() {
 
                 {/* Current Weight */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
                     Current Weight {data.unit_system === 'imperial' ? '(lbs)' : '(kg)'}
                   </label>
                   <div className="relative">
@@ -403,7 +449,7 @@ export default function OnboardingPage() {
 
                 {/* Goal Weight */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
                     Goal Weight {data.unit_system === 'imperial' ? '(lbs)' : '(kg)'}
                   </label>
                   <div className="relative">
@@ -439,7 +485,7 @@ export default function OnboardingPage() {
                     next('goals_experience')
                   }
                 }}
-                className="w-full px-8 py-6 rounded-xl text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                className="w-full px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
               >
                 Continue
               </button>
@@ -461,7 +507,7 @@ export default function OnboardingPage() {
               <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
                 {/* Primary Goal */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">What&apos;s your primary goal?</label>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">What&apos;s your primary goal?</label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: t('onboarding.loseWeight'), value: 'lose_weight' },
@@ -489,8 +535,8 @@ export default function OnboardingPage() {
 
                 {/* Experience Level */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Fitness experience level?</label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Fitness experience level?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.beginner'), value: 'beginner', desc: '< 1 year' },
                       { label: t('onboarding.intermediate'), value: 'intermediate', desc: '1-3 years' },
@@ -517,8 +563,8 @@ export default function OnboardingPage() {
 
                 {/* Workout Frequency */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">How often can you train per week?</label>
-                  <div className="grid grid-cols-4 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">How often can you train per week?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '0-1', value: 0 },
                       { label: '2-3', value: 2 },
@@ -542,7 +588,7 @@ export default function OnboardingPage() {
 
                 {/* Activity Level */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Daily activity level (outside workouts)?</label>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Daily activity level (outside workouts)?</label>
                   <div className="space-y-3">
                     {[
                       { label: t('onboarding.sedentary'), value: 'sedentary', desc: t('onboarding.sedentaryDesc') },
@@ -572,8 +618,8 @@ export default function OnboardingPage() {
 
                 {/* Sleep Hours */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Average nightly sleep?</label>
-                  <div className="grid grid-cols-4 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Average nightly sleep?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '< 6 hrs', value: 5 },
                       { label: '6-7 hrs', value: 6.5 },
@@ -596,10 +642,10 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3 sm:gap-4">
                 <button
                   onClick={() => next('physical_stats')}
-                  className="px-8 py-6 rounded-xl text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
                 >
                   Back
                 </button>
@@ -609,7 +655,7 @@ export default function OnboardingPage() {
                       next('diet_lifestyle')
                     }
                   }}
-                  className="flex-1 px-8 py-6 rounded-xl text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
                 >
                   Continue
                 </button>
@@ -632,8 +678,8 @@ export default function OnboardingPage() {
               <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
                 {/* Dietary Preference */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Any dietary restrictions?</label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Any dietary restrictions?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.none'), value: 'none' },
                       { label: t('onboarding.vegetarian'), value: 'vegetarian' },
@@ -659,8 +705,8 @@ export default function OnboardingPage() {
 
                 {/* Food Allergies */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">
-                    Food allergies? <span className="text-neutral-500 text-sm">(optional)</span>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                    Food allergies? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -714,8 +760,8 @@ export default function OnboardingPage() {
 
                 {/* Meals Per Day */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Preferred meals per day?</label>
-                  <div className="grid grid-cols-4 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Preferred meals per day?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '2 meals', value: 2 },
                       { label: '3 meals', value: 3 },
@@ -739,8 +785,8 @@ export default function OnboardingPage() {
 
                 {/* Stress Level */}
                 <div>
-                  <label className="block text-neutral-300 text-lg mb-3">Typical stress level?</label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Typical stress level?</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.low'), value: 'low' },
                       { label: t('onboarding.medium'), value: 'medium' },
@@ -762,10 +808,10 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3 sm:gap-4">
                 <button
                   onClick={() => next('goals_experience')}
-                  className="px-8 py-6 rounded-xl text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
                 >
                   Back
                 </button>
@@ -774,7 +820,7 @@ export default function OnboardingPage() {
                     next('calculating')
                     setTimeout(submit, 300)
                   }}
-                  className="flex-1 px-8 py-6 rounded-xl text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
                 >
                   Complete Onboarding
                 </button>
