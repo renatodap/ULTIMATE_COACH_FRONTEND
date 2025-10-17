@@ -3,6 +3,15 @@
  *
  * Frontend nutrition calculation utility (mirrors backend logic).
  * Used for live preview in UI - actual logged values come from backend.
+ *
+ * CRITICAL: These calculations are for UX PREVIEW ONLY!
+ * Backend will RECALCULATE everything at meal creation time.
+ * See: NUTRITION_LOGGING_ARCHITECTURE.md - Frontend/Backend Contract
+ *
+ * QUANTITY SEMANTIC OVERLOAD:
+ * - quantity can mean GRAMS or SERVINGS depending on unit parameter
+ * - unit='grams' → quantity = grams (e.g., 150 = 150g)
+ * - unit='serving' → quantity = serving count (e.g., 2 = 2 servings)
  */
 
 export interface NutritionData {
@@ -110,6 +119,15 @@ export function calculateComposedFoodNutrition(
 
 /**
  * Main calculation function - handles all food types
+ *
+ * CRITICAL NOTES:
+ * 1. This is PREVIEW calculation only - backend recalculates at submission
+ * 2. quantity parameter has TWO meanings:
+ *    - unit='grams' → quantity = grams directly
+ *    - unit='serving' → quantity = serving count (not grams!)
+ * 3. Backend uses identical logic (see nutrition_service.py:create_meal)
+ *
+ * See: NUTRITION_LOGGING_ARCHITECTURE.md for complete documentation
  */
 export function calculateFoodNutrition(
   food: Food,
@@ -122,7 +140,11 @@ export function calculateFoodNutrition(
   let nutrition: NutritionData
 
   if (unit === 'grams') {
-    // Direct grams input
+    // ======================================================
+    // GRAM-BASED CALCULATION
+    // ======================================================
+    // quantity = grams directly (e.g., 150 = 150g)
+    // ======================================================
     if (food.composition_type === 'composed') {
       throw new Error('Composed foods cannot be logged by grams, only by servings')
     }
@@ -131,7 +153,12 @@ export function calculateFoodNutrition(
     nutrition = calculateSimpleFoodNutrition(food, grams)
   } else if (unit === 'serving') {
     if (food.composition_type === 'composed') {
-      // Composed food: calculate from ingredients
+      // ======================================================
+      // COMPOSED FOOD: Calculate from ingredients
+      // ======================================================
+      // quantity = serving count (e.g., 2 = 2 servings)
+      // Recursively sums nutrition from all recipe_items
+      // ======================================================
       if (!getFoodById) {
         throw new Error('getFoodById function required for composed foods')
       }
@@ -139,7 +166,13 @@ export function calculateFoodNutrition(
       nutrition = calculateComposedFoodNutrition(food, quantity, getFoodById)
       grams = (food.composed_total_grams || 0) * quantity
     } else {
-      // Simple/branded food with serving size
+      // ======================================================
+      // SIMPLE/BRANDED FOOD: Calculate from serving
+      // ======================================================
+      // quantity = serving count (e.g., 2 = 2 scoops)
+      // Calculate grams: quantity × grams_per_serving
+      // Example: 2 × 118g = 236g
+      // ======================================================
       if (!serving) {
         throw new Error('Serving required when unit is serving')
       }

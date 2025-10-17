@@ -559,6 +559,256 @@ export default function ActivitiesPage() {
 
 ---
 
+## 📚 Activity Tracking Documentation (CRITICAL - READ BEFORE MODIFYING)
+
+### **Comprehensive Documentation Available**
+
+The activity tracking system has **comprehensive documentation** designed to achieve **ZERO BUGS**. Before working on any activity tracking feature, you MUST consult these documents.
+
+### **Documentation Files**
+
+**Location:** Project root directory (`../../`)
+
+1. **`ACTIVITY_TRACKING_SYSTEM.md`** (15,000+ words)
+   - Complete system architecture
+   - Database schema & all constraints
+   - API contracts for all 6 endpoints
+   - Type system (TypeScript + Pydantic sync requirements)
+   - Data flow diagrams
+   - State management (useActivitiesData hook)
+   - Validation rules (3 layers)
+   - Calculation formulas (duration, METs, calories)
+   - Timezone handling (UTC ↔ local)
+   - Critical code paths
+
+2. **`ACTIVITY_TRACKING_BUG_PREVENTION.md`** (18,000+ words)
+   - **50+ specific bug scenarios** with prevention strategies
+   - 12 bug categories covering all common mistakes
+   - Code examples: ✅ Correct vs ❌ Wrong
+   - Mitigation checklists
+   - Cross-references to system docs
+
+3. **`ACTIVITY_TRACKING_DOCUMENTATION_SUMMARY.md`**
+   - Executive summary
+   - Documentation statistics
+   - Quick reference guide
+
+### **When to Use Each Document**
+
+**Before Starting Development:**
+```
+1. Read ACTIVITY_TRACKING_SYSTEM.md relevant sections
+   - Section 4: Type System (if changing TypeScript types)
+   - Section 5: Data Flow (if changing page logic)
+   - Section 6: State Management (if changing hooks)
+   - Section 8: Calculation Formulas (if changing calculations)
+   - Section 9: Timezone Handling (if working with dates)
+```
+
+**While Coding:**
+```
+1. Refer to inline documentation in code files
+   - lib/types/activities.ts (comprehensive docstrings)
+   - app/activities/page.tsx (page implementation)
+   - All inline docs cross-reference main documentation
+
+2. Check ACTIVITY_TRACKING_BUG_PREVENTION.md for your task
+   - Bug 1.x: Data Synchronization Bugs
+   - Bug 2.x: Timezone & Date Handling Bugs
+   - Bug 3.x: Calculation & Formula Bugs
+   - Bug 4.x: Type Safety & Validation Bugs
+   - Bug 5.x: State Management Bugs
+   - Bug 9.x: Null/Undefined Handling Bugs
+```
+
+**Before Submitting PR:**
+```
+1. Run through relevant mitigation checklists
+2. Verify type sync (TypeScript ↔ Pydantic)
+3. Check timezone handling is correct
+4. Verify optional chaining for nullable fields
+5. Ensure calculations match documented formulas
+```
+
+### **Critical Requirements**
+
+**TYPE SYNCHRONIZATION (CRITICAL):**
+```typescript
+// Frontend: lib/types/activities.ts
+// Backend: app/models/activities.py
+// MUST stay in sync - documented in both files
+// Last Sync Date: Check file headers
+// Breaking changes require API versioning
+```
+
+**TIMEZONE HANDLING (CRITICAL):**
+```typescript
+// Database: Always UTC (stored as ISO 8601 UTC strings)
+// API: Always send/receive ISO 8601 UTC strings
+// Frontend Display: Convert to user's local timezone
+// Grouping: NEVER use UTC date - use user's timezone
+// Use: date-fns-tz utcToZonedTime() and zonedTimeToUtc()
+// See: ACTIVITY_TRACKING_SYSTEM.md Section 9
+```
+
+**NULL HANDLING (CRITICAL):**
+```typescript
+// ALWAYS use optional chaining for nullable fields
+activity.end_time?.toString()        // ✅ Correct
+activity.metrics?.distance_km        // ✅ Correct
+activity.metrics.distance_km         // ❌ Wrong - may crash
+
+// Check existence before accessing nested properties
+if (activity.metrics?.exercises?.length > 0) { ... }
+```
+
+**VALIDATION (CRITICAL):**
+```typescript
+// Frontend validates for UX (instant feedback)
+// Backend re-validates everything (never trusts frontend)
+// Always show validation errors to user
+// See: ACTIVITY_TRACKING_SYSTEM.md Section 7
+```
+
+### **Common Mistakes to Avoid**
+
+❌ **DON'T:**
+- Change TypeScript types without updating Pydantic models
+- Use UTC date for grouping activities by day
+- Access nullable fields without optional chaining (`?.`)
+- Hardcode calculation formulas (use documented formulas)
+- Forget to check `metrics` existence before accessing nested properties
+- Display UTC timestamps directly to users
+- Use `any` type (strict type safety required)
+
+✅ **DO:**
+- Check documentation before modifying
+- Update TypeScript types when backend models change
+- Use timezone-aware date comparisons (utcToZonedTime)
+- Follow documented calculation formulas exactly
+- Always use optional chaining for nullable fields
+- Convert timestamps to user's timezone for display
+- Add new bugs to bug prevention guide
+
+### **Bug Prevention Strategy**
+
+When implementing a feature:
+
+1. **Read relevant documentation sections**
+   - Understand the architecture
+   - Review data flow diagrams
+   - Check calculation formulas
+
+2. **Check bug prevention guide**
+   - Find similar scenarios
+   - Review prevention strategies
+   - Use provided code examples
+
+3. **Follow mitigation checklists**
+   - Optional chaining for all nullable fields
+   - Timezone handling correct
+   - Type sync maintained
+   - Validation provides user feedback
+
+4. **Test edge cases**
+   - Null/undefined values
+   - Timezone boundaries (midnight, DST)
+   - Empty metrics objects
+   - Missing optional fields
+
+5. **Update documentation if needed**
+   - Add new bug scenarios discovered
+   - Update calculation formulas if changed
+   - Update last sync dates
+
+### **Quick Reference**
+
+**File Locations:**
+```
+Frontend Types:     lib/types/activities.ts
+Frontend API:       lib/api/activities.ts
+Frontend Page:      app/activities/page.tsx
+Frontend Components: app/components/activities/*.tsx
+Backend Models:     ../../ULTIMATE_COACH_BACKEND/app/models/activities.py
+Backend Service:    ../../ULTIMATE_COACH_BACKEND/app/services/activity_service.py
+```
+
+**Documentation:**
+```
+System Docs:     ../../ACTIVITY_TRACKING_SYSTEM.md
+Bug Prevention:  ../../ACTIVITY_TRACKING_BUG_PREVENTION.md
+Summary:         ../../ACTIVITY_TRACKING_DOCUMENTATION_SUMMARY.md
+```
+
+**Key Sections to Bookmark:**
+- Section 4.1: TypeScript Types & Interfaces
+- Section 5: Data Flow (Create, List, Update)
+- Section 6: State Management (useActivitiesData hook)
+- Section 8: Calculation Formulas
+- Section 9: Timezone Handling
+- Bug 2.1: Activities Grouped Under Wrong Date
+- Bug 4.1: TypeScript Types Out of Sync
+- Bug 9.1: Null/Undefined Access Crashes
+
+### **Frontend-Specific Reminders**
+
+**Timezone Conversion:**
+```typescript
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz'
+
+// Display: UTC → Local
+const localTime = utcToZonedTime(activity.start_time, userTimezone)
+const displayDate = format(localTime, 'MMM d, yyyy')
+
+// Submit: Local → UTC
+const utcTime = zonedTimeToUtc(localTime, userTimezone)
+const isoString = utcTime.toISOString()
+```
+
+**Optional Chaining Examples:**
+```typescript
+// Basic nullable fields
+const endTime = activity.end_time?.toString()
+const notes = activity.notes ?? 'No notes'
+
+// Nested metrics
+const distance = activity.metrics?.distance_km
+const exercises = activity.metrics?.exercises?.length ?? 0
+const firstExercise = activity.metrics?.exercises?.[0]?.name
+```
+
+**Category Metadata:**
+```typescript
+import { ACTIVITY_CATEGORIES } from '@/lib/types/activities'
+
+const meta = ACTIVITY_CATEGORIES[activity.category]
+const icon = meta.icon        // Emoji icon
+const label = meta.label      // Display label
+const color = meta.color      // Tailwind color class
+```
+
+### **For AI Assistants Working on Activities**
+
+**MANDATORY STEPS:**
+
+1. **Read ACTIVITY_TRACKING_SYSTEM.md Section relevant to your task**
+2. **Check ACTIVITY_TRACKING_BUG_PREVENTION.md for similar scenarios**
+3. **Review inline documentation in lib/types/activities.ts**
+4. **Verify type sync requirements**
+5. **Test with timezone edge cases**
+6. **Use optional chaining for all nullable fields**
+7. **Run mitigation checklists**
+
+**If you discover a new bug:**
+1. Document root cause
+2. Add to ACTIVITY_TRACKING_BUG_PREVENTION.md
+3. Add prevention strategy with code example
+4. Create test to prevent regression
+
+**Remember:** This system is designed for ZERO BUGS. The documentation is comprehensive. Use it.
+
+---
+
 ## Nutrition Logging System (Production Feature)
 
 ### **Overview**
@@ -989,6 +1239,189 @@ export default function LogMealPage() {
 
 ---
 
+## ⚠️ CRITICAL: Nutrition Logging Documentation (READ BEFORE MODIFYING)
+
+### **Overview**
+The nutrition logging system has comprehensive documentation to prevent bugs like the "100 banana" incident (where users could accidentally log 100 servings instead of 1). **ALWAYS read this documentation before modifying nutrition logging code.**
+
+### **Documentation Files**
+
+**📘 Complete Reference:**
+- **Location:** `../../NUTRITION_LOGGING_ARCHITECTURE.md` (project root)
+- **Length:** 800+ lines
+- **Contents:**
+  - System overview and design philosophy
+  - Critical concepts (quantity semantic overload)
+  - State management rules with 3 critical reset points
+  - Complete data flow diagram
+  - Frontend/backend contract specifications
+  - Multi-layer validation requirements
+  - Common bugs and prevention strategies
+  - Testing checklist
+
+**🚀 Quick Reference:**
+- **Location:** `../../NUTRITION_LOGGING_QUICK_REFERENCE.md` (project root)
+- **Length:** 200+ lines
+- **Contents:**
+  - TL;DR of critical concepts
+  - Three reset rules with code examples
+  - Validation checklist
+  - Testing scenarios
+  - Code locations table
+
+### **When to Read This Documentation**
+- ✅ Before modifying `app/nutrition/log/page.tsx`
+- ✅ Before changing `lib/utils/nutrition-calculator.ts`
+- ✅ Before updating nutrition API calls
+- ✅ When debugging nutrition calculation issues
+- ✅ When adding new food types or serving logic
+- ✅ When a bug report mentions incorrect quantities or nutrition values
+
+### **The One Concept You Must Understand**
+
+**⚠️ CRITICAL: Quantity Semantic Overload**
+
+The `quantity` field means **two different things** depending on context:
+
+```typescript
+// GRAMS MODE (serving_id = null)
+quantity: 150  // = 150 grams of chicken breast
+
+// SERVING MODE (serving_id = UUID)
+quantity: 2    // = 2 servings of protein powder
+```
+
+**Why this causes bugs:**
+- Modal opens with `quantity = 100` (default for grams)
+- User switches to serving mode
+- If `quantity` is NOT reset → user logs 100 servings instead of 1
+
+### **The Three Critical Reset Rules**
+
+These reset points are **MANDATORY** to prevent bugs:
+
+#### **1. Reset When Opening Modal**
+```typescript
+// app/nutrition/log/page.tsx:145-160
+const handleSelectFood = (food: Food) => {
+  setSelectedFood(food)
+  setModalQuantity(100)  // ← Default for grams
+  setModalUnit('grams')
+  setModalServing(food.servings?.[0] || null)
+}
+```
+
+#### **2. Reset When Switching Modes**
+```typescript
+// app/nutrition/log/page.tsx:638-675
+const handleSwitchToServing = () => {
+  setModalUnit('serving')
+  setModalQuantity(1)  // ← MUST RESET
+}
+
+const handleSwitchToGrams = () => {
+  setModalUnit('grams')
+  setModalQuantity(100)  // ← MUST RESET
+}
+```
+
+#### **3. Reset When Selecting Serving (MOST CRITICAL)**
+```typescript
+// app/nutrition/log/page.tsx:721-750
+const handleServingChange = (serving: FoodServing) => {
+  setModalServing(serving)
+  setModalQuantity(1)  // ← PREVENTS "100 BANANA" BUG
+}
+```
+
+### **Multi-Layer Validation**
+
+The system uses **four layers** of protection:
+
+1. **HTML Input** (line 700): `max={modalUnit === 'serving' ? 20 : undefined}`
+2. **Visual Warning** (lines 703-708): Yellow warning for `quantity > 10` servings
+3. **Backend Warning** (nutrition_service.py:735): Logs warning for `quantity > 10`
+4. **Backend Rejection** (nutrition_service.py:722): HTTP 400 for `quantity > 50`
+
+### **Frontend/Backend Contract**
+
+**Critical Principle:** "Calculate once, store forever"
+
+- **Frontend:** Live preview for UX (user sees instant feedback)
+- **Backend:** Authoritative calculations (recalculates everything at submission)
+- **Database:** Immutable values (nutrition stored at creation time)
+
+**Never trust frontend calculations.** Backend ALWAYS recalculates all nutrition values when creating meals (see nutrition_service.py:764-768).
+
+### **Code References**
+
+| Feature | File | Line(s) |
+|---------|------|---------|
+| Modal state init | app/nutrition/log/page.tsx | 54 |
+| Food selection (Reset #1) | app/nutrition/log/page.tsx | 145-160 |
+| Mode switch (Reset #2) | app/nutrition/log/page.tsx | 638-675 |
+| Serving selection (Reset #3) | app/nutrition/log/page.tsx | 721-750 |
+| Preview calculation | app/nutrition/log/page.tsx | 753-775 |
+| HTML validation | app/nutrition/log/page.tsx | 700 |
+| Visual warning | app/nutrition/log/page.tsx | 703-708 |
+| Frontend calculator | lib/utils/nutrition-calculator.ts | 132-191 |
+| API transformer | lib/utils/nutrition-transformer.ts | 13-76 |
+
+### **Testing Checklist**
+
+Before merging nutrition logging changes:
+
+- [ ] All three quantity reset points present
+- [ ] HTML max attribute on quantity input
+- [ ] Visual warning for >10 servings
+- [ ] Inline comments reference NUTRITION_LOGGING_ARCHITECTURE.md
+- [ ] Test case: Select food → Switch to serving mode → quantity = 1 (NOT 100)
+- [ ] Test case: Select food → Switch to serving → Select different serving → quantity = 1
+- [ ] Test case: Try to enter 25 servings → Blocked by HTML max=20
+
+### **Common Mistakes**
+
+❌ **Mistake 1:** Forgetting reset on serving selection
+```typescript
+// WRONG - causes "100 banana" bug
+const handleServingChange = (serving: FoodServing) => {
+  setModalServing(serving)
+  // Missing: setModalQuantity(1)
+}
+```
+
+❌ **Mistake 2:** Trusting frontend calculations
+```typescript
+// WRONG - uses frontend values
+const item = { calories: frontendCalculatedCalories }
+
+// CORRECT - backend recalculates
+// See nutrition_service.py:764-768
+```
+
+❌ **Mistake 3:** No validation
+```typescript
+// WRONG - no max attribute
+<input type="number" value={quantity} />
+
+// CORRECT - has max for servings
+<input type="number" max={unit === 'serving' ? 20 : undefined} />
+```
+
+### **When in Doubt**
+
+1. **Read the full documentation:** `NUTRITION_LOGGING_ARCHITECTURE.md`
+2. **Check the inline comments:** Lines 14-26 in `app/nutrition/log/page.tsx`
+3. **Ask:** Does `quantity` mean grams or servings here?
+4. **Verify:** Are all three reset points present?
+5. **Test:** Can I log 100 bananas by accident?
+
+### **Key Principle**
+
+> **"The quantity field is a semantic chameleon - it changes meaning based on context. Always reset it when the context changes."**
+
+---
+
 ## Current State & Known Issues
 
 ### **✅ Production Ready**
@@ -1088,6 +1521,10 @@ When working on this codebase:
 3. **ALWAYS** check `PRODUCTION_ISSUES.md` before adding features
 4. **ALWAYS** use existing patterns (don't invent new ones)
 5. **ASK** if unsure about design decisions (don't guess)
+6. **CRITICAL:** Before modifying nutrition logging code, read:
+   - `../../NUTRITION_LOGGING_ARCHITECTURE.md` (800+ lines)
+   - `../../NUTRITION_LOGGING_QUICK_REFERENCE.md` (200+ lines)
+   - See "⚠️ CRITICAL: Nutrition Logging Documentation" section above
 
 **Common Mistakes to Avoid:**
 - ❌ Adding Tailwind colors directly (use design tokens)
@@ -1096,6 +1533,9 @@ When working on this codebase:
 - ❌ Desktop-first responsive design
 - ❌ Creating new state management (use React hooks)
 - ❌ Ignoring TypeScript errors
+- ❌ Modifying nutrition logging without reading documentation
+- ❌ Forgetting quantity reset points in nutrition modal
+- ❌ Trusting frontend nutrition calculations (backend recalculates)
 
 ---
 

@@ -11,12 +11,16 @@ import type { MealAPI, MealItemAPI, NutritionStatsAPI, FoodServingAPI } from '..
  * Transform API meal item to UI format
  */
 export function transformMealItem(item: MealItemAPI): FoodItem {
+  // Extract food data from nested foods object (if available from JOIN)
+  // Backend now includes foods(name, brand_name) in the query
+  const foodData = (item as any).foods || {}
+
   return {
     id: item.id,
     mealId: item.meal_id,
     foodId: item.food_id,
-    foodName: '', // Will need to be enriched from food data if available
-    brandName: undefined,
+    foodName: foodData.name || 'Unknown Food',
+    brandName: foodData.brand_name || undefined,
     quantity: item.quantity,
     servingId: item.serving_id,
     displayUnit: item.display_unit,

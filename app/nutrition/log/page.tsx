@@ -10,6 +10,19 @@
  * - Inline editing of meal items
  * - Save current meal as quick meal
  * - Complete API integration
+ *
+ * CRITICAL STATE MANAGEMENT RULES (See NUTRITION_LOGGING_ARCHITECTURE.md):
+ * 1. modalQuantity has TWO meanings: grams (if serving_id=null) OR serving count (if serving_id present)
+ * 2. MUST reset modalQuantity when:
+ *    a) Switching between grams/serving modes (line 624-641)
+ *    b) Selecting a serving from dropdown (line 695-700)
+ *    c) Opening modal for new food (line 132-143)
+ * 3. Frontend calculations are PREVIEW ONLY - backend recalculates everything
+ *
+ * VALIDATION LAYERS:
+ * - HTML: max=20 servings (line 674)
+ * - Frontend Warning: >10 servings (line 677-680)
+ * - Backend Rejection: >50 servings (nutrition_service.py:693-698)
  */
 
 import { useState, useEffect } from 'react'
@@ -20,6 +33,8 @@ import Toast from '@/app/components/shared/Toast'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useUserLanguage } from '@/lib/hooks/useUserLanguage'
 import { useTranslation } from '@/lib/i18n'
+import { useTimezone } from '@/lib/context/TimezoneContext'
+import { toUTC } from '@/lib/utils/timezone'
 import { searchFoods, getRecentFoods } from '@/lib/api/foods'
 import { listQuickMeals, createQuickMeal, logQuickMeal } from '@/lib/api/quick-meals'
 import { createMeal } from '@/lib/api/nutrition'
@@ -32,6 +47,7 @@ export default function LogMealPage() {
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
   const { getFoodName, getBrandName } = useUserLanguage()
   const { t } = useTranslation()
+  const { timezone } = useTimezone()
 
   // Data loading state
   const [quickMeals, setQuickMeals] = useState<QuickMeal[]>([])
@@ -137,6 +153,10 @@ export default function LogMealPage() {
       servings: food.servings
     })
     setSelectedFood(food)
+
+    // CRITICAL: Reset all modal state to defaults
+    // modalQuantity = 100 because default mode is grams
+    // This is RESET POINT #1 (see NUTRITION_LOGGING_ARCHITECTURE.md)
     setModalQuantity(100)
     setModalUnit('grams')
     setModalServing(food.servings?.find(s => s.is_default) || food.servings?.[0] || null)
@@ -276,21 +296,34 @@ export default function LogMealPage() {
     try {
       setLogging(true)
 
+      // Transform MealItemPreview[] to CreateMealItemRequest[]
+      // IMPORTANT: Backend will IGNORE calculated_* values and recalculate everything
+      // We send them for logging/debugging purposes only
+      // See NUTRITION_LOGGING_ARCHITECTURE.md - Frontend/Backend Contract
       const items: CreateMealItemRequest[] = mealItems.map(item => ({
         food_id: item.food_id,
+
+        // CRITICAL: quantity semantic depends on serving_id
+        // - If serving_id is null → quantity = grams
+        // - If serving_id present → quantity = number of servings
         quantity: item.quantity,
         serving_id: item.serving_id || null,
+
+        // Frontend-calculated values (backend will RECALCULATE and ignore these)
         grams: item.calculated_grams,
         calories: Math.round(item.calculated_calories),
         protein_g: Math.round(item.calculated_protein_g * 10) / 10,
         carbs_g: Math.round(item.calculated_carbs_g * 10) / 10,
         fat_g: Math.round(item.calculated_fat_g * 10) / 10,
+
+        // Display fields (used for showing meal history)
         display_unit: item.unit === 'grams' ? 'g' : item.serving?.serving_unit || 'serving',
         display_label: item.serving?.serving_label || null,
       }))
 
       const request: CreateMealRequest = {
         meal_type: mealType,
+        logged_at: toUTC(new Date(), timezone), // Convert user's current time to UTC
         items,
         source: 'manual'
       }
@@ -623,7 +656,10 @@ export default function LogMealPage() {
                 <button
                   onClick={() => {
                     setModalUnit('grams')
-                    setModalQuantity(100) // Default for grams mode
+                    // RESET POINT #2a: Switching to grams mode
+                    // modalQuantity = 100 (standard default for grams)
+                    // See NUTRITION_LOGGING_ARCHITECTURE.md - State Management Rules
+                    setModalQuantity(100)
                   }}
                   className={`flex-1 py-2 px-4 font-medium transition-colors ${
                     modalUnit === 'grams'
@@ -637,7 +673,11 @@ export default function LogMealPage() {
                   <button
                     onClick={() => {
                       setModalUnit('serving')
-                      setModalQuantity(1) // CRITICAL: Always reset to 1 for serving mode
+                      // RESET POINT #2b: Switching to serving mode
+                      // CRITICAL: MUST reset to 1 (prevents "100 banana" bug)
+                      // If we don't reset here, user would log 100 servings instead of 1
+                      // See NUTRITION_LOGGING_ARCHITECTURE.md - Bug #1
+                      setModalQuantity(1)
                     }}
                     className={`flex-1 py-2 px-4 font-medium transition-colors ${
                       modalUnit === 'serving'
@@ -662,19 +702,23 @@ export default function LogMealPage() {
                 value={modalQuantity}
                 onChange={(e) => {
                   const newQuantity = Number(e.target.value)
-                  // Validate serving mode: max 20 servings (prevent calorie explosion bug)
+
+                  // VALIDATION LAYER 1: Frontend warning for >20 servings
+                  // HTML max attribute blocks input >20, but user could override via DevTools
                   if (modalUnit === 'serving' && newQuantity > 20) {
-                    // Show warning but allow (will be caught by backend)
                     console.warn('Warning: Quantity > 20 servings may be incorrect')
                   }
+
                   setModalQuantity(newQuantity)
                 }}
                 className="w-full bg-iron-dark-gray border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
                 min="0"
-                max={modalUnit === 'serving' ? 20 : undefined}
+                max={modalUnit === 'serving' ? 20 : undefined}  // VALIDATION LAYER 2: HTML blocks >20
                 step={modalUnit === 'grams' ? '1' : '0.1'}
               />
               {modalUnit === 'serving' && modalQuantity > 10 && (
+                // VALIDATION LAYER 3: Visual warning for >10 servings
+                // Helps catch typos (e.g., user meant 1.5, not 15)
                 <div className="mt-2 text-xs text-red-400">
                   ⚠️ Are you sure? {modalQuantity} servings = {modalQuantity * (modalServing?.grams_per_serving || 0)}g
                 </div>
@@ -695,7 +739,18 @@ export default function LogMealPage() {
                   onChange={(e) => {
                     const serving = selectedFood.servings?.find(s => s.id === e.target.value)
                     setModalServing(serving || null)
-                    // CRITICAL FIX: Reset quantity to 1 when serving changes
+
+                    // RESET POINT #3: Serving selection from dropdown
+                    // CRITICAL FIX: This line PREVENTS the "100 banana" bug!
+                    //
+                    // Bug scenario if this line is removed:
+                    // 1. Modal opens: quantity = 100 (grams default)
+                    // 2. User clicks "Serving" button: quantity = 1 ✓
+                    // 3. User selects "medium banana" from dropdown: quantity NOT reset ✗
+                    // 4. User submits: 100 servings × 118g = 11,800g = 10,502 cal 🔴
+                    //
+                    // With this line: quantity = 1 (correct) ✓
+                    // See NUTRITION_LOGGING_ARCHITECTURE.md - Bug #1
                     setModalQuantity(1)
                   }}
                   className="w-full bg-iron-dark-gray border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
@@ -717,6 +772,10 @@ export default function LogMealPage() {
               <div className="text-iron-white font-medium">
                 {(() => {
                   try {
+                    // FRONTEND PREVIEW CALCULATION (NOT TRUSTED BY BACKEND)
+                    // This calculation is for UX only - shows live preview as user adjusts quantity
+                    // Backend will RECALCULATE everything from scratch at meal creation time
+                    // See NUTRITION_LOGGING_ARCHITECTURE.md - Frontend/Backend Contract
                     const nutrition = calculateFoodNutrition(
                       selectedFood,
                       modalQuantity,
