@@ -130,6 +130,12 @@ export default function LogMealPage() {
 
   // Handle food selection
   const handleSelectFood = (food: Food) => {
+    console.log('[LOG] Food selected:', {
+      name: food.name,
+      id: food.id,
+      servings_count: food.servings?.length || 0,
+      servings: food.servings
+    })
     setSelectedFood(food)
     setModalQuantity(100)
     setModalUnit('grams')
@@ -288,6 +294,19 @@ export default function LogMealPage() {
         items,
         source: 'manual'
       }
+
+      console.log('[LOG] Creating meal with request:', {
+        meal_type: mealType,
+        items_count: items.length,
+        items: items.map(i => ({
+          food_id: i.food_id,
+          quantity: i.quantity,
+          serving_id: i.serving_id,
+          grams: i.grams,
+          calories: i.calories,
+          display_unit: i.display_unit
+        }))
+      })
 
       await createMeal(request)
 
