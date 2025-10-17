@@ -281,7 +281,7 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="min-h-screen bg-iron-black text-iron-white pb-24">
+    <div className="min-h-screen bg-iron-black text-iron-white pb-40">
       {/* Subtle dynamic gradient background at top */}
       <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-iron-orange/10 via-transparent to-transparent pointer-events-none" />
       {/* Header */}
@@ -573,10 +573,10 @@ export default function ProfilePage() {
           </div>
         </CollapsibleSection>
 
-        {/* Sign Out Button */}
+        {/* Sign Out Button - Extra spacing to prevent accidental taps near nav */}
         <motion.button
           onClick={handleSignOut}
-          className="w-full border-2 border-red-600/80 text-red-500 font-heading text-base sm:text-lg md:text-xl py-3 sm:py-4 uppercase tracking-wider hover:bg-red-600 hover:text-iron-white transition-colors flex items-center justify-center gap-2 rounded-xl"
+          className="w-full border-2 border-red-600/80 text-red-500 font-heading text-base sm:text-lg md:text-xl py-3 sm:py-4 uppercase tracking-wider hover:bg-red-600 hover:text-iron-white transition-colors flex items-center justify-center gap-2 rounded-xl mb-12"
           variants={sectionVariants}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

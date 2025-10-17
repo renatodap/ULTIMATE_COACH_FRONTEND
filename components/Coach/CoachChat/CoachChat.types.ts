@@ -129,6 +129,8 @@ export interface ChatInputProps {
   onSend: () => void;
   onVoiceInput?: () => void;
   onImageUpload?: (file: File) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   disabled?: boolean;
   placeholder?: string;
 }

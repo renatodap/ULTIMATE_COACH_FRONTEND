@@ -27,6 +27,7 @@ import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { FAB } from '@/components/shared/FAB'
+import { StickyMiniSummary } from '@/components/shared/StickyMiniSummary'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useNutritionData } from '@/lib/hooks/useNutritionData'
 import { useTranslation } from '@/lib/i18n'
@@ -212,7 +213,7 @@ function NutritionPageContent() {
   const hasNoMeals = nutritionData.meals.length === 0
 
   return (
-    <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-20'}`}>
+    <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-40'}`}>
       {/* Header - NEW CONSISTENT DESIGN */}
       <PageHeader
         title={t('nutrition.pageTitle')}
@@ -234,6 +235,18 @@ function NutritionPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Sticky Mini Summary - Always visible during scroll */}
+      {nutritionData && (
+        <StickyMiniSummary
+          type="nutrition"
+          totalCalories={nutritionData.total_calories}
+          calorieGoal={nutritionData.calorie_goal}
+          protein={nutritionData.total_protein_g}
+          carbs={nutritionData.total_carbs_g}
+          fat={nutritionData.total_fat_g}
+        />
+      )}
 
       {/* Main Content */}
       <main className={`max-w-4xl mx-auto px-4 ${hasNoMeals ? 'flex-1 flex flex-col' : 'py-6'}`}>
@@ -293,6 +306,7 @@ function NutritionPageContent() {
       {/* FAB - Floating Action Button */}
       <FAB
         href="/nutrition/log"
+        positioning="high"
       />
 
       {/* Bottom Navigation */}

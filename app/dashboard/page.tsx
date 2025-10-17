@@ -119,7 +119,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-40">
       {/* Top Progress Indicator - shows during refresh */}
       {refreshing && <div className="top-progress-iron" />}
 
@@ -138,6 +138,16 @@ export default function DashboardPage() {
         initial="hidden"
         animate="visible"
       >
+        {/* MOBILE-FIRST: Progress Tracker at top (most important metric) */}
+        <motion.div variants={cardVariants} className="md:hidden">
+          <ProgressTrackerCard
+            weight={dashboardData.weight}
+            weekly={dashboardData.weekly}
+            unitSystem={unitSystem}
+            onLogWeight={() => setWeightModalOpen(true)}
+          />
+        </motion.div>
+
         {/* Hero Card - Today At A Glance */}
         <motion.div variants={cardVariants}>
           <HeroCard
@@ -152,8 +162,8 @@ export default function DashboardPage() {
           <SmartActionsGrid onLogWeight={() => setWeightModalOpen(true)} />
         </motion.div>
 
-        {/* Progress Tracker */}
-        <motion.div variants={cardVariants}>
+        {/* DESKTOP: Progress Tracker at bottom (traditional layout) */}
+        <motion.div variants={cardVariants} className="hidden md:block">
           <ProgressTrackerCard
             weight={dashboardData.weight}
             weekly={dashboardData.weekly}

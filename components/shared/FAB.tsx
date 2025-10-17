@@ -20,6 +20,7 @@ interface FABProps {
   onClick?: () => void
   href?: string
   variant?: 'primary' | 'save'
+  positioning?: 'default' | 'high' | 'list'
   className?: string
 }
 
@@ -29,6 +30,7 @@ export function FAB({
   onClick,
   href,
   variant = 'primary',
+  positioning = 'default',
   className = ''
 }: FABProps) {
   const router = useRouter()
@@ -46,11 +48,18 @@ export function FAB({
     save: 'bg-green-500 hover:bg-green-600 text-iron-white',
   }
 
+  // Positioning presets for different page types
+  const positionStyles = {
+    default: 'bottom-24',     // 96px - standard position
+    high: 'bottom-32',        // 128px - more space from nav
+    list: 'bottom-[120px]',   // 120px - optimal for list pages with lots of content
+  }
+
   return (
     <motion.button
       onClick={handleClick}
       className={`
-        fixed bottom-24 right-6 z-50
+        fixed ${positionStyles[positioning]} right-6 z-50
         w-[60px] h-[60px]
         ${variantStyles[variant]}
         border-2 border-iron-black

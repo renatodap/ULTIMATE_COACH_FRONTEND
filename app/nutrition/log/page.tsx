@@ -29,6 +29,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
+import { FABFullWidth } from '@/components/shared/FAB'
 import Toast from '@/app/components/shared/Toast'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useUserLanguage } from '@/lib/hooks/useUserLanguage'
@@ -363,7 +364,7 @@ export default function LogMealPage() {
   }
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-40">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-iron-black border-b border-iron-gray">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
@@ -615,27 +616,18 @@ export default function LogMealPage() {
           </div>
         )}
 
-        {/* Log Button */}
-        {mealItems.length > 0 && (
-          <button
-            onClick={handleLogMeal}
-            disabled={logging}
-            className="w-full bg-iron-orange text-iron-black py-4 font-heading text-lg uppercase tracking-wider flex items-center justify-center gap-3 hover:bg-iron-orange/90 transition-colors shadow-lg disabled:opacity-50"
-          >
-            {logging ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                {t('nutrition.logging')}
-              </>
-            ) : (
-              <>
-                <Plus className="w-6 h-6" />
-                {t('nutrition.logMeal')} ({Math.round(mealTotals.calories)} cal)
-              </>
-            )}
-          </button>
-        )}
       </main>
+
+      {/* Sticky Log Button - Always visible above nav */}
+      {mealItems.length > 0 && (
+        <FABFullWidth
+          label={logging ? t('nutrition.logging') : `${t('nutrition.logMeal')} (${Math.round(mealTotals.calories)} cal)`}
+          icon={logging ? <Loader2 className="w-6 h-6 animate-spin" /> : <Plus className="w-6 h-6" />}
+          onClick={handleLogMeal}
+          disabled={logging}
+          variant="primary"
+        />
+      )}
 
       {/* Food Selection Modal */}
       {selectedFood && (

@@ -10,7 +10,7 @@ import { hapticFeedback } from '../shared/utils';
 import './Input.css';
 
 export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
-  ({ value, onChange, onSend, onVoiceInput, onImageUpload, disabled = false, placeholder = 'Message your coach...' }, ref) => {
+  ({ value, onChange, onSend, onVoiceInput, onImageUpload, onFocus, onBlur, disabled = false, placeholder = 'Message your coach...' }, ref) => {
     const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter' && !e.shiftKey && !disabled) {
         e.preventDefault();
@@ -57,6 +57,8 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyPress={handleKeyPress}
+            onFocus={onFocus}
+            onBlur={onBlur}
             disabled={disabled}
             placeholder={placeholder}
             className="chat-input__field"

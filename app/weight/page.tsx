@@ -92,7 +92,7 @@ export default function WeightHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-40">
       {/* Header */}
       <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
         <div className="max-w-4xl mx-auto px-4 py-4">
@@ -125,6 +125,31 @@ export default function WeightHistoryPage() {
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 p-4 mb-4">
             <p className="text-red-500 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Summary Stats - AT TOP for immediate visibility */}
+        {metrics.length > 1 && (
+          <div className="card-glass border border-iron-gray/30 p-6 mb-6">
+            <p className="text-iron-gray text-xs uppercase tracking-wider mb-4">
+              Summary
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">Total Entries</p>
+                <p className="text-2xl font-bold text-iron-white">{metrics.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">Total Change</p>
+                <p className={`text-2xl font-bold ${
+                  metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg < 0
+                    ? 'text-green-500'
+                    : 'text-red-500'
+                }`}>
+                  {displayWeight((metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg), unitSystem).value.toFixed(1)} {displayWeight(0, unitSystem).unit}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -219,31 +244,6 @@ export default function WeightHistoryPage() {
                 </div>
               )
             })}
-          </div>
-        )}
-
-        {/* Summary Stats */}
-        {metrics.length > 1 && (
-          <div className="card-glass border border-iron-gray/30 p-6 mt-6">
-            <p className="text-iron-gray text-xs uppercase tracking-wider mb-4">
-              Summary
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">Total Entries</p>
-                <p className="text-2xl font-bold text-iron-white">{metrics.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-iron-gray mb-1 uppercase tracking-wider">Total Change</p>
-                <p className={`text-2xl font-bold ${
-                  metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg < 0
-                    ? 'text-green-500'
-                    : 'text-red-500'
-                }`}>
-                  {displayWeight((metrics[0].weight_kg - metrics[metrics.length - 1].weight_kg), unitSystem).value.toFixed(1)} {displayWeight(0, unitSystem).unit}
-                </p>
-              </div>
-            </div>
           </div>
         )}
       </div>

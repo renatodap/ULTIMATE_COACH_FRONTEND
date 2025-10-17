@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { FAB } from '@/components/shared/FAB'
 import { BottomNav } from '@/components/BottomNav'
+import { StickyMiniSummary } from '@/components/shared/StickyMiniSummary'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 import { formatRelativeDate } from '@/lib/utils/timezone'
@@ -124,7 +125,7 @@ export default function ActivitiesPage() {
   const hasActivities = activitiesByDate.size > 0
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-40">
       {/* Header - NEW CONSISTENT DESIGN */}
       <PageHeader
         title={t('activities.pageTitle')}
@@ -142,6 +143,17 @@ export default function ActivitiesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Sticky Mini Summary - Always visible */}
+      {summary && (
+        <StickyMiniSummary
+          type="activity"
+          totalCalories={summary.total_calories_burned}
+          calorieGoal={summary.calorie_burn_goal}
+          totalDuration={summary.total_duration_minutes}
+          activityCount={totalActivities}
+        />
       )}
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -210,6 +222,7 @@ export default function ActivitiesPage() {
       {/* FAB - Floating Action Button */}
       <FAB
         href="/activities/log"
+        positioning="high"
       />
 
       {/* Bottom Navigation */}

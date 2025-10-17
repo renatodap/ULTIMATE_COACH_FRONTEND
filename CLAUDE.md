@@ -69,6 +69,16 @@
 - `md:` Laptop (≥ 768px)
 - `lg:` Desktop (≥ 1024px)
 
+**CRITICAL MOBILE PATTERNS - Read before implementing any page:**
+
+See the **Mobile-First Design Patterns** section below for comprehensive guidelines on:
+- Bottom spacing (pb-20 vs pb-40)
+- FAB positioning
+- Keyboard handling
+- Auto-hide navigation
+- Sticky elements
+- Touch targets
+
 ---
 
 ## File Structure & Code Index
@@ -1419,6 +1429,570 @@ const item = { calories: frontendCalculatedCalories }
 ### **Key Principle**
 
 > **"The quantity field is a semantic chameleon - it changes meaning based on context. Always reset it when the context changes."**
+
+---
+
+## 📱 Mobile-First Design Patterns
+
+### **Overview**
+
+This app is **mobile-first** - most users access it from their phones. These patterns ensure exceptional mobile UX while maintaining desktop functionality.
+
+**Core Philosophy:**
+- Mobile users are **thumb-first** - optimize for one-handed use
+- Bottom 1/3 of screen = **prime thumb zone** - put important actions here
+- Content must **breathe** - generous spacing prevents cramped UI
+- **Auto-hide** non-essential UI - maximize content visibility
+- **Responsive hierarchy** - show most important content first on mobile
+
+---
+
+### **1. Bottom Spacing Patterns**
+
+The bottom navigation (64px height, z-index 300) occupies the **most valuable screen real estate**. Content needs appropriate padding to prevent overlap and enable comfortable scrolling.
+
+#### **Spacing Presets**
+
+| Preset | Tailwind | Pixels | Use Case |
+|--------|----------|--------|----------|
+| **None** | `pb-0` | 0px | Modal overlays, full-screen components |
+| **Minimal** | `pb-20` | 80px | Pages with fixed bottom elements (Coach chat) |
+| **Default** | `pb-32` | 128px | Standard pages, forms |
+| **Generous** | `pb-40` | 160px | **List pages** (Activities, Nutrition, Weight, Profile) |
+
+#### **Generous Spacing Explained (pb-40 / 160px)**
+
+**Why 160px?**
+- Bottom nav: 64px
+- Extra scroll space: 96px (1.5× nav height)
+- Allows users to bring last item into **thumb zone**
+- Creates "over-scroll" feel like native apps
+
+**Example:**
+```tsx
+// ✅ List page with generous spacing
+<div className="min-h-screen bg-iron-black pb-40">
+  <PageHeader />
+  <ContentList />
+  {/* Last item can scroll 96px past nav = comfortable thumb reach */}
+  <BottomNav />
+</div>
+```
+
+**Before (pb-20):** Last item cramped against nav, hard to tap
+**After (pb-40):** Last item scrolls into middle of screen, easy access
+
+---
+
+###  **2. FAB (Floating Action Button) Positioning**
+
+FABs are the **primary action** on list pages. Position carefully to avoid overlap with bottom nav.
+
+#### **Positioning System**
+
+```tsx
+// components/shared/FAB.tsx
+<FAB
+  href="/activities/log"
+  positioning="high"  // 'default' | 'high' | 'list'
+/>
+```
+
+| Positioning | Bottom | Height | Use Case |
+|-------------|--------|--------|----------|
+| **default** | 96px | `bottom-24` | Standard single-action pages |
+| **high** | 128px | `bottom-32` | List pages with scroll |
+| **list** | 120px | `bottom-[120px]` | Dense lists, needs more separation |
+
+#### **FAB Best Practices**
+
+✅ **DO:**
+- Use `positioning="high"` on Activities, Nutrition pages
+- Keep FAB visible during scroll (don't auto-hide)
+- Use `z-50` (above content, below modals)
+- Minimum 60×60px touch target
+- Add animation (scale on tap, bounce on appear)
+
+❌ **DON'T:**
+- Place FAB too close to nav (< 80px)
+- Use multiple FABs on same page
+- Hide FAB on pages where it's the primary action
+- Make FAB smaller than 44×44px (Apple minimum)
+
+**Example:**
+```tsx
+// Activities page
+<FAB
+  href="/activities/log"
+  positioning="high"
+  icon={<Plus />}
+/>
+```
+
+---
+
+### **3. Auto-Hide Bottom Navigation**
+
+**Pattern:** Hide nav on scroll down, show on scroll up. Reclaims 64px of screen space during content consumption.
+
+**Implementation:**
+```tsx
+// hooks/useScrollDirection.ts - Already implemented
+const scrollDirection = useScrollDirection() // 'up' | 'down'
+
+// components/BottomNav.tsx
+<BottomNav hideOnScroll={true} /> // Default
+<BottomNav hideOnScroll={false} /> // Coach page (input needs nav visible)
+```
+
+**How it Works:**
+1. User scrolls down 80px → nav slides down (translate-y-full)
+2. User scrolls up any amount → nav slides up (translate-y-0)
+3. At page top → nav always visible
+4. Smooth 300ms transition for professional feel
+
+**When to Disable:**
+- Coach page (input fixed above nav)
+- Pages with nav-dependent UI
+- Very short pages (< 1 screen height)
+
+---
+
+### **4. Sticky Elements & Z-Index Layers**
+
+**Z-Index Stack (from bottom to top):**
+```
+z-[0]    = Base content
+z-[5]    = Date separators in lists
+z-[6]    = Sync notifications
+z-[50]   = FABs
+z-[90]   = Sticky controls (date picker, filters)
+z-[100]  = Page headers
+z-[150]  = Scroll-to-top button, error banners
+z-[200]  = Coach header (special case)
+z-[300]  = Bottom nav
+z-[400]  = Floating elements (Coach input when keyboard up)
+z-[500]  = Modals, overlays
+```
+
+#### **Sticky Summary Bars**
+
+**Pattern:** Keep daily totals visible during scroll without taking up screen space.
+
+```tsx
+// components/shared/StickyMiniSummary.tsx
+<StickyMiniSummary
+  type="activity"
+  totalCalories={1250}
+  calorieGoal={2000}
+  totalDuration={60}
+  activityCount={2}
+/>
+```
+
+**Positioning:**
+- Activities: `top-16` (below header)
+- Nutrition: `top-[120px]` (below header + date controls)
+- Uses `z-[90]` to stay above content
+- Glass morphism (`bg-iron-black/95 backdrop-blur`)
+
+---
+
+### **5. Keyboard Handling (Mobile)**
+
+**Problem:** Mobile keyboard pushes content up, hiding important UI.
+
+**Solution:** Floating input that overlays nav when keyboard is active.
+
+#### **Coach Page Pattern**
+
+```tsx
+const [keyboardVisible, setKeyboardVisible] = useState(false)
+
+// Messages container - dynamic padding
+<div className={`
+  flex-1 overflow-y-auto
+  ${keyboardVisible ? 'pb-[200px]' : 'pb-24'}
+`}>
+  {messages}
+</div>
+
+// Floating input
+<div className={`
+  fixed left-0 right-0 z-[400]
+  ${keyboardVisible ? 'bottom-0 pb-4' : 'bottom-16 pb-2'}
+  transition-all duration-300
+`}>
+  <ChatInput
+    onFocus={() => setKeyboardVisible(true)}
+    onBlur={() => setTimeout(() => setKeyboardVisible(false), 100)}
+  />
+</div>
+
+// Bottom nav - keep visible
+<BottomNav hideOnScroll={false} />
+```
+
+**Why This Works:**
+1. Input starts above nav (normal state)
+2. User taps input → keyboard slides up
+3. Input slides down to bottom:0, overlays nav (z-[400] > z-[300])
+4. Messages get extra padding (pb-[200px]) so last message visible
+5. User dismisses keyboard → input slides back up to bottom:16
+
+---
+
+### **6. Responsive Card Reordering**
+
+**Pattern:** Show most important content first on mobile, traditional layout on desktop.
+
+#### **Dashboard Example**
+
+**Mobile:** Progress Tracker → Hero → Actions
+**Desktop:** Hero → Actions → Progress Tracker
+
+```tsx
+{/* MOBILE: Progress first (weight = most important metric) */}
+<div className="md:hidden">
+  <ProgressTrackerCard {...props} />
+</div>
+
+{/* Hero Card */}
+<HeroCard {...props} />
+
+{/* Actions */}
+<SmartActionsGrid {...props} />
+
+{/* DESKTOP: Progress last (traditional layout) */}
+<div className="hidden md:block">
+  <ProgressTrackerCard {...props} />
+</div>
+```
+
+**Benefits:**
+- Mobile users see weight progress **immediately** (above the fold)
+- Desktop users see comprehensive overview first
+- No duplication (component renders once per breakpoint)
+- Maintains visual hierarchy for each device type
+
+---
+
+### **7. Touch Targets & Tap Feedback**
+
+**Apple HIG Standard:** Minimum 44×44px touch targets
+**Our Standard:** Minimum 44×44px, prefer 48×48px+
+
+#### **Touch Target Classes**
+
+```tsx
+// globals.css
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.active-press {
+  @apply active:scale-95 transition-transform duration-100;
+}
+
+.focus-ring-iron {
+  @apply focus:outline-none focus:ring-2 focus:ring-iron-orange focus:ring-offset-2 focus:ring-offset-iron-black;
+}
+```
+
+#### **Button Examples**
+
+```tsx
+// ✅ Good mobile button
+<button className="
+  px-4 py-3
+  tap-target
+  active-press
+  focus-ring-iron
+  bg-iron-orange text-iron-black
+">
+  Log Weight
+</button>
+
+// ✅ Icon-only button
+<button className="
+  min-w-[44px] min-h-[44px]
+  flex items-center justify-center
+  active-press
+">
+  <Edit2 className="w-5 h-5" />
+</button>
+
+// ❌ Too small
+<button className="px-2 py-1 text-xs">
+  Tap me
+</button>
+```
+
+---
+
+### **8. Page Container Pattern**
+
+**Centralized layout management** for consistent spacing and nav behavior.
+
+```tsx
+// components/layout/PageContainer.tsx
+<PageContainer
+  bottomSpacing="generous"
+  hideNavOnScroll={true}
+>
+  <YourPageContent />
+</PageContainer>
+```
+
+**When to Use:**
+- New pages (recommended for all future pages)
+- Major refactors
+- Prototyping
+
+**When NOT to Use:**
+- Existing pages working well (don't break what works)
+- Pages with custom layout needs
+- Modals and overlays
+
+---
+
+### **9. Page-Specific Patterns**
+
+#### **List Pages (Activities, Nutrition, Weight, Profile)**
+
+```tsx
+<div className="min-h-screen bg-iron-black pb-40">  {/* Generous spacing */}
+  <PageHeader showRefresh onRefresh={refresh} />
+  <StickyMiniSummary {...summaryData} />  {/* Always visible */}
+  <ContentList />
+  <FAB href="/log" positioning="high" />  {/* Clear separation */}
+  <BottomNav hideOnScroll={true} />  {/* Auto-hide */}
+</div>
+```
+
+#### **Coach Chat**
+
+```tsx
+<div className="min-h-screen bg-iron-black flex flex-col">
+  <Header />
+  <Messages className="flex-1 pb-24" />  {/* Minimal padding */}
+  <FloatingInput />  {/* Overlays nav when keyboard up */}
+  <BottomNav hideOnScroll={false} />  {/* Always visible */}
+</div>
+```
+
+#### **Dashboard**
+
+```tsx
+<div className="min-h-screen bg-iron-black pb-40">  {/* Generous */}
+  <Header />
+  {/* Mobile: Progress first */}
+  <div className="md:hidden"><ProgressCard /></div>
+  <HeroCard />
+  <ActionsGrid />
+  {/* Desktop: Progress last */}
+  <div className="hidden md:block"><ProgressCard /></div>
+  <BottomNav />
+</div>
+```
+
+#### **Log/Form Pages (Nutrition Log, Activity Log)**
+
+```tsx
+<div className="min-h-screen bg-iron-black pb-40">  {/* Generous */}
+  <Header />
+  <QuickActions />
+  <FormContent />
+  <FABFullWidth label="Submit" onClick={submit} />  {/* Sticky */}
+  <BottomNav />
+</div>
+```
+
+---
+
+### **10. Mobile UX Checklist**
+
+Before shipping a new mobile feature:
+
+**Spacing:**
+- [ ] Bottom padding appropriate for page type (pb-40 for lists)
+- [ ] Last item in list visible when scrolled to bottom
+- [ ] FAB positioned ≥96px from bottom
+- [ ] No content hidden behind bottom nav
+
+**Touch Targets:**
+- [ ] All buttons ≥44×44px (48px preferred)
+- [ ] Icon-only buttons have explicit min-w/min-h
+- [ ] Tap feedback (active:scale-95 or similar)
+- [ ] Focus rings for accessibility
+
+**Performance:**
+- [ ] Animations use CSS transforms (not position/margin)
+- [ ] Scroll listeners throttled with requestAnimationFrame
+- [ ] Images lazy loaded below the fold
+- [ ] No layout shift during page load
+
+**Navigation:**
+- [ ] Bottom nav auto-hides on scroll (unless input above it)
+- [ ] Sticky elements have appropriate z-index
+- [ ] Back buttons in correct position (top-left)
+- [ ] Breadcrumbs hidden on mobile (use back button)
+
+**Content Hierarchy:**
+- [ ] Most important content above the fold
+- [ ] Cards reordered on mobile if needed (dashboard pattern)
+- [ ] Sticky summaries keep key metrics visible
+- [ ] Empty states guide users to action
+
+**Keyboard:**
+- [ ] Inputs don't get hidden behind keyboard
+- [ ] Submit button reachable with keyboard up
+- [ ] Keyboard dismisses on form submit
+- [ ] Tab order logical
+
+**Testing:**
+- [ ] Test on 375px width (iPhone SE)
+- [ ] Test on 390px width (iPhone 12/13)
+- [ ] Test on 428px width (iPhone 14 Pro Max)
+- [ ] Test in landscape mode
+- [ ] Test with system font size increased
+
+---
+
+### **11. Common Mobile Mistakes**
+
+❌ **Mistake 1:** Using `pb-20` on list pages
+```tsx
+// Wrong - last item cramped
+<div className="pb-20">
+  <LongList />
+</div>
+
+// Correct - generous space
+<div className="pb-40">
+  <LongList />
+</div>
+```
+
+❌ **Mistake 2:** FAB too close to nav
+```tsx
+// Wrong - only 32px clearance
+<FAB className="bottom-24" />
+
+// Correct - 64px+ clearance
+<FAB positioning="high" className="bottom-32" />
+```
+
+❌ **Mistake 3:** Forgetting keyboard state
+```tsx
+// Wrong - input hidden by keyboard
+<div className="fixed bottom-16">
+  <input />
+</div>
+
+// Correct - floats over nav when keyboard up
+<div className={keyboardVisible ? 'bottom-0' : 'bottom-16'}>
+  <input onFocus={() => setKeyboardVisible(true)} />
+</div>
+```
+
+❌ **Mistake 4:** Desktop-first responsive
+```tsx
+// Wrong - starts large, scales down
+<h1 className="text-6xl md:text-4xl">
+
+// Correct - starts small, scales up
+<h1 className="text-4xl md:text-6xl">
+```
+
+❌ **Mistake 5:** Touch target too small
+```tsx
+// Wrong - only 24px
+<button className="p-1">
+  <X className="w-4 h-4" />
+</button>
+
+// Correct - 44px minimum
+<button className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+  <X className="w-5 h-5" />
+</button>
+```
+
+---
+
+### **12. Mobile Performance Tips**
+
+**Scroll Performance:**
+```tsx
+// ✅ Use transform (GPU accelerated)
+<div className="transition-transform translate-y-full" />
+
+// ❌ Use top/bottom (causes reflow)
+<div style={{ bottom: shouldHide ? '-64px' : '0' }} />
+```
+
+**Touch Responsiveness:**
+```tsx
+// ✅ Use touch-action for better scroll
+<div className="overflow-y-auto" style={{ touchAction: 'pan-y' }} />
+
+// ✅ Prevent scroll rubberbanding
+<div style={{ overscrollBehavior: 'contain' }} />
+```
+
+**Animation:**
+```tsx
+// ✅ Throttle scroll listeners
+useEffect(() => {
+  let ticking = false
+  const onScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        handleScroll()
+        ticking = false
+      })
+      ticking = true
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  return () => window.removeEventListener('scroll', onScroll)
+}, [])
+```
+
+---
+
+### **13. Quick Reference**
+
+**Bottom Spacing:**
+- List pages: `pb-40` (160px)
+- Forms: `pb-32` (128px)
+- Chat: `pb-20` (80px)
+- Modals: `pb-0` (0px)
+
+**FAB Position:**
+- Standard: `bottom-24` (96px)
+- Lists: `bottom-32` (128px)
+- Dense: `bottom-[120px]` (120px)
+
+**Z-Index:**
+- Content: 0-10
+- Sticky elements: 90-100
+- FABs: 50
+- Nav: 300
+- Floating (keyboard): 400
+- Modals: 500
+
+**Touch Targets:**
+- Minimum: 44×44px
+- Preferred: 48×48px
+- Icon buttons: explicit min-w/min-h
+
+**Breakpoints:**
+- Mobile: < 640px (default)
+- Tablet: ≥ 640px (sm:)
+- Laptop: ≥ 768px (md:)
+- Desktop: ≥ 1024px (lg:)
 
 ---
 

@@ -84,6 +84,7 @@ export default function CoachPage() {
   const [logPreview, setLogPreview] = useState<LogPreview | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
 
   // Refs
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -390,10 +391,14 @@ export default function CoachPage() {
         </div>
       </header>
 
-      {/* Messages container */}
+      {/* Messages container - Dynamic padding based on keyboard state */}
       <div
         ref={messagesContainerRef}
-        className={`flex-1 overflow-y-auto overflow-x-hidden px-4 ${messages.length === 0 && !loading.isLoading ? 'flex items-center justify-center' : 'py-6 space-y-4'}`}
+        className={`
+          flex-1 overflow-y-auto overflow-x-hidden px-4
+          ${messages.length === 0 && !loading.isLoading ? 'flex items-center justify-center' : 'py-6 space-y-4'}
+          ${keyboardVisible ? 'pb-[200px]' : 'pb-24'}
+        `}
         style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
       >
         {messages.length === 0 && !loading.isLoading ? (
@@ -519,9 +524,14 @@ export default function CoachPage() {
         )}
       </AnimatePresence>
 
-      {/* Input (fixed to bottom, above BottomNav) */}
+      {/* Floating Input - Overlays nav when keyboard is up */}
       <motion.div
-        className="px-4 pb-2"
+        className={`
+          fixed left-0 right-0 z-[400]
+          px-4 pt-3 border-t border-iron-gray/20 bg-iron-black
+          transition-all duration-300 ease-in-out
+          ${keyboardVisible ? 'bottom-0 pb-4' : 'bottom-16 pb-2'}
+        `}
         initial={{ opacity: 1, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
@@ -531,13 +541,18 @@ export default function CoachPage() {
           value={inputValue}
           onChange={setInputValue}
           onSend={sendMessage}
+          onFocus={() => setKeyboardVisible(true)}
+          onBlur={() => {
+            // Delay to allow click events to fire before blur
+            setTimeout(() => setKeyboardVisible(false), 100)
+          }}
           disabled={loading.isLoading || !!logPreview}
           placeholder={logPreview ? 'Confirm or cancel log first...' : 'Message your coach...'}
         />
       </motion.div>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
+      {/* Bottom Navigation - Keep visible on Coach page (input is above nav) */}
+      <BottomNav hideOnScroll={false} />
     </div>
   )
 }

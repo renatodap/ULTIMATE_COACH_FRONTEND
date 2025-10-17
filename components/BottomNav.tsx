@@ -4,15 +4,25 @@
  * Bottom Navigation Component
  *
  * Fixed bottom navigation bar for mobile-first navigation.
- * Features glass morphism design with active state indicators.
+ * Features:
+ * - Glass morphism design with active state indicators
+ * - Auto-hide on scroll down (reclaim 64px screen space)
+ * - Show on scroll up or when near page top
+ * - Smooth transitions for professional feel
  */
 
 import { usePathname, useRouter } from 'next/navigation'
 import { FEATURE_PLAN_IN_NAV } from '@/lib/constants/features'
+import { useScrollDirection } from '@/hooks/useScrollDirection'
 
-export function BottomNav() {
+interface BottomNavProps {
+  hideOnScroll?: boolean
+}
+
+export function BottomNav({ hideOnScroll = true }: BottomNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const scrollDirection = useScrollDirection()
 
   const baseTabs = [
     {
@@ -87,8 +97,18 @@ export function BottomNav() {
     return pathname?.startsWith(path)
   }
 
+  // Determine if nav should be hidden
+  const shouldHide = hideOnScroll && scrollDirection === 'down'
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[300] bg-iron-black border-t border-iron-gray/30">
+    <nav
+      className={`
+        fixed bottom-0 left-0 right-0 z-[300]
+        bg-iron-black border-t border-iron-gray/30
+        transition-transform duration-300 ease-in-out
+        ${shouldHide ? 'translate-y-full' : 'translate-y-0'}
+      `}
+    >
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-around h-16">
           {tabs.map((tab) => {
