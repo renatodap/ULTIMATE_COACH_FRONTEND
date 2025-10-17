@@ -241,6 +241,17 @@ export function useActivitiesData(
         activitiesPromise
       ])
 
+      // 🔍 DEBUG: Log API response
+      console.log('🔍 [useActivitiesData] API Response:', {
+        viewMode,
+        selectedDate,
+        timezone,
+        summaryData,
+        activitiesCount: activitiesResponse.activities.length,
+        firstActivity: activitiesResponse.activities[0],
+        activitiesResponse
+      })
+
       // Group activities by date in user's timezone (CRITICAL: timezone-aware grouping)
       // Sort activities by start_time DESC (most recent first)
       const sortedActivities = [...activitiesResponse.activities].sort((a, b) =>
@@ -268,6 +279,18 @@ export function useActivitiesData(
         finalSummary = summaryData
       }
 
+      // 📊 DEBUG: Log grouped activities
+      console.log('📊 [useActivitiesData] Grouped Activities:', {
+        totalGroups: grouped.size,
+        groups: Array.from(grouped.entries()).map(([date, acts]) => ({
+          date,
+          count: acts.length,
+          firstActivity: acts[0]?.activity_name
+        })),
+        finalSummary,
+        allDates: Array.from(grouped.keys())
+      })
+
       setSummary(finalSummary)
       setActivitiesByDate(grouped)
 
@@ -283,7 +306,17 @@ export function useActivitiesData(
         ? err.message
         : 'Failed to load activities'
 
-      console.error('Activities data load error:', err)
+      // ❌ DEBUG: Log full error details
+      console.error('❌ [useActivitiesData] Load Error:', err)
+      console.error('Error details:', {
+        message: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined,
+        viewMode,
+        selectedDate,
+        timezone,
+        errorType: err instanceof Error ? err.constructor.name : typeof err
+      })
+
       setError(errorMessage)
 
       // Fire error callback

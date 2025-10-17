@@ -10,10 +10,12 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { useTranslation } from '@/lib/i18n'
 import { deleteActivity } from '@/lib/api/activities'
+import { apiClient } from '@/lib/api/client'
 import { useActivitiesData } from '@/lib/hooks/useActivitiesData'
 import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import ActivityCard from '@/app/components/activities/ActivityCard'
@@ -71,6 +73,34 @@ export default function ActivitiesPage() {
     refresh,
     totalActivities
   } = useActivitiesData({ timezone })
+
+  // 🐛 DEBUG: Call backend debug endpoint on mount
+  useEffect(() => {
+    async function debugCheck() {
+      try {
+        const debugData = await apiClient.get('/api/v1/activities/debug')
+        console.log('🐛 [Backend Debug]:', debugData)
+      } catch (e) {
+        console.error('❌ Debug endpoint failed:', e)
+      }
+    }
+    debugCheck()
+  }, [])
+
+  // 🔍 DEBUG: Log component state
+  useEffect(() => {
+    console.log('🔍 [ActivitiesPage] State:', {
+      loading,
+      refreshing,
+      error,
+      syncInProgress,
+      totalActivities,
+      hasActivities: activitiesByDate.size > 0,
+      activitiesByDateSize: activitiesByDate.size,
+      summaryExists: !!summary,
+      summary
+    })
+  }, [loading, activitiesByDate, summary, error, totalActivities, refreshing, syncInProgress])
 
   const handleEdit = (id: string) => {
     // TODO: Implement edit functionality
