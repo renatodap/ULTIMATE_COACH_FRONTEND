@@ -150,7 +150,7 @@ export default function ActivitiesPage() {
         <StickyMiniSummary
           type="activity"
           totalCalories={summary.total_calories_burned}
-          calorieGoal={summary.calorie_burn_goal}
+          calorieGoal={summary.daily_goal_calories}
           totalDuration={summary.total_duration_minutes}
           activityCount={totalActivities}
         />
