@@ -241,10 +241,10 @@ function NutritionPageContent() {
         <StickyMiniSummary
           type="nutrition"
           totalCalories={nutritionData.totalCalories}
-          calorieGoal={nutritionData.calorie_goal}
-          protein={nutritionData.total_protein_g}
-          carbs={nutritionData.total_carbs_g}
-          fat={nutritionData.total_fat_g}
+          calorieGoal={nutritionData.calorieGoal}
+          protein={nutritionData.totalProtein}
+          carbs={nutritionData.totalCarbs}
+          fat={nutritionData.totalFat}
         />
       )}
 
