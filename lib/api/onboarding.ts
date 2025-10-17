@@ -4,8 +4,7 @@
  * Handles all onboarding-related API calls
  */
 
-import { apiClient } from './client'
-import { supabase } from '@/lib/supabase';
+import { apiClient } from './client';
 
 // ============================================================================
 // TYPES
@@ -80,50 +79,21 @@ export interface OnboardingStatus {
 
 /**
  * Complete onboarding and get personalized targets
+ *
+ * AUTHENTICATION: Uses httpOnly cookies set during login (no manual token management)
+ * Backend validates via cookies automatically (credentials: 'include' in apiClient)
+ *
+ * FIX: Removed session refresh to prevent orphaned token errors
+ * Previous implementation called supabase.auth.refreshSession() which created tokens
+ * that Supabase couldn't validate, causing "Session from session_id claim in JWT does not exist"
  */
 export async function completeOnboarding(data: OnboardingData): Promise<OnboardingResponse> {
   try {
-    console.log('[Onboarding] Starting submission - refreshing session for maximum validity...');
+    console.log('[Onboarding] Starting submission using cookie-based authentication');
 
-    // CRITICAL: ALWAYS refresh session before submitting to get a fresh 60-min token
-    // This prevents expiry errors even if user spent 30+ minutes on onboarding
-    const { data: refreshedData, error: refreshError } = await supabase.auth.refreshSession();
-
-    if (refreshError) {
-      console.error('[Onboarding] Session refresh error:', refreshError);
-
-      // Fallback: Try to get existing session
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.access_token) {
-        throw new Error('Session expired. Please log in again.');
-      }
-
-      console.warn('[Onboarding] Using existing session after refresh failed');
-      const accessToken = sessionData.session.access_token;
-
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      };
-
-      return await apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
-    }
-
-    if (!refreshedData?.session?.access_token) {
-      console.error('[Onboarding] No access token after refresh');
-      throw new Error('Authentication required. Please log in again.');
-    }
-
-    const accessToken = refreshedData.session.access_token;
-    console.log('[Onboarding] Session refreshed successfully - token valid for 60 more minutes');
-    console.log('[Onboarding] Submitting with token:', accessToken.substring(0, 20) + '...');
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
-    };
-
-    return await apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data, { headers });
+    // Simply use apiClient - it automatically includes httpOnly cookies
+    // No need to manually refresh session or attach Authorization headers
+    return await apiClient.post<OnboardingResponse>('/api/v1/onboarding/complete', data);
   } catch (error: any) {
     console.error('[Onboarding] Complete onboarding error:', error);
     // Re-throw with better error message
