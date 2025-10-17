@@ -60,7 +60,12 @@ export async function refreshToken(refreshToken: string): Promise<{ access_token
  */
 export async function logout(): Promise<void> {
   try {
-    // Call backend to clear session
+    // Clear Supabase session first (for OAuth users)
+    // This removes any tokens stored by Supabase Auth
+    const { supabase } = await import('@/lib/supabase')
+    await supabase.auth.signOut()
+
+    // Call backend to clear httpOnly cookies
     await apiClient.post('api/v1/auth/logout')
   } catch (error) {
     // Even if backend call fails, still redirect to clear client state
