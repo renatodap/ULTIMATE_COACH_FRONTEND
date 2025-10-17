@@ -10,11 +10,34 @@ import { apiClient } from './client';
 // TYPES
 // ============================================================================
 
+export interface TrainingModalitySelection {
+  modality_id: string
+  proficiency_level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  is_primary?: boolean
+}
+
+export interface TrainingModality {
+  id: string
+  name: string
+  description?: string
+  typical_frequency_per_week?: number
+  equipment_required?: string[]
+  icon?: string
+  display_order: number
+}
+
 export interface OnboardingData {
   // Step 1: Goals
   primary_goal: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level: 'beginner' | 'intermediate' | 'advanced'
   workout_frequency: number
+
+  // Training Modalities (Step 3.5)
+  training_modalities?: TrainingModalitySelection[]
+
+  // Fitness Notes (Step 4)
+  fitness_notes?: string
 
   // Step 2: Physical Stats (in metric - backend canonical)
   // Prefer birth_date; age is optional (derived server-side if birth_date provided)
@@ -147,4 +170,19 @@ export async function previewTargets(params: {
   })
 
   return apiClient.get<MacroTargets>(`/api/v1/onboarding/preview-targets?${queryParams}`)
+}
+
+/**
+ * Get list of available training modalities
+ */
+export async function getTrainingModalities(): Promise<TrainingModality[]> {
+  // Fetch from Supabase directly (public table, no auth required)
+  // This endpoint will be created in the backend if it doesn't exist
+  try {
+    return await apiClient.get<TrainingModality[]>('/api/v1/training-modalities')
+  } catch (error) {
+    console.error('[Onboarding] Failed to fetch training modalities:', error)
+    // Return empty array as fallback
+    return []
+  }
 }

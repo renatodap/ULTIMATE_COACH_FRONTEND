@@ -92,16 +92,16 @@ export default function EditPreferencesModal({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto rounded-xl">
         {/* Header */}
-        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-iron-orange" />
             <h2 className="font-heading text-xl text-iron-white uppercase">Edit Preferences</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-iron-gray/20 transition-colors rounded-lg"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -125,7 +125,7 @@ export default function EditPreferencesModal({
                   setLanguage(value)
                 }
               }}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <option
@@ -151,7 +151,7 @@ export default function EditPreferencesModal({
               id="unitSystem"
               value={unitSystem}
               onChange={(e) => setUnitSystem(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
             >
               {UNIT_SYSTEM_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -173,7 +173,7 @@ export default function EditPreferencesModal({
               id="timezone"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
             >
               {TIMEZONE_OPTIONS.map((tz) => (
                 <option key={tz.value} value={tz.value}>
@@ -192,14 +192,14 @@ export default function EditPreferencesModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-h-[48px] px-6 py-4 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 min-h-[48px] px-6 py-4 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-lg"
             >
               {isSubmitting ? (
                 <>

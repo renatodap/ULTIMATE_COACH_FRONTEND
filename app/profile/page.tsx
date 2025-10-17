@@ -38,7 +38,7 @@ import {
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
-import { getFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { getFullUserProfile, getUserTrainingModalities, type FullUserProfile, type UserTrainingModality } from '@/lib/api/profile'
 import { logout } from '@/lib/api/auth'
 import { updateFullUserProfile } from '@/lib/api/profile'
 import { displayWeight, displayHeight } from '@/lib/utils/units'
@@ -49,6 +49,7 @@ import EditGoalsModal from '@/app/components/profile/EditGoalsModal'
 import EditDietaryModal from '@/app/components/profile/EditDietaryModal'
 import EditLifestyleModal from '@/app/components/profile/EditLifestyleModal'
 import EditPreferencesModal from '@/app/components/profile/EditPreferencesModal'
+import EditTrainingModalitiesModal from '@/app/components/profile/EditTrainingModalitiesModal'
 import Toast from '@/app/components/shared/Toast'
 import {
   formatGoal,
@@ -99,6 +100,7 @@ export default function ProfilePage() {
   const { t } = useTranslation()
   const { timezone } = useTimezone()
   const [profile, setProfile] = useState<FullUserProfile | null>(null)
+  const [trainingModalities, setTrainingModalities] = useState<UserTrainingModality[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -114,6 +116,7 @@ export default function ProfilePage() {
   const [showDietaryModal, setShowDietaryModal] = useState(false)
   const [showLifestyleModal, setShowLifestyleModal] = useState(false)
   const [showPreferencesModal, setShowPreferencesModal] = useState(false)
+  const [showTrainingModalitiesModal, setShowTrainingModalitiesModal] = useState(false)
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -122,8 +125,12 @@ export default function ProfilePage() {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getFullUserProfile()
-      setProfile(data)
+      const [profileData, modalitiesData] = await Promise.all([
+        getFullUserProfile(),
+        getUserTrainingModalities().catch(() => []) // Non-critical, default to empty
+      ])
+      setProfile(profileData)
+      setTrainingModalities(modalitiesData)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('profile.failedToLoad')
       setError(errorMessage)
@@ -466,6 +473,10 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <DataRow label={t('profile.primaryGoal')} value={formatGoal(profile.primary_goal)} />
             <DataRow
+              label="Secondary Goal"
+              value={profile.secondary_goal ? formatGoal(profile.secondary_goal) : t('profile.none')}
+            />
+            <DataRow
               label={t('profile.experienceLevel')}
               value={formatExperienceLevel(profile.experience_level)}
             />
@@ -474,6 +485,57 @@ export default function ProfilePage() {
               label={t('profile.workoutFrequency')}
               value={profile.workout_frequency ? `${profile.workout_frequency}${t('profile.timesPerWeek')}` : undefined}
             />
+            {/* Fitness Notes */}
+            {profile.fitness_notes && (
+              <div className="pt-2 border-t border-iron-gray/20">
+                <div className="text-sm text-iron-gray mb-1">Fitness Considerations</div>
+                <div className="text-sm text-iron-white p-3 bg-iron-black/40 rounded-lg whitespace-pre-wrap">
+                  {profile.fitness_notes}
+                </div>
+              </div>
+            )}
+
+            {/* Training Modalities */}
+            <div className="pt-4 border-t border-iron-gray/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm text-iron-gray font-medium">Training Modalities</div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowTrainingModalitiesModal(true)
+                  }}
+                  className="min-h-[36px] px-3 py-1.5 text-xs bg-iron-orange/20 text-iron-orange hover:bg-iron-orange/30 transition-colors rounded-lg border border-iron-orange/30 flex items-center gap-1"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  Edit
+                </button>
+              </div>
+              {trainingModalities.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {trainingModalities.map((tm) => (
+                    <div
+                      key={tm.id}
+                      className="px-3 py-2 rounded-lg bg-iron-black/40 border border-iron-gray/30 flex items-center gap-2"
+                    >
+                      <span className="text-lg">{tm.training_modalities.icon}</span>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-iron-white font-medium">
+                          {tm.training_modalities.name}
+                          {tm.is_primary && <span className="ml-1 text-yellow-400">★</span>}
+                        </span>
+                        <span className="text-xs text-iron-gray capitalize">
+                          {tm.proficiency_level}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-iron-gray italic p-4 bg-iron-black/20 rounded-lg border border-iron-gray/20 text-center">
+                  No training modalities selected
+                </div>
+              )}
+            </div>
           </div>
         </CollapsibleSection>
 

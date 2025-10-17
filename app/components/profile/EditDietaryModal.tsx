@@ -122,16 +122,16 @@ export default function EditDietaryModal({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto rounded-xl">
         {/* Header */}
-        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <Apple className="w-5 h-5 text-iron-orange" />
             <h2 className="font-heading text-xl text-iron-white uppercase">Edit Dietary Preferences</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-iron-gray/20 transition-colors rounded-lg"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -149,7 +149,7 @@ export default function EditDietaryModal({
               id="dietaryPreference"
               value={dietaryPreference}
               onChange={(e) => setDietaryPreference(e.target.value as any)}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
             >
               <option value="none">None</option>
               <option value="vegetarian">Vegetarian</option>
@@ -168,14 +168,14 @@ export default function EditDietaryModal({
             <div className="space-y-2">
               {/* List of allergies */}
               {foodAllergies.length > 0 && (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {foodAllergies.map((allergy, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray">
+                    <div key={index} className="flex items-center gap-2 p-3 bg-iron-black border border-iron-gray rounded-lg">
                       <span className="flex-1 text-sm text-iron-white">{allergy}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveAllergy(index)}
-                        className="p-1 hover:bg-red-900/20 transition-colors"
+                        className="min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-red-900/20 transition-colors rounded-lg"
                         aria-label={`Remove ${allergy}`}
                       >
                         <Trash2 className="w-4 h-4 text-red-500" />
@@ -193,15 +193,15 @@ export default function EditDietaryModal({
                   onChange={(e) => setNewAllergy(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAllergy())}
                   placeholder="Add allergy..."
-                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors"
+                  className="flex-1 px-4 py-3 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
                 />
                 <button
                   type="button"
                   onClick={handleAddAllergy}
-                  className="px-3 py-2 bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors rounded-lg"
                   aria-label="Add allergy"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -215,14 +215,14 @@ export default function EditDietaryModal({
             <div className="space-y-2">
               {/* List of foods to avoid */}
               {foodsToAvoid.length > 0 && (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {foodsToAvoid.map((food, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-iron-black border border-iron-gray">
+                    <div key={index} className="flex items-center gap-2 p-3 bg-iron-black border border-iron-gray rounded-lg">
                       <span className="flex-1 text-sm text-iron-white">{food}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveAvoid(index)}
-                        className="p-1 hover:bg-red-900/20 transition-colors"
+                        className="min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-red-900/20 transition-colors rounded-lg"
                         aria-label={`Remove ${food}`}
                       >
                         <Trash2 className="w-4 h-4 text-red-500" />
@@ -240,15 +240,15 @@ export default function EditDietaryModal({
                   onChange={(e) => setNewAvoid(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAvoid())}
                   placeholder="Add food to avoid..."
-                  className="flex-1 px-3 py-2 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors"
+                  className="flex-1 px-4 py-3 bg-iron-black border border-iron-gray text-iron-white text-sm focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
                 />
                 <button
                   type="button"
                   onClick={handleAddAvoid}
-                  className="px-3 py-2 bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-iron-orange text-iron-black hover:bg-orange-600 transition-colors rounded-lg"
                   aria-label="Add food to avoid"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -266,19 +266,19 @@ export default function EditDietaryModal({
               onChange={(e) => setMealsPerDay(e.target.value)}
               min="1"
               max="8"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
               placeholder="How many meals do you eat per day?"
             />
           </div>
 
           {/* Cooks Regularly */}
           <div>
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
               <input
                 type="checkbox"
                 checked={cooksRegularly}
                 onChange={(e) => setCooksRegularly(e.target.checked)}
-                className="w-5 h-5 bg-iron-black border border-iron-gray focus:outline-none focus:ring-2 focus:ring-iron-orange"
+                className="w-6 h-6 bg-iron-black border border-iron-gray focus:outline-none focus:ring-2 focus:ring-iron-orange rounded"
               />
               <span className="text-sm font-medium text-iron-white">I cook regularly</span>
             </label>
@@ -290,14 +290,14 @@ export default function EditDietaryModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-h-[48px] px-6 py-4 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 min-h-[48px] px-6 py-4 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-lg"
             >
               {isSubmitting ? (
                 <>

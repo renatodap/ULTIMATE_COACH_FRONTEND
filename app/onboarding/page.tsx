@@ -9,7 +9,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
-import { completeOnboarding } from '@/lib/api/onboarding'
+import { completeOnboarding, getTrainingModalities, type TrainingModality, type TrainingModalitySelection } from '@/lib/api/onboarding'
 import { getCurrentUser } from '@/lib/api/users'
 import {
   weightToKg,
@@ -26,9 +26,10 @@ import { Input } from '@/components/onboarding/Input'
 
 type Step =
   | 'language'
-  | 'physical_stats'    // Screen 1: age, sex, height, weight, goal_weight
-  | 'goals_experience'  // Screen 2: goal, experience, frequency, activity, sleep
-  | 'diet_lifestyle'    // Screen 3: diet, allergies, meals, stress
+  | 'physical_stats'       // Screen 1: age, sex, height, weight, goal_weight
+  | 'goals_experience'     // Screen 2: primary + secondary goal, experience, frequency, activity, sleep
+  | 'training_modalities'  // Screen 3: training modalities selection (NEW)
+  | 'diet_lifestyle'       // Screen 4: fitness notes, diet, allergies, meals, stress
   | 'calculating'
   | 'complete'
 
@@ -47,11 +48,15 @@ export default function OnboardingPage() {
     goal_weight_kg: 0,
     // Goals & Experience (Screen 2)
     primary_goal: '',
+    secondary_goal: '' as string,
     experience_level: '',
     workout_frequency: 0,
     activity_level: '',
     sleep_hours: 7,
-    // Diet & Lifestyle (Screen 3)
+    // Training Modalities (Screen 3)
+    training_modalities: [] as TrainingModalitySelection[],
+    // Diet & Lifestyle (Screen 4)
+    fitness_notes: '',
     dietary_preference: 'none',
     food_allergies: [] as string[],
     meals_per_day: 3,
@@ -60,6 +65,21 @@ export default function OnboardingPage() {
     // Auto-detected
     unit_system: 'imperial' as UnitSystem,
   })
+
+  // Fetch training modalities on mount
+  const [availableModalities, setAvailableModalities] = useState<TrainingModality[]>([])
+  useEffect(() => {
+    async function fetchModalities() {
+      try {
+        const modalities = await getTrainingModalities()
+        setAvailableModalities(modalities)
+      } catch (error) {
+        console.error('[Onboarding] Failed to fetch training modalities:', error)
+        // Continue without modalities - not critical
+      }
+    }
+    fetchModalities()
+  }, [])
 
   // Auto-detect browser language + timezone on mount
   useEffect(() => {
@@ -190,8 +210,11 @@ export default function OnboardingPage() {
 
       const payload = {
         primary_goal: data.primary_goal as any,
+        secondary_goal: data.secondary_goal || undefined,
         experience_level: data.experience_level as any,
         workout_frequency: data.workout_frequency,
+        training_modalities: data.training_modalities.length > 0 ? data.training_modalities : undefined,
+        fitness_notes: data.fitness_notes || undefined,
         birth_date: data.birth_date,
         biological_sex: data.biological_sex as any,
         height_cm: data.height_cm,
@@ -533,6 +556,36 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
+                {/* Secondary Goal (Optional) */}
+                <div>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                    Secondary goal? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: 'None', value: '' },
+                      ...([
+                        { label: t('onboarding.loseWeight'), value: 'lose_weight' },
+                        { label: t('onboarding.buildMuscle'), value: 'build_muscle' },
+                        { label: t('onboarding.maintain'), value: 'maintain' },
+                        { label: t('onboarding.improvePerformance'), value: 'improve_performance' },
+                      ].filter(opt => opt.value !== data.primary_goal))
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => updateData({ secondary_goal: option.value })}
+                        className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
+                          data.secondary_goal === option.value
+                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
+                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Experience Level */}
                 <div>
                   <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Fitness experience level?</label>
@@ -652,9 +705,127 @@ export default function OnboardingPage() {
                 <button
                   onClick={() => {
                     if (validateGoalsExperience()) {
-                      next('diet_lifestyle')
+                      next('training_modalities')
                     }
                   }}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                >
+                  Continue
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 3: Training Modalities (NEW) */}
+          {step === 'training_modalities' && (
+            <motion.div
+              key="training_modalities"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              <Message text="What do you train?" />
+              <p className="text-neutral-400 text-base -mt-4">Select all that apply</p>
+
+              <div className="space-y-6 bg-neutral-900/30 rounded-2xl p-6 sm:p-8 border border-neutral-800">
+                {/* Training Modalities Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  {availableModalities.filter(m => m.name !== 'Other').map((modality) => {
+                    const isSelected = data.training_modalities.some(tm => tm.modality_id === modality.id)
+                    const selectedModality = data.training_modalities.find(tm => tm.modality_id === modality.id)
+
+                    return (
+                      <button
+                        key={modality.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            // Deselect
+                            updateData({
+                              training_modalities: data.training_modalities.filter(tm => tm.modality_id !== modality.id)
+                            })
+                          } else {
+                            // Select with default proficiency
+                            updateData({
+                              training_modalities: [...data.training_modalities, {
+                                modality_id: modality.id,
+                                proficiency_level: 'beginner',
+                                is_primary: data.training_modalities.length === 0 // First one is primary by default
+                              }]
+                            })
+                          }
+                        }}
+                        className={`min-h-[88px] px-4 py-3 rounded-xl text-left transition-all ${
+                          isSelected
+                            ? 'bg-primary/10 text-neutral-white border-2 border-primary shadow-lg shadow-primary/30'
+                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-2xl">{modality.icon}</span>
+                          <span className="text-base sm:text-lg font-medium">{modality.name}</span>
+                        </div>
+                        {isSelected && selectedModality && (
+                          <select
+                            value={selectedModality.proficiency_level}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              updateData({
+                                training_modalities: data.training_modalities.map(tm =>
+                                  tm.modality_id === modality.id
+                                    ? { ...tm, proficiency_level: e.target.value as any }
+                                    : tm
+                                )
+                              })
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full mt-2 px-2 py-1 rounded-lg text-sm bg-neutral-800 text-neutral-white border border-neutral-700 focus:border-primary focus:outline-none"
+                          >
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="expert">Expert</option>
+                          </select>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Selected Modalities Summary */}
+                {data.training_modalities.length > 0 && (
+                  <div className="pt-4 border-t border-neutral-700">
+                    <p className="text-neutral-400 text-sm mb-3">
+                      {data.training_modalities.length} selected
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.training_modalities.map((tm) => {
+                        const modality = availableModalities.find(m => m.id === tm.modality_id)
+                        return (
+                          <div
+                            key={tm.modality_id}
+                            className="px-3 py-1.5 rounded-lg bg-primary/20 text-neutral-white text-sm flex items-center gap-2"
+                          >
+                            {modality?.icon} {modality?.name}
+                            {tm.is_primary && <span className="text-yellow-400">★</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={() => next('goals_experience')}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => next('diet_lifestyle')}
                   className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
                 >
                   Continue
@@ -676,6 +847,33 @@ export default function OnboardingPage() {
               <Message text="Final step - diet and lifestyle preferences" />
 
               <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
+                {/* Fitness Notes */}
+                <div>
+                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                    Any fitness considerations? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
+                  </label>
+                  <textarea
+                    value={data.fitness_notes}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (value.length <= 1000) {
+                        updateData({ fitness_notes: value })
+                      }
+                    }}
+                    placeholder="Any injuries, preferences, or fitness considerations we should know about?"
+                    rows={4}
+                    className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all resize-none"
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-neutral-500 text-xs sm:text-sm">
+                      Share any relevant context that might help us personalize your experience
+                    </p>
+                    <p className={`text-xs sm:text-sm ${data.fitness_notes.length > 900 ? 'text-yellow-500' : 'text-neutral-500'}`}>
+                      {1000 - data.fitness_notes.length} characters remaining
+                    </p>
+                  </div>
+                </div>
+
                 {/* Dietary Preference */}
                 <div>
                   <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Any dietary restrictions?</label>
@@ -810,7 +1008,7 @@ export default function OnboardingPage() {
 
               <div className="flex gap-3 sm:gap-4">
                 <button
-                  onClick={() => next('goals_experience')}
+                  onClick={() => next('training_modalities')}
                   className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
                 >
                   Back

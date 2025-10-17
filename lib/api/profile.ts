@@ -48,9 +48,11 @@ export interface FullUserProfile {
 
   // Goals & Training
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
   workout_frequency?: number
+  fitness_notes?: string
 
   // Dietary
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
@@ -88,9 +90,11 @@ export interface UpdateProfileData {
   current_weight_kg?: number
   goal_weight_kg?: number
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
   workout_frequency?: number
+  fitness_notes?: string
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
   food_allergies?: string[]
   foods_to_avoid?: string[]
@@ -101,6 +105,26 @@ export interface UpdateProfileData {
   unit_system?: 'metric' | 'imperial'
   timezone?: string
   language?: string
+}
+
+// Training Modalities Types
+export interface TrainingModality {
+  id: string
+  name: string
+  description?: string
+  icon?: string
+  display_order: number
+}
+
+export interface UserTrainingModality {
+  id: string
+  user_id: string
+  modality_id: string
+  proficiency_level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  is_primary: boolean
+  willing_to_continue: boolean
+  created_at: string
+  training_modalities: TrainingModality
 }
 
 // =====================================================
@@ -225,4 +249,15 @@ export async function updateFullUserProfile(data: UpdateProfileData): Promise<Fu
   }
 
   return response.json()
+}
+
+/**
+ * Get current user's training modalities from backend API
+ * Uses GET /api/v1/users/me/training-modalities endpoint with httpOnly cookie authentication
+ *
+ * @returns {Promise<UserTrainingModality[]>} List of user's training modalities with details
+ * @throws {Error} If not authenticated or fetch fails
+ */
+export async function getUserTrainingModalities(): Promise<UserTrainingModality[]> {
+  return apiClient.get<UserTrainingModality[]>('api/v1/users/me/training-modalities')
 }

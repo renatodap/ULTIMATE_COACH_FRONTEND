@@ -137,16 +137,16 @@ export default function EditPhysicalStatsModal({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full max-h-[90vh] overflow-y-auto rounded-xl">
         {/* Header */}
-        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-iron-dark-gray border-b border-iron-gray p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <Scale className="w-5 h-5 text-iron-orange" />
             <h2 className="font-heading text-xl text-iron-white uppercase">Edit Physical Stats</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-iron-gray/20 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-iron-gray/20 transition-colors rounded-lg"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-iron-gray" />
@@ -156,7 +156,7 @@ export default function EditPhysicalStatsModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Info Message */}
-          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30">
+          <div className="p-3 bg-iron-orange/10 border border-iron-orange/30 rounded-lg">
             <p className="text-sm text-iron-white">
               Changes to physical stats will automatically recalculate your macro targets.
             </p>
@@ -174,7 +174,7 @@ export default function EditPhysicalStatsModal({
               onChange={(e) => setAge(e.target.value)}
               min="13"
               max="120"
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
               placeholder="Enter your age"
             />
           </div>
@@ -193,7 +193,7 @@ export default function EditPhysicalStatsModal({
                     onChange={(e) => setHeightFeet(e.target.value)}
                     min={getHeightConstraints('imperial').minFeet}
                     max={getHeightConstraints('imperial').maxFeet}
-                    className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                    className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
                     placeholder="Feet"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-iron-gray">ft</span>
@@ -205,7 +205,7 @@ export default function EditPhysicalStatsModal({
                     onChange={(e) => setHeightInches(e.target.value)}
                     min={getHeightConstraints('imperial').minInches}
                     max={getHeightConstraints('imperial').maxInches}
-                    className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                    className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
                     placeholder="Inches"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-iron-gray">in</span>
@@ -219,7 +219,7 @@ export default function EditPhysicalStatsModal({
                 min="100"
                 max="300"
                 step="1"
-                className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+                className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
                 placeholder="Enter your height"
               />
             )}
@@ -238,7 +238,7 @@ export default function EditPhysicalStatsModal({
               min={getWeightConstraints(unitSystem).min}
               max={getWeightConstraints(unitSystem).max}
               step={getWeightConstraints(unitSystem).step}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
               placeholder="Enter your current weight"
             />
           </div>
@@ -256,7 +256,7 @@ export default function EditPhysicalStatsModal({
               min={getWeightConstraints(unitSystem).min}
               max={getWeightConstraints(unitSystem).max}
               step={getWeightConstraints(unitSystem).step}
-              className="w-full px-4 py-3 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors"
+              className="w-full px-4 py-4 bg-iron-black border border-iron-gray text-iron-white focus:outline-none focus:border-iron-orange transition-colors rounded-lg"
               placeholder="Enter your goal weight"
             />
           </div>
@@ -266,7 +266,7 @@ export default function EditPhysicalStatsModal({
             <label className="block text-sm font-medium text-iron-gray mb-2">
               Biological Sex (cannot be changed)
             </label>
-            <div className="px-4 py-3 bg-iron-gray/10 border border-iron-gray/30 text-iron-gray">
+            <div className="px-4 py-4 bg-iron-gray/10 border border-iron-gray/30 text-iron-gray rounded-lg">
               {profile.biological_sex ? profile.biological_sex.charAt(0).toUpperCase() + profile.biological_sex.slice(1) : 'Not set'}
             </div>
           </div>
@@ -277,14 +277,14 @@ export default function EditPhysicalStatsModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-h-[48px] px-6 py-4 border border-iron-gray text-iron-white font-heading uppercase tracking-wider hover:bg-iron-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 min-h-[48px] px-6 py-4 bg-iron-orange text-iron-black font-heading uppercase tracking-wider hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-lg"
             >
               {isSubmitting ? (
                 <>

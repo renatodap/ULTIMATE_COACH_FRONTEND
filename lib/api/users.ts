@@ -28,9 +28,11 @@ export interface FullUserProfile {
 
   // Goals & Training
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
   workout_frequency?: number
+  fitness_notes?: string
 
   // Dietary
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
@@ -68,9 +70,11 @@ export interface UpdateProfileData {
   current_weight_kg?: number
   goal_weight_kg?: number
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
+  secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
   workout_frequency?: number
+  fitness_notes?: string
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
   food_allergies?: string[]
   foods_to_avoid?: string[]
