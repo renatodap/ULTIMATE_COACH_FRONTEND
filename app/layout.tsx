@@ -9,10 +9,10 @@ export const metadata: Metadata = {
   title: 'SHARPENED - AI Fitness & Nutrition',
   description: 'Become a sharpened version of yourself with AI-powered fitness and nutrition coaching',
   manifest: '/manifest.json',
-  themeColor: '#FF6B35',
+  themeColor: '#0A0A0B', // Iron black - matches app background
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'black', // Opaque black status bar (no translucency)
     title: 'SHARPENED',
   },
   viewport: {
@@ -53,6 +53,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Force black status bar on iOS PWA - prevents white bezel on notch area */}
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="theme-color" content="#0A0A0B" />
+      </head>
       <body className="font-sans" suppressHydrationWarning>
         <ErrorBoundary>
           <TimezoneProvider profileTimezone={profileTimezone}>
