@@ -9,6 +9,14 @@ import { supabase } from '@/lib/supabase'
 
 // ========== Types ==========
 
+export interface TimeAwareProgress {
+  actual_progress: number
+  expected_progress: number
+  deviation: number
+  interpretation: string
+  message_suggestion: string
+}
+
 export interface SendMessageRequest {
   message: string
   conversation_id?: string
@@ -22,11 +30,15 @@ export interface SendMessageResponse {
   message: string
   is_log_preview: boolean
   log_preview?: LogPreview
+  waiting_for_clarification?: boolean
+  nutrition_confidence?: number
+  classification_confidence?: number
   tokens_used?: number
   cost_usd?: number
   model?: string
   tools_used?: string[]
   error?: string
+  time_aware_progress?: TimeAwareProgress
 }
 
 export interface LogPreview {
@@ -34,6 +46,19 @@ export interface LogPreview {
   type: 'nutrition' | 'workout' | 'measurement'
   data: NutritionLogData | WorkoutLogData | MeasurementLogData
   confidence?: number
+}
+
+export interface MealItem {
+  food_id: string
+  food_name: string
+  quantity: number
+  unit: string
+  display_label?: string
+  grams: number
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
 }
 
 export interface FoodItem {
@@ -44,9 +69,11 @@ export interface FoodItem {
 
 export interface NutritionLogData {
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
-  foods: FoodItem[]
+  foods?: FoodItem[]
+  meal_items?: MealItem[]
   notes?: string
   logged_at?: string
+  quick_entry_id?: string
 }
 
 export interface WorkoutLogData {

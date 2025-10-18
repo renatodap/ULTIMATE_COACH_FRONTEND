@@ -22,7 +22,7 @@ import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 // Import coach components
 import { MessageBubble } from '@/components/Coach/Message/MessageBubble'
 import { LoadingIndicator } from '@/components/Coach/Loading/LoadingIndicator'
-import { LogPreviewCard } from '@/components/Coach/LogPreview/LogPreviewCard'
+import { ConfirmationModal } from '@/components/Coach/ConfirmationModal/ConfirmationModal'
 import { ChatInput } from '@/components/Coach/Input/ChatInput'
 import { EmptyState } from '@/components/Coach/EmptyState/EmptyState'
 
@@ -193,7 +193,11 @@ export default function CoachPage() {
           model: data.model,
           tokens: data.tokens_used,
           cost: data.cost_usd,
-          toolsUsed: data.tools_used
+          toolsUsed: data.tools_used,
+          // Include clarification metadata (when nutrition_confidence < 60%)
+          waiting_for_clarification: data.waiting_for_clarification,
+          nutrition_confidence: data.nutrition_confidence,
+          classification_confidence: data.classification_confidence
         }
       }
 
@@ -229,44 +233,29 @@ export default function CoachPage() {
   }, [inputValue, loading.isLoading, conversationId])
 
   // Handle log preview confirmation
-  const handleLogConfirm = useCallback(async (foodsWithNutrition: any[]) => {
+  const handleLogConfirm = useCallback(async () => {
     if (!logPreview) return
 
-    setLogPreview(null)
     hapticFeedback('medium')
+
+    // Get the quick_entry_id from the log preview
+    const quickEntryId = (logPreview.data as any).quick_entry_id
+
+    if (!quickEntryId) {
+      console.error('No quick_entry_id in log preview')
+      toast.error('Missing log ID. Please try again.')
+      setLogPreview(null)
+      return
+    }
+
+    // Close modal immediately for better UX
+    setLogPreview(null)
 
     const toastId = toast.loading('Saving log...')
 
     try {
-      // Transform enriched foods → items array for backend
-      const items = foodsWithNutrition.map((food, index) => ({
-        food_id: food.food_id || null,  // null if food not found in database
-        quantity: food.quantity_g,
-        serving_id: null,  // Always null for coach-detected logs (uses grams)
-        grams: food.quantity_g,
-        calories: Math.round(food.calories),
-        protein_g: Math.round(food.protein_g * 10) / 10,
-        carbs_g: Math.round(food.carbs_g * 10) / 10,
-        fat_g: Math.round(food.fat_g * 10) / 10,
-        display_unit: 'g',
-        display_label: null,
-        display_order: index
-      }))
-
-      // Get quick_entry_id from log_preview
-      const quick_entry_id = (logPreview as any).quick_entry_id
-
-      if (!quick_entry_id) {
-        throw new Error('Missing quick_entry_id in log preview')
-      }
-
-      // Send to backend with items in edits
-      await confirmLog({
-        quick_entry_id: quick_entry_id,
-        edits: {
-          items: items  // Override the items array in structured_data
-        }
-      })
+      // Call backend to confirm log (backend handles all the transformation)
+      const response = await confirmLog({ quick_entry_id: quickEntryId })
 
       toast.success('Log saved successfully!', { id: toastId })
 
@@ -274,12 +263,13 @@ export default function CoachPage() {
       const successMessage: Message = {
         id: `success_${Date.now()}`,
         role: 'assistant',
-        content: 'Successfully logged!',
+        content: response.message || 'Log saved successfully! 🎉',
         timestamp: new Date(),
         type: 'text'
       }
 
       setMessages(prev => [...prev, successMessage])
+
     } catch (err: any) {
       console.error('Failed to confirm log:', err)
       toast.error('Failed to save log', { id: toastId })
@@ -456,34 +446,13 @@ export default function CoachPage() {
           </>
         )}
 
-        {/* Log preview overlay */}
-        <AnimatePresence>
-          {logPreview && (
-            <motion.div
-              key="log-preview-overlay"
-              className="fixed inset-0 z-[250] bg-iron-black/80 backdrop-blur-sm flex items-end justify-center p-4"
-              variants={overlayVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.2 }}
-            >
-              <motion.div
-                variants={modalVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <LogPreviewCard
-                  preview={logPreview}
-                  onConfirm={handleLogConfirm}
-                  onCancel={handleLogCancel}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Confirmation Modal - Integrated with framer-motion */}
+        <ConfirmationModal
+          preview={logPreview!}
+          onConfirm={handleLogConfirm}
+          onCancel={handleLogCancel}
+          isOpen={!!logPreview}
+        />
       </div>
 
       {/* Scroll to bottom button */}

@@ -20,10 +20,11 @@ import {
 import { getSmartLoadingMessage, scrollToBottom, isScrolledToBottom, hapticFeedback } from '../shared/utils';
 import { MessageBubble } from '../Message/MessageBubble';
 import { LoadingIndicator } from '../Loading/LoadingIndicator';
-import { LogPreviewCard } from '../LogPreview/LogPreviewCard';
+import { ConfirmationModal } from '../ConfirmationModal/ConfirmationModal';
 import { QuickActions } from '../QuickActions/QuickActions';
 import { ChatInput } from '../Input/ChatInput';
 import { EmptyState } from '../EmptyState/EmptyState';
+import { confirmLog } from '@/lib/api/coach';
 import './CoachChat.css';
 
 export const CoachChat: React.FC<CoachChatProps> = ({
@@ -147,7 +148,7 @@ export const CoachChat: React.FC<CoachChatProps> = ({
         }
       }
 
-      // Handle log preview
+      // Handle log preview (high confidence - show confirmation modal)
       if (data.is_log_preview && data.log_preview) {
         setLogPreview(data.log_preview);
         setLoading({ isLoading: false, message: '' });
@@ -160,12 +161,16 @@ export const CoachChat: React.FC<CoachChatProps> = ({
         role: 'assistant',
         content: data.message,
         timestamp: new Date(),
-        type: 'text',
+        type: data.waiting_for_clarification ? 'text' : 'text',
         metadata: {
           model: data.model,
           tokens: data.tokens_used,
           cost: data.cost_usd,
-          toolsUsed: data.tools_used
+          toolsUsed: data.tools_used,
+          // Include clarification metadata
+          waiting_for_clarification: data.waiting_for_clarification,
+          nutrition_confidence: data.nutrition_confidence,
+          classification_confidence: data.classification_confidence
         }
       };
 
@@ -201,25 +206,70 @@ export const CoachChat: React.FC<CoachChatProps> = ({
   }, [inputValue, loading.isLoading, conversationId, onConversationChange]);
 
   // Handle log preview confirmation
-  const handleLogConfirm = useCallback(async (logData: any) => {
-    setLogPreview(null);
+  const handleLogConfirm = useCallback(async () => {
+    if (!logPreview) return;
+
     hapticFeedback('medium');
 
-    // Add confirmation message
-    const confirmMessage: Message = {
+    // Get the quick_entry_id from the log preview
+    const quickEntryId = (logPreview.data as any).quick_entry_id;
+
+    if (!quickEntryId) {
+      console.error('No quick_entry_id in log preview');
+      setLogPreview(null);
+      return;
+    }
+
+    // Close modal immediately for better UX
+    setLogPreview(null);
+
+    // Add processing message
+    const processingMessage: Message = {
       id: `confirm_${Date.now()}`,
       role: 'assistant',
-      content: 'Logged. Processing...',
+      content: 'Logging your entry...',
       timestamp: new Date(),
       type: 'text'
     };
 
-    setMessages(prev => [...prev, confirmMessage]);
+    setMessages(prev => [...prev, processingMessage]);
 
-    // TODO: Send confirmation to backend
-    // This would save the log and get the coach's response
+    try {
+      // Call backend to confirm log
+      const response = await confirmLog({ quick_entry_id: quickEntryId });
 
-  }, []);
+      // Replace processing message with success message
+      const successMessage: Message = {
+        id: `success_${Date.now()}`,
+        role: 'assistant',
+        content: response.message || 'Log saved successfully! 🎉',
+        timestamp: new Date(),
+        type: 'text'
+      };
+
+      setMessages(prev => [
+        ...prev.slice(0, -1), // Remove processing message
+        successMessage
+      ]);
+
+    } catch (error: any) {
+      console.error('Failed to confirm log:', error);
+
+      // Replace processing message with error message
+      const errorMessage: Message = {
+        id: `error_${Date.now()}`,
+        role: 'assistant',
+        content: 'Failed to save log. Please try again.',
+        timestamp: new Date(),
+        type: 'error'
+      };
+
+      setMessages(prev => [
+        ...prev.slice(0, -1), // Remove processing message
+        errorMessage
+      ]);
+    }
+  }, [logPreview]);
 
   // Handle log preview cancellation
   const handleLogCancel = useCallback(() => {
@@ -299,16 +349,13 @@ export const CoachChat: React.FC<CoachChatProps> = ({
           </>
         )}
 
-        {/* Log preview overlay */}
-        {logPreview && (
-          <div className="coach-chat__log-preview-overlay">
-            <LogPreviewCard
-              preview={logPreview}
-              onConfirm={handleLogConfirm}
-              onCancel={handleLogCancel}
-            />
-          </div>
-        )}
+        {/* Confirmation Modal (replaces old LogPreviewCard) */}
+        <ConfirmationModal
+          preview={logPreview!}
+          onConfirm={handleLogConfirm}
+          onCancel={handleLogCancel}
+          isOpen={!!logPreview}
+        />
       </div>
 
       {/* Quick actions (shown when not loading) */}

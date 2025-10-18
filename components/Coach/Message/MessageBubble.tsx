@@ -10,6 +10,7 @@ import { MessageBubbleProps } from '../CoachChat/CoachChat.types';
 import { formatTimestamp, extractNutritionFromMessage, copyToClipboard, hapticFeedback } from '../shared/utils';
 import { NutritionCard } from './NutritionCard';
 import { WorkoutCard } from './WorkoutCard';
+import { ClarificationMessage } from './ClarificationMessage';
 import './Message.css';
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -23,6 +24,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   const isUser = message.role === 'user';
   const isError = message.type === 'error';
+
+  // Check if this is a clarification message (coach asking for more details)
+  const isClarification = message.metadata?.waiting_for_clarification === true;
+  const nutritionConfidence = message.metadata?.nutrition_confidence;
 
   // Handle copy to clipboard
   const handleCopy = async () => {
@@ -49,6 +54,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     (message.metadata?.nutrition && nutritionData.hasNutrition);
 
   const hasWorkoutCard = message.type === 'workout_card' || message.metadata?.workout;
+
+  // Render clarification message with special styling
+  if (isClarification && !isUser) {
+    return (
+      <ClarificationMessage
+        message={message.content}
+        nutrition_confidence={nutritionConfidence}
+      />
+    );
+  }
 
   return (
     <div

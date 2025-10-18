@@ -60,6 +60,11 @@ export interface MessageMetadata {
     trend?: 'up' | 'down' | 'stable';
   };
 
+  // Clarification metadata (when nutrition_confidence < 60%)
+  waiting_for_clarification?: boolean;
+  nutrition_confidence?: number;
+  classification_confidence?: number;
+
   // API response metadata
   model?: string;
   tokens?: number;
