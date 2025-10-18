@@ -54,6 +54,12 @@ export function LogPreviewCard({ preview, onConfirm, onCancel }: LogPreviewCardP
       try {
         const enrichedFoods: FoodWithNutrition[] = []
 
+        // Skip if no foods array (new backend returns meal_items instead)
+        if (!data.foods || data.foods.length === 0) {
+          setLoading(false)
+          return
+        }
+
         for (const foodItem of data.foods) {
           try {
             // Search for the food in database
