@@ -125,6 +125,38 @@ export interface ConfirmLogRequest {
   edits?: Record<string, any>
 }
 
+// ========== Helper Functions ==========
+
+/**
+ * Transform backend log_preview format to frontend LogPreview format
+ *
+ * Backend returns: { log_type: "meal", structured_data: {...} }
+ * Frontend expects: { type: "nutrition", data: {...} }
+ */
+function transformLogPreview(backendPreview: any): LogPreview | null {
+  if (!backendPreview) return null;
+
+  // Map backend log_type to frontend type
+  const typeMap: Record<string, 'nutrition' | 'workout' | 'measurement'> = {
+    'meal': 'nutrition',
+    'activity': 'workout',
+    'measurement': 'measurement'
+  };
+
+  const frontendType = typeMap[backendPreview.log_type];
+  if (!frontendType) {
+    console.warn(`Unknown log_type: ${backendPreview.log_type}`);
+    return null;
+  }
+
+  return {
+    type: frontendType,
+    data: backendPreview.structured_data,
+    confidence: backendPreview.confidence,
+    id: backendPreview.quick_entry_id
+  };
+}
+
 // ========== API Functions ==========
 
 /**
@@ -137,7 +169,15 @@ export async function sendCoachMessage(request: SendMessageRequest): Promise<Sen
     'Content-Type': 'application/json'
   };
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
-  return apiClient.post<SendMessageResponse>('/api/v1/coach/message', request, { headers });
+
+  const response = await apiClient.post<SendMessageResponse>('/api/v1/coach/message', request, { headers });
+
+  // Transform log_preview if present
+  if (response.log_preview) {
+    response.log_preview = transformLogPreview(response.log_preview);
+  }
+
+  return response;
 }
 
 /**
