@@ -130,8 +130,8 @@ export interface ConfirmLogRequest {
 /**
  * Transform backend log_preview format to frontend LogPreview format
  *
- * Backend returns: { log_type: "meal", structured_data: {...} }
- * Frontend expects: { type: "nutrition", data: {...} }
+ * Backend returns: { log_type: "meal", structured_data: { foods: [...] } }
+ * Frontend expects: { type: "nutrition", data: { meal_items: [...] } }
  */
 function transformLogPreview(backendPreview: any): LogPreview | null {
   if (!backendPreview) return null;
@@ -149,9 +149,35 @@ function transformLogPreview(backendPreview: any): LogPreview | null {
     return null;
   }
 
+  // Transform data structure for nutrition logs
+  let transformedData = backendPreview.structured_data;
+
+  if (frontendType === 'nutrition' && backendPreview.structured_data?.foods) {
+    // Backend sends "foods", frontend expects "meal_items"
+    // Transform foods array to meal_items format
+    const meal_items = backendPreview.structured_data.foods.map((food: any) => ({
+      food_id: food.food_id || '',
+      food_name: food.name,
+      quantity: food.quantity || food.estimated_grams || 0,
+      unit: food.unit || 'g',
+      display_label: food.unit !== 'grams' ? food.unit : undefined,
+      grams: food.estimated_grams || food.quantity || 0,
+      calories: food.calories || 0,
+      protein_g: food.protein_g || 0,
+      carbs_g: food.carbs_g || 0,
+      fat_g: food.fat_g || 0
+    }));
+
+    transformedData = {
+      ...backendPreview.structured_data,
+      meal_items,
+      quick_entry_id: backendPreview.quick_entry_id
+    };
+  }
+
   return {
     type: frontendType,
-    data: backendPreview.structured_data,
+    data: transformedData,
     confidence: backendPreview.confidence,
     id: backendPreview.quick_entry_id
   };
