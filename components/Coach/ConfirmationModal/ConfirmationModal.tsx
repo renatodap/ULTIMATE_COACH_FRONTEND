@@ -170,7 +170,7 @@ export function ConfirmationModal({
                           </p>
                         </div>
                         <div className="confirmation-modal__item-calories">
-                          {item.calories} cal
+                          {item.calories > 0 ? `${item.calories} cal` : 'Calculating...'}
                         </div>
                       </div>
                     ))}
