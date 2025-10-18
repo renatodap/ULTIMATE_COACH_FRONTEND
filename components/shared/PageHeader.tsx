@@ -35,8 +35,8 @@ export function PageHeader({
   const router = useRouter()
 
   return (
-    <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30 backdrop-blur-sm">
-      <div className="flex items-center justify-between h-16 px-4">
+    <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
+      <div className="flex items-center justify-between h-14 px-4">
         {/* Left: Back button or spacer */}
         <div className="w-12">
           {showBack && (

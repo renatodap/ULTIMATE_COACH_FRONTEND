@@ -155,7 +155,7 @@ export default function ActivitiesPage() {
   const hasActivities = activitiesByDate.size > 0
 
   return (
-    <div className="min-h-screen bg-iron-black pb-40">
+    <div className="min-h-screen bg-iron-black pb-36">
       {/* Header - NEW CONSISTENT DESIGN */}
       <PageHeader
         title={t('activities.pageTitle')}
@@ -166,7 +166,7 @@ export default function ActivitiesPage() {
 
       {/* Sync notification */}
       {syncInProgress && (
-        <div className="sticky top-16 z-[6] bg-iron-black px-4 py-3 border-b border-iron-gray">
+        <div className="sticky top-14 z-[150] bg-iron-black px-4 py-3 border-b border-iron-gray">
           <div className="max-w-4xl mx-auto">
             <div className="w-full bg-iron-orange/10 border border-iron-orange/40 text-iron-white text-sm px-3 py-2">
               Sync in progress… Your wearable activities will appear shortly.
@@ -226,7 +226,7 @@ export default function ActivitiesPage() {
               .map(([date, activities]) => (
                 <motion.div key={date} variants={cardVariants}>
                   {/* Date Separator */}
-                  <div className="sticky top-28 z-[5] bg-iron-black py-2 px-1 border-b border-iron-gray mb-4">
+                  <div className="sticky top-20 z-[95] bg-iron-black py-1 px-1 border-b border-iron-gray mb-4">
                     <h3 className="text-sm font-medium text-iron-white">
                       {formatDateHeader(date)}
                     </h3>

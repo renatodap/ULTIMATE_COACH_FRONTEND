@@ -4,10 +4,13 @@
  * Sticky Mini Summary Bar
  *
  * Compact summary that stays visible at top of page during scroll.
- * Prevents users from needing to scroll back up to check their daily totals.
+ * Auto-hides on scroll down to reclaim screen space (40px).
+ * Shows on scroll up for quick access to daily totals.
  *
  * Used on: Activities, Nutrition pages
  */
+
+import { useScrollDirection } from '@/hooks/useScrollDirection'
 
 interface StickyMiniSummaryProps {
   type: 'activity' | 'nutrition'
@@ -20,6 +23,8 @@ interface StickyMiniSummaryProps {
   protein?: number
   carbs?: number
   fat?: number
+  // Control auto-hide behavior
+  hideOnScroll?: boolean
 }
 
 export function StickyMiniSummary({
@@ -31,11 +36,20 @@ export function StickyMiniSummary({
   protein = 0,
   carbs = 0,
   fat = 0,
+  hideOnScroll = true,
 }: StickyMiniSummaryProps) {
+  const scrollDirection = useScrollDirection()
+
+  // Auto-hide on scroll down, show on scroll up
+  const shouldHide = hideOnScroll && scrollDirection === 'down'
 
   if (type === 'activity') {
     return (
-      <div className="sticky top-16 z-[90] bg-iron-black/95 backdrop-blur border-b border-iron-gray/30">
+      <div className={`
+        sticky top-14 z-[90] bg-iron-black border-b border-iron-gray/30
+        transition-transform duration-300 ease-in-out
+        ${shouldHide ? '-translate-y-full' : 'translate-y-0'}
+      `}>
         <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="text-sm">
             <span className="text-iron-orange font-bold">{totalCalories}</span>
@@ -51,7 +65,11 @@ export function StickyMiniSummary({
 
   // Nutrition type
   return (
-    <div className="sticky top-[120px] z-[90] bg-iron-black/95 backdrop-blur border-b border-iron-gray/30">
+    <div className={`
+      sticky top-[110px] z-[90] bg-iron-black border-b border-iron-gray/30
+      transition-transform duration-300 ease-in-out
+      ${shouldHide ? '-translate-y-full' : 'translate-y-0'}
+    `}>
       <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
         <div className="text-sm">
           <span className="text-iron-orange font-bold">{totalCalories}</span>

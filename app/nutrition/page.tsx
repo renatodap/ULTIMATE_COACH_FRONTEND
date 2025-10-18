@@ -213,7 +213,7 @@ function NutritionPageContent() {
   const hasNoMeals = nutritionData.meals.length === 0
 
   return (
-    <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-40'}`}>
+    <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-36'}`}>
       {/* Header - NEW CONSISTENT DESIGN */}
       <PageHeader
         title={t('nutrition.pageTitle')}
@@ -223,7 +223,7 @@ function NutritionPageContent() {
       />
 
       {/* Sticky Controls (mobile-first) */}
-      <div className="sticky top-16 z-[90] bg-iron-black/95 backdrop-blur border-b border-iron-gray/30">
+      <div className="sticky top-14 z-[90] bg-iron-black border-b border-iron-gray/30">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex flex-col gap-3">
             <SegmentedControl

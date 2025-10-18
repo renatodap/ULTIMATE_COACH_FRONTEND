@@ -123,17 +123,15 @@
     border-color: var(--iron-orange);
   }
 
-  /* Card with subtle glassmorphism */
+  /* Card - fully opaque for clarity (no transparency confusion) */
   .card {
-    background-color: rgba(26, 26, 27, 0.4);
-    border: 1px solid rgba(74, 74, 74, 0.2);
-    backdrop-filter: blur(8px);
+    background-color: rgba(26, 26, 27, 1.0);
+    border: 1px solid rgba(74, 74, 74, 0.3);
   }
 
   .card-glass {
-    background-color: rgba(10, 10, 11, 0.6);
+    background-color: rgba(26, 26, 27, 1.0);
     border: 1px solid rgba(74, 74, 74, 0.3);
-    backdrop-filter: blur(12px);
   }
 }
 
