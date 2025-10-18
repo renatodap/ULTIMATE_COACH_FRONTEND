@@ -77,7 +77,7 @@ export default function ConnectedAppsPage() {
 
   return (
     <div className="min-h-screen bg-iron-black pb-20">
-      <PageHeader title="Connected Apps" />
+      <PageHeader title="Connected Apps" showBack />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Garmin Card */}
