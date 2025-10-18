@@ -351,7 +351,7 @@ export const CoachChat: React.FC<CoachChatProps> = ({
 
         {/* Confirmation Modal (replaces old LogPreviewCard) */}
         <ConfirmationModal
-          preview={logPreview!}
+          preview={logPreview}
           onConfirm={handleLogConfirm}
           onCancel={handleLogCancel}
           isOpen={!!logPreview}

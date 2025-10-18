@@ -448,7 +448,7 @@ export default function CoachPage() {
 
         {/* Confirmation Modal - Integrated with framer-motion */}
         <ConfirmationModal
-          preview={logPreview!}
+          preview={logPreview}
           onConfirm={handleLogConfirm}
           onCancel={handleLogCancel}
           isOpen={!!logPreview}

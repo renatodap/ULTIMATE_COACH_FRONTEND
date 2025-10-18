@@ -16,7 +16,7 @@ import { X, Check } from 'lucide-react'
 import './ConfirmationModal.css'
 
 export interface ConfirmationModalProps {
-  preview: LogPreview
+  preview: LogPreview | null
   onConfirm: () => void
   onCancel: () => void
   isOpen: boolean
@@ -43,6 +43,11 @@ export function ConfirmationModal({
   onCancel,
   isOpen
 }: ConfirmationModalProps) {
+  // Early return if modal is closed or preview is null
+  if (!isOpen || !preview) {
+    return null
+  }
+
   // Only handle nutrition and workout types
   if (preview.type !== 'nutrition' && preview.type !== 'workout') {
     return null
