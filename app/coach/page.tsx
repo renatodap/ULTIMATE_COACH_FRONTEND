@@ -241,11 +241,17 @@ export default function CoachPage() {
 
     hapticFeedback('medium')
 
-    // Get the quick_entry_id from the log preview
-    const quickEntryId = (logPreview.data as any).quick_entry_id
+    console.log('[Confirm] Full logPreview:', logPreview)
+    console.log('[Confirm] logPreview.id:', logPreview.id)
+    console.log('[Confirm] logPreview.data:', logPreview.data)
+
+    // Get the quick_entry_id from the log preview (try multiple locations)
+    const quickEntryId = logPreview.id || (logPreview.data as any).quick_entry_id
+
+    console.log('[Confirm] quickEntryId:', quickEntryId)
 
     if (!quickEntryId) {
-      console.error('No quick_entry_id in log preview')
+      console.error('No quick_entry_id in log preview:', logPreview)
       toast.error('Missing log ID. Please try again.')
       setLogPreview(null)
       return
