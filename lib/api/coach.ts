@@ -172,9 +172,16 @@ export async function sendCoachMessage(request: SendMessageRequest): Promise<Sen
 
   const response = await apiClient.post<SendMessageResponse>('/api/v1/coach/message', request, { headers });
 
+  // Debug: Log raw backend response
+  if (response.is_log_preview) {
+    console.log('[Coach API] Raw backend log_preview:', response.log_preview);
+  }
+
   // Transform log_preview if present
   if (response.log_preview) {
-    response.log_preview = transformLogPreview(response.log_preview);
+    const transformed = transformLogPreview(response.log_preview);
+    console.log('[Coach API] Transformed log_preview:', transformed);
+    response.log_preview = transformed;
   }
 
   return response;

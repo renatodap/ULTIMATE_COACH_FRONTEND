@@ -177,6 +177,9 @@ export default function CoachPage() {
 
       // Handle log preview
       if (data.is_log_preview && data.log_preview) {
+        console.log('[Coach Page] Setting log preview:', data.log_preview)
+        console.log('[Coach Page] Preview type:', data.log_preview.type)
+        console.log('[Coach Page] Preview data:', data.log_preview.data)
         setLogPreview(data.log_preview)
         setLoading({ isLoading: false, message: '' })
         return

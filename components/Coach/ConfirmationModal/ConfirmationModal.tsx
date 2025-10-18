@@ -43,18 +43,24 @@ export function ConfirmationModal({
   onCancel,
   isOpen
 }: ConfirmationModalProps) {
+  console.log('[ConfirmationModal] Render:', { isOpen, preview })
+
   // Early return if modal is closed or preview is null
   if (!isOpen || !preview) {
+    console.log('[ConfirmationModal] Early return - not open or no preview')
     return null
   }
 
   // Only handle nutrition and workout types
   if (preview.type !== 'nutrition' && preview.type !== 'workout') {
+    console.log('[ConfirmationModal] Early return - unsupported type:', preview.type)
     return null
   }
 
   const isNutrition = preview.type === 'nutrition'
   const data = preview.data as any
+
+  console.log('[ConfirmationModal] Rendering modal:', { isNutrition, data })
 
   // Calculate totals for nutrition
   let totalCalories = 0
