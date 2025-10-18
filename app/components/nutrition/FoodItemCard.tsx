@@ -10,13 +10,14 @@
  * - Read-only display mode (edit mode will be added in Phase 2)
  * - Shows quantity with unit (e.g., "1 cup")
  * - Shows calculated weight in grams
- * - Color-coded macros
+ * - Color-coded macros (using design tokens)
  * - Tap to edit (future)
  * - Mobile-friendly layout
  */
 
 import { Edit2 } from 'lucide-react'
 import type { FoodItem } from '@/lib/types/nutrition'
+import { colors } from '@/lib/design-system/tokens'
 
 interface FoodItemCardProps {
   item: FoodItem
@@ -79,13 +80,13 @@ export default function FoodItemCard({ item, onEdit }: FoodItemCardProps) {
           <span className="text-iron-orange font-semibold">
             {Math.round(calories)} cal
           </span>
-          <span className="text-green-500">
+          <span style={{ color: colors.macro.protein }}>
             P: {Math.round(protein)}g
           </span>
-          <span className="text-blue-500">
+          <span style={{ color: colors.macro.carbs }}>
             C: {Math.round(carbs)}g
           </span>
-          <span className="text-orange-500">
+          <span style={{ color: colors.macro.fat }}>
             F: {Math.round(fat)}g
           </span>
         </div>

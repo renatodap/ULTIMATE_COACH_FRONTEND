@@ -69,6 +69,13 @@ export const colors = {
     dark: '#0062CC',
   },
 
+  // Macro Colors (Nutrition tracking - industry standard colors)
+  macro: {
+    protein: '#10B981', // Green - standard for protein in fitness apps
+    carbs: '#3B82F6',   // Blue - standard for carbohydrates
+    fat: '#F97316',     // Orange - standard for fats
+  },
+
   // Glass Effects
   glass: {
     light: 'rgba(255, 255, 255, 0.05)',

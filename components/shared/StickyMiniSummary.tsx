@@ -25,6 +25,8 @@ interface StickyMiniSummaryProps {
   fat?: number
   // Control auto-hide behavior
   hideOnScroll?: boolean
+  // Additional className for transitions
+  className?: string
 }
 
 export function StickyMiniSummary({
@@ -37,6 +39,7 @@ export function StickyMiniSummary({
   carbs = 0,
   fat = 0,
   hideOnScroll = true,
+  className = '',
 }: StickyMiniSummaryProps) {
   const scrollDirection = useScrollDirection()
 
@@ -49,6 +52,7 @@ export function StickyMiniSummary({
         sticky top-14 z-[90] bg-iron-black border-b border-iron-gray/30
         transition-transform duration-300 ease-in-out
         ${shouldHide ? '-translate-y-full' : 'translate-y-0'}
+        ${className}
       `}>
         <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="text-sm">
@@ -69,6 +73,7 @@ export function StickyMiniSummary({
       sticky top-[110px] z-[90] bg-iron-black border-b border-iron-gray/30
       transition-transform duration-300 ease-in-out
       ${shouldHide ? '-translate-y-full' : 'translate-y-0'}
+      ${className}
     `}>
       <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
         <div className="text-sm">

@@ -14,14 +14,13 @@
  * - Real-time data from API
  */
 
-import { Suspense } from 'react'
+import { Suspense, useRef, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import DailySummaryCard from '@/components/shared/DailySummaryCard'
 import MealTypeCard from '../components/nutrition/MealTypeCard'
 import DateRangeControls from '@/app/components/ui/DateRangeControls'
-import SegmentedControl from '@/app/components/ui/SegmentedControl'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -88,6 +87,10 @@ function NutritionPageContent() {
   const searchParams = useSearchParams()
   const { timezone } = useTimezone()
 
+  // Intersection Observer for smart summary display
+  const [bigCardVisible, setBigCardVisible] = useState(true)
+  const bigCardRef = useRef<HTMLDivElement>(null)
+
   // Check authentication and onboarding status
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
 
@@ -148,6 +151,29 @@ function NutritionPageContent() {
     // TODO: Phase 2 - Implement food item editing
     // Placeholder for food item editing functionality
   }
+
+  // Set up Intersection Observer for smart summary transition
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setBigCardVisible(entry.isIntersecting)
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of card is visible
+        rootMargin: '-56px 0px 0px 0px' // Account for header height
+      }
+    )
+
+    if (bigCardRef.current) {
+      observer.observe(bigCardRef.current)
+    }
+
+    return () => {
+      if (bigCardRef.current) {
+        observer.unobserve(bigCardRef.current)
+      }
+    }
+  }, [])
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -214,29 +240,25 @@ function NutritionPageContent() {
 
   return (
     <div className={`bg-iron-black ${hasNoMeals ? 'h-screen flex flex-col' : 'min-h-screen pb-36'}`}>
-      {/* Header - NEW CONSISTENT DESIGN */}
+      {/* Header with integrated date controls */}
       <PageHeader
         title={t('nutrition.pageTitle')}
         showRefresh={true}
         onRefresh={handleRefresh}
         refreshing={refreshing}
-      />
-
-      {/* Sticky Controls (mobile-first) */}
-      <div className="sticky top-14 z-[90] bg-iron-black border-b border-iron-gray/30">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex flex-col gap-3">
-            <SegmentedControl
-              options={[{ key: 'day', label: 'Day' }]}
-              value={'day'}
-              onChange={() => {}}
-            />
+        rightAction={
+          <div className="hidden sm:block">
             <DateRangeControls mode="day" date={selectedDate} onChange={handleDateChange} />
           </div>
-        </div>
+        }
+      />
+
+      {/* Mobile date controls - below header, not sticky */}
+      <div className="sm:hidden bg-iron-black border-b border-iron-gray/30 px-4 py-3">
+        <DateRangeControls mode="day" date={selectedDate} onChange={handleDateChange} />
       </div>
 
-      {/* Sticky Mini Summary - Always visible during scroll */}
+      {/* Sticky Mini Summary - Only visible when big card scrolls away */}
       {nutritionData && (
         <StickyMiniSummary
           type="nutrition"
@@ -245,14 +267,16 @@ function NutritionPageContent() {
           protein={nutritionData.totalProtein}
           carbs={nutritionData.totalCarbs}
           fat={nutritionData.totalFat}
+          className={`transition-opacity duration-300 ${bigCardVisible ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         />
       )}
 
       {/* Main Content */}
       <main className={`max-w-4xl mx-auto px-4 ${hasNoMeals ? 'flex-1 flex flex-col' : 'py-6'}`}>
-        {/* Daily Summary */}
+        {/* Daily Summary - with ref for Intersection Observer */}
         <motion.div
-          className={hasNoMeals ? 'mb-4' : ''}
+          ref={bigCardRef}
+          className={hasNoMeals ? 'mb-4' : 'mb-6'}
           variants={summaryVariants}
           initial="hidden"
           animate="visible"
@@ -263,7 +287,7 @@ function NutritionPageContent() {
         {/* Meals Section */}
         <div className={hasNoMeals ? 'flex-1 flex flex-col justify-center' : ''}>
           {!hasNoMeals && (
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-medium text-iron-white uppercase tracking-wider">
                 🍽️ {t('nutrition.todaysMeals')}
               </h2>
@@ -275,7 +299,7 @@ function NutritionPageContent() {
 
           {nutritionData.meals.length > 0 ? (
             <motion.div
-              className="space-y-4"
+              className="space-y-6"
               variants={mealListVariants}
               initial="hidden"
               animate="visible"
