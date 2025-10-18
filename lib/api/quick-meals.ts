@@ -84,3 +84,13 @@ export async function logQuickMeal(quickMealId: string): Promise<{ message: stri
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
   return apiClient.post(`api/v1/quick-meals/${quickMealId}/log`, {}, { headers });
 }
+
+/**
+ * Toggle favorite status of a quick meal
+ */
+export async function toggleQuickMealFavorite(
+  quickMealId: string,
+  isFavorite: boolean
+): Promise<QuickMeal> {
+  return updateQuickMeal(quickMealId, { is_favorite: isFavorite })
+}

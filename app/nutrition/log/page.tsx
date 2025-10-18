@@ -27,7 +27,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock } from 'lucide-react'
+import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock, Sparkles } from 'lucide-react'
+import { getDefaultMealType } from '@/lib/utils/meal-time'
 import { BottomNav } from '@/components/BottomNav'
 import { FABFullWidth } from '@/components/shared/FAB'
 import Toast from '@/app/components/shared/Toast'
@@ -62,9 +63,13 @@ export default function LogMealPage() {
 
   // Meal building state
   const [mealItems, setMealItems] = useState<MealItemPreview[]>([])
-  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | 'other'>('other')
+  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | 'other'>(getDefaultMealType())
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
   const [editQuantity, setEditQuantity] = useState<number>(0)
+
+  // Progressive disclosure states
+  const [showQuickMeals, setShowQuickMeals] = useState(true)
+  const [showRecentFoods, setShowRecentFoods] = useState(true)
 
   // Modal states
   const [selectedFood, setSelectedFood] = useState<Food | null>(null)
@@ -99,6 +104,10 @@ export default function LogMealPage() {
         ])
         setQuickMeals(meals)
         setRecentFoods(recent)
+
+        // Set progressive disclosure based on data availability
+        setShowQuickMeals(meals.length > 0)
+        setShowRecentFoods(recent.length >= 3)
       } catch (error) {
         console.error('Failed to load initial data:', error)
       } finally {
@@ -108,6 +117,17 @@ export default function LogMealPage() {
 
     fetchInitialData()
   }, [authLoading, onboardingComplete])
+
+  // Progressive disclosure: Hide Quick Meals & Recent Foods when searching
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      setShowQuickMeals(false)
+      setShowRecentFoods(false)
+    } else {
+      setShowQuickMeals(quickMeals.length > 0)
+      setShowRecentFoods(recentFoods.length >= 3)
+    }
+  }, [searchQuery, quickMeals.length, recentFoods.length])
 
   // Debounced search
   useEffect(() => {
@@ -385,35 +405,78 @@ export default function LogMealPage() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Quick Meals Section */}
-        {!initialLoading && quickMeals.length > 0 && (
+        {/* Meal Type Selector - MOVED TO TOP for better UX */}
+        <div className="mb-6">
+          <h2 className="text-sm font-medium text-iron-gray uppercase tracking-wider mb-3">
+            What meal are you logging?
+          </h2>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {(['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const).map((type) => {
+              const isDefault = type === getDefaultMealType()
+              return (
+                <button
+                  key={type}
+                  onClick={() => setMealType(type)}
+                  className={`px-4 py-2.5 font-medium transition-colors whitespace-nowrap rounded-lg relative ${
+                    mealType === type
+                      ? 'bg-iron-orange text-iron-black'
+                      : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
+                  }`}
+                >
+                  {t(`nutrition.${type}`)}
+                  {isDefault && mealType === type && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-iron-orange opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-iron-orange">
+                        <Sparkles className="h-2 w-2 text-iron-black m-auto" />
+                      </span>
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {mealType === getDefaultMealType() && (
+            <p className="text-xs text-iron-gray mt-2">
+              ✨ Suggested for this time of day
+            </p>
+          )}
+        </div>
+
+        {/* Quick Meals Section - ENHANCED */}
+        {!initialLoading && showQuickMeals && quickMeals.length > 0 && (
           <div className="mb-6">
-            <h2 className="font-heading text-base font-medium text-iron-white uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Star className="w-4 h-4 text-iron-orange" />
-              {t('nutrition.quickMeals')}
-            </h2>
-            <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Star className="w-5 h-5 text-iron-orange fill-iron-orange" />
+              <h2 className="font-heading text-base font-medium text-iron-white uppercase tracking-wider">
+                {t('nutrition.quickMeals')}
+              </h2>
+            </div>
+            <p className="text-xs text-iron-gray mb-3">
+              ⚡ Tap to log instantly
+            </p>
+            <div className="space-y-3">
               {quickMeals.slice(0, 5).map((quickMeal) => (
                 <button
                   key={quickMeal.id}
                   onClick={() => handleLogQuickMeal(quickMeal.id)}
                   disabled={logging}
-                  className="w-full bg-iron-dark-gray border border-iron-gray p-3 text-left hover:border-iron-orange/50 transition-colors disabled:opacity-50"
+                  className="w-full bg-iron-dark-gray border-2 border-iron-orange/30 p-4 text-left hover:border-iron-orange hover:bg-iron-orange/5 transition-all disabled:opacity-50 rounded-lg"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="text-iron-white font-medium flex items-center gap-2">
+                      <div className="text-iron-white font-semibold flex items-center gap-2 text-base">
                         {quickMeal.name}
-                        {quickMeal.is_favorite && <Star className="w-3 h-3 text-iron-orange fill-iron-orange" />}
+                        {quickMeal.is_favorite && <Star className="w-3.5 h-3.5 text-iron-orange fill-iron-orange" />}
                       </div>
                       {quickMeal.description && (
-                        <div className="text-xs text-iron-gray mt-1">{quickMeal.description}</div>
+                        <div className="text-sm text-iron-gray mt-1">{quickMeal.description}</div>
                       )}
-                      <div className="text-xs text-iron-gray mt-1">
-                        {quickMeal.foods.length} {quickMeal.foods.length !== 1 ? t('nutrition.items') : t('nutrition.item')}
+                      <div className="text-xs text-iron-gray/80 mt-2 flex items-center gap-1">
+                        <span>{quickMeal.foods.length} {quickMeal.foods.length !== 1 ? t('nutrition.items') : t('nutrition.item')}</span>
                       </div>
                     </div>
-                    <Plus className="w-5 h-5 text-iron-orange flex-shrink-0" />
+                    <Plus className="w-6 h-6 text-iron-orange flex-shrink-0" />
                   </div>
                 </button>
               ))}
@@ -421,31 +484,36 @@ export default function LogMealPage() {
           </div>
         )}
 
-        {/* Recent Foods Section */}
-        {!initialLoading && recentFoods.length > 0 && !searchQuery && (
+        {/* Recent Foods Section - ENHANCED */}
+        {!initialLoading && showRecentFoods && recentFoods.length > 0 && (
           <div className="mb-6">
-            <h2 className="font-heading text-base font-medium text-iron-white uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-iron-orange" />
-              {t('nutrition.recentFoods')}
-            </h2>
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-5 h-5 text-iron-gray" />
+              <h2 className="font-heading text-base font-medium text-iron-white uppercase tracking-wider">
+                {t('nutrition.recentFoods')}
+              </h2>
+            </div>
+            <p className="text-xs text-iron-gray mb-3">
+              📝 Recently logged foods
+            </p>
             <div className="space-y-2">
               {recentFoods.slice(0, 5).map((food) => (
                 <button
                   key={food.id}
                   onClick={() => handleSelectFood(food)}
-                  className="w-full bg-iron-dark-gray border border-iron-gray p-3 text-left hover:border-iron-orange/50 transition-colors"
+                  className="w-full bg-iron-dark-gray border border-iron-gray/40 p-3 text-left hover:border-iron-gray hover:bg-iron-gray/5 transition-all rounded-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="text-iron-white font-medium">{getFoodName(food)}</div>
                       {getBrandName(food) && (
-                        <div className="text-xs text-iron-gray">{getBrandName(food)}</div>
+                        <div className="text-xs text-iron-gray mt-0.5">{getBrandName(food)}</div>
                       )}
-                      <div className="text-xs text-iron-gray mt-1">
+                      <div className="text-xs text-iron-gray mt-1.5">
                         {food.calories_per_100g} {t('nutrition.calPerHundredG')}
                       </div>
                     </div>
-                    <Plus className="w-4 h-4 text-iron-orange flex-shrink-0" />
+                    <Plus className="w-5 h-5 text-iron-gray flex-shrink-0" />
                   </div>
                 </button>
               ))}
@@ -472,30 +540,45 @@ export default function LogMealPage() {
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="divide-y divide-iron-gray/10">
-                  {searchResults.map((food) => (
-                    <button
-                      key={food.id}
-                      onClick={() => handleSelectFood(food)}
-                      className="w-full px-4 py-3 text-left hover:bg-iron-gray/10 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="text-iron-white font-medium">{getFoodName(food)}</div>
-                          {getBrandName(food) && (
-                            <div className="text-sm text-iron-gray">{getBrandName(food)}</div>
-                          )}
-                          <div className="text-xs text-iron-gray mt-1">
-                            {food.calories_per_100g} {t('nutrition.calPerHundredG')}
-                            {food.composition_type === 'composed' && ` • ${t('nutrition.composedMeal')}`}
-                            {food.composition_type === 'branded' && ` • ${t('nutrition.branded')}`}
+                  {searchResults.map((food) => {
+                    // Calculate typical serving nutrition for preview
+                    const typicalServing = food.servings?.[0]
+                    const typicalGrams = typicalServing?.grams_per_serving || 100
+                    const factor = typicalGrams / 100
+                    const typicalCalories = Math.round(food.calories_per_100g * factor)
+                    const typicalProtein = Math.round(food.protein_g_per_100g * factor)
+
+                    return (
+                      <button
+                        key={food.id}
+                        onClick={() => handleSelectFood(food)}
+                        className="w-full px-4 py-3 text-left hover:bg-iron-gray/10 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="text-iron-white font-medium">{getFoodName(food)}</div>
+                            {getBrandName(food) && (
+                              <div className="text-sm text-iron-gray">{getBrandName(food)}</div>
+                            )}
+                            <div className="flex items-center gap-3 mt-2 text-xs">
+                              <div className="text-iron-gray">
+                                Per 100g: {food.calories_per_100g} cal
+                                {food.composition_type === 'composed' && ` • ${t('nutrition.composedMeal')}`}
+                                {food.composition_type === 'branded' && ` • ${t('nutrition.branded')}`}
+                              </div>
+                            </div>
+                            {/* Typical serving preview */}
+                            <div className="mt-1.5 text-xs text-iron-orange/80">
+                              Typical ({typicalGrams}g): {typicalCalories} cal • {typicalProtein}g protein
+                            </div>
+                          </div>
+                          <div className="text-2xl flex-shrink-0">
+                            {food.composition_type === 'composed' ? '🍽️' : food.composition_type === 'branded' ? '🏪' : '🥩'}
                           </div>
                         </div>
-                        <div className="text-iron-orange text-sm">
-                          {food.composition_type === 'composed' ? '🍽️' : food.composition_type === 'branded' ? '🏪' : '🥩'}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="p-4 text-center text-iron-gray">
@@ -511,7 +594,7 @@ export default function LogMealPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-heading text-lg text-iron-white uppercase tracking-wider">
-                {t('nutrition.buildingMeal')}
+                Building {t(`nutrition.${mealType}`)} 🍽️
               </h2>
               {mealItems.length >= 2 && (
                 <button
@@ -523,26 +606,7 @@ export default function LogMealPage() {
               )}
             </div>
 
-            {/* Meal Type Selector */}
-            <div className="mb-4">
-              <div className="flex gap-2 overflow-x-auto">
-                {(['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setMealType(type)}
-                    className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
-                      mealType === type
-                        ? 'bg-iron-orange text-iron-black'
-                        : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
-                    }`}
-                  >
-                    {t(`nutrition.${type}`)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-iron-dark-gray border border-iron-gray p-4 space-y-3">
+            <div className="bg-iron-dark-gray border border-iron-gray p-4 space-y-3 rounded-lg">
               {mealItems.map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="flex-1">
@@ -632,18 +696,47 @@ export default function LogMealPage() {
       {/* Food Selection Modal */}
       {selectedFood && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-          <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full p-6">
-            <h3 className="font-heading text-xl text-iron-white uppercase tracking-wider mb-4">
-              {getFoodName(selectedFood)}
-            </h3>
+          <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full p-6 rounded-xl">
+            {/* Food Info Header */}
+            <div className="mb-4">
+              <h3 className="font-heading text-xl text-iron-white uppercase tracking-wider">
+                {getFoodName(selectedFood)}
+              </h3>
+              {getBrandName(selectedFood) && (
+                <div className="text-sm text-iron-gray mt-1">{getBrandName(selectedFood)}</div>
+              )}
+            </div>
 
-            {getBrandName(selectedFood) && (
-              <div className="text-sm text-iron-gray mb-4">{getBrandName(selectedFood)}</div>
-            )}
+            {/* Live Nutrition Preview Card - ALWAYS VISIBLE */}
+            <div className="mb-6 p-4 bg-iron-black/60 border border-iron-orange/30 rounded-lg">
+              <div className="text-xs text-iron-gray uppercase tracking-wider mb-2">Live Preview</div>
+              <div className="text-iron-white font-medium text-lg">
+                {(() => {
+                  try {
+                    const nutrition = calculateFoodNutrition(
+                      selectedFood,
+                      modalQuantity,
+                      modalUnit,
+                      modalServing || undefined
+                    )
+                    return (
+                      <div className="space-y-1">
+                        <div className="text-2xl font-heading text-iron-orange">{Math.round(nutrition.calories)} cal</div>
+                        <div className="text-sm text-iron-gray">
+                          {Math.round(nutrition.protein_g)}g protein • {Math.round(nutrition.carbs_g)}g carbs • {Math.round(nutrition.fat_g)}g fat
+                        </div>
+                      </div>
+                    )
+                  } catch {
+                    return <span className="text-red-500">{t('nutrition.invalidInput')}</span>
+                  }
+                })()}
+              </div>
+            </div>
 
             {/* Unit Selection */}
             <div className="mb-4">
-              <label className="block text-sm text-iron-gray mb-2">{t('nutrition.unit')}</label>
+              <label className="block text-sm text-iron-gray mb-2">How do you want to log this?</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -653,13 +746,14 @@ export default function LogMealPage() {
                     // See NUTRITION_LOGGING_ARCHITECTURE.md - State Management Rules
                     setModalQuantity(100)
                   }}
-                  className={`flex-1 py-2 px-4 font-medium transition-colors ${
+                  className={`flex-1 py-3 px-4 font-medium transition-colors rounded-lg flex items-center gap-2 justify-center ${
                     modalUnit === 'grams'
                       ? 'bg-iron-orange text-iron-black'
                       : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
                   }`}
                 >
-                  {t('nutrition.grams')}
+                  <span>⚖️</span>
+                  <span>{t('nutrition.grams')}</span>
                 </button>
                 {selectedFood.servings && selectedFood.servings.length > 0 && (
                   <button
@@ -671,23 +765,23 @@ export default function LogMealPage() {
                       // See NUTRITION_LOGGING_ARCHITECTURE.md - Bug #1
                       setModalQuantity(1)
                     }}
-                    className={`flex-1 py-2 px-4 font-medium transition-colors ${
+                    className={`flex-1 py-3 px-4 font-medium transition-colors rounded-lg flex items-center gap-2 justify-center ${
                       modalUnit === 'serving'
                         ? 'bg-iron-orange text-iron-black'
                         : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
                     }`}
                   >
-                    {t('nutrition.serving')}
+                    <span>🥄</span>
+                    <span>{t('nutrition.serving')}</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Quantity Input */}
-            {/* TODO i18n: Add translations for amountGrams, numberOfServings, servingHelperText */}
             <div className="mb-4">
-              <label className="block text-sm text-iron-gray mb-2">
-                {modalUnit === 'grams' ? 'Amount (grams)' : 'How many servings?'}
+              <label className="block text-sm text-iron-white font-medium mb-2">
+                {modalUnit === 'grams' ? '⚖️ How many grams?' : `🥄 How many ${modalServing?.serving_unit || 'servings'}?`}
               </label>
               <input
                 type="number"
@@ -725,7 +819,7 @@ export default function LogMealPage() {
             {/* Serving Selection */}
             {modalUnit === 'serving' && selectedFood.servings && selectedFood.servings.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm text-iron-gray mb-2">{t('nutrition.servingSize')}</label>
+                <label className="block text-sm text-iron-white font-medium mb-2">Which serving size?</label>
                 <select
                   value={modalServing?.id || ''}
                   onChange={(e) => {
@@ -745,7 +839,7 @@ export default function LogMealPage() {
                     // See NUTRITION_LOGGING_ARCHITECTURE.md - Bug #1
                     setModalQuantity(1)
                   }}
-                  className="w-full bg-iron-dark-gray border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none"
+                  className="w-full bg-iron-black border border-iron-gray px-4 py-3 text-iron-white focus:border-iron-orange focus:outline-none rounded-lg"
                 >
                   {selectedFood.servings.map((serving) => (
                     <option key={serving.id} value={serving.id}>
@@ -755,32 +849,11 @@ export default function LogMealPage() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-iron-gray mt-2">
+                  💡 The nutrition preview above updates automatically
+                </p>
               </div>
             )}
-
-            {/* Preview */}
-            <div className="mb-6 p-4 bg-iron-gray/10">
-              <div className="text-sm text-iron-gray mb-1">{t('nutrition.nutrition')}</div>
-              <div className="text-iron-white font-medium">
-                {(() => {
-                  try {
-                    // FRONTEND PREVIEW CALCULATION (NOT TRUSTED BY BACKEND)
-                    // This calculation is for UX only - shows live preview as user adjusts quantity
-                    // Backend will RECALCULATE everything from scratch at meal creation time
-                    // See NUTRITION_LOGGING_ARCHITECTURE.md - Frontend/Backend Contract
-                    const nutrition = calculateFoodNutrition(
-                      selectedFood,
-                      modalQuantity,
-                      modalUnit,
-                      modalServing || undefined
-                    )
-                    return formatNutrition(nutrition)
-                  } catch {
-                    return t('nutrition.invalidInput')
-                  }
-                })()}
-              </div>
-            </div>
 
             {/* Actions */}
             <div className="flex gap-3">

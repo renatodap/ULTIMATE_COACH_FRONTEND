@@ -35,6 +35,7 @@ import {
   ChevronDown,
   ChevronUp,
   Link2,
+  Star,
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
@@ -322,8 +323,16 @@ export default function ProfilePage() {
               </div>
             )}
             <a
+              href="/templates"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-iron-gray text-iron-white text-xs hover:border-iron-orange/60 transition-colors"
+              aria-label="Templates"
+            >
+              <Star className="w-4 h-4" />
+              <span className="hidden sm:inline">Templates</span>
+            </a>
+            <a
               href="/profile/connected-apps"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-iron-gray text-iron-white text-xs hover:border-iron-orange/60"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-iron-gray text-iron-white text-xs hover:border-iron-orange/60 transition-colors"
               aria-label="Connected Apps"
             >
               <Link2 className="w-4 h-4" />

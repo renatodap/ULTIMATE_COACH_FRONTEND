@@ -16,7 +16,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, Edit2, Trash2 } from 'lucide-react'
+import { ChevronDown, Edit2, Trash2, Star } from 'lucide-react'
 import type { Meal, FoodItem } from '@/lib/types/nutrition'
 import FoodItemCard from './FoodItemCard'
 import { useTimezone } from '@/lib/context/TimezoneContext'
@@ -30,6 +30,7 @@ interface MealTypeCardProps {
   onEdit?: () => void
   onDelete?: () => void
   onEditFoodItem?: (item: FoodItem) => void
+  onSaveAsTemplate?: () => void
 }
 
 // Meal type icons and display names (no colors - emoji provides visual distinction)
@@ -48,6 +49,7 @@ export default function MealTypeCard({
   onEdit,
   onDelete,
   onEditFoodItem,
+  onSaveAsTemplate,
 }: MealTypeCardProps) {
   const [internalIsExpanded, setInternalIsExpanded] = useState(true)
   const { timezone } = useTimezone()
@@ -136,7 +138,7 @@ export default function MealTypeCard({
           </div>
 
           {/* Meal Actions - Stacked vertically for better mobile UX */}
-          {(onEdit || onDelete) && (
+          {(onEdit || onDelete || onSaveAsTemplate) && (
             <div className="flex flex-col gap-2 p-4 border-t border-iron-gray/30">
               {onEdit && (
                 <button
@@ -144,10 +146,22 @@ export default function MealTypeCard({
                     e.stopPropagation()
                     onEdit()
                   }}
-                  className="w-full flex items-center justify-center gap-2 border border-iron-orange text-iron-orange py-3 font-medium text-sm uppercase tracking-wider active-press tap-target transition-colors"
+                  className="w-full flex items-center justify-center gap-2 border border-iron-orange text-iron-orange py-3 font-medium text-sm uppercase tracking-wider active-press tap-target transition-colors rounded-lg"
                 >
                   <Edit2 className="w-4 h-4" />
                   Edit Meal
+                </button>
+              )}
+              {onSaveAsTemplate && meal.foodItems.length >= 2 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onSaveAsTemplate()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 border border-iron-gray bg-iron-gray/10 text-iron-white py-3 font-medium text-sm uppercase tracking-wider active-press tap-target transition-colors rounded-lg hover:border-iron-orange hover:text-iron-orange"
+                >
+                  <Star className="w-4 h-4" />
+                  Save as Quick Meal
                 </button>
               )}
               {onDelete && (
@@ -156,7 +170,7 @@ export default function MealTypeCard({
                     e.stopPropagation()
                     onDelete()
                   }}
-                  className="w-full flex items-center justify-center gap-2 border border-red-500 text-red-500 py-3 font-medium text-sm uppercase tracking-wider active-press tap-target transition-colors"
+                  className="w-full flex items-center justify-center gap-2 border border-red-500 text-red-500 py-3 font-medium text-sm uppercase tracking-wider active-press tap-target transition-colors rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Meal

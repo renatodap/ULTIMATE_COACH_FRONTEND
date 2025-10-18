@@ -31,6 +31,8 @@ import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useNutritionData } from '@/lib/hooks/useNutritionData'
 import { useTranslation } from '@/lib/i18n'
 import { useTimezone } from '@/lib/context/TimezoneContext'
+import { createQuickMeal } from '@/lib/api/quick-meals'
+import type { Meal } from '@/lib/types/nutrition'
 
 // Animation variants
 const summaryVariants = {
@@ -91,6 +93,12 @@ function NutritionPageContent() {
   const [bigCardVisible, setBigCardVisible] = useState(true)
   const bigCardRef = useRef<HTMLDivElement>(null)
 
+  // Save as template modal state
+  const [savingMeal, setSavingMeal] = useState<Meal | null>(null)
+  const [templateName, setTemplateName] = useState('')
+  const [templateDescription, setTemplateDescription] = useState('')
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false)
+
   // Check authentication and onboarding status
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
 
@@ -150,6 +158,44 @@ function NutritionPageContent() {
   const handleEditFoodItem = (mealId: string, itemId: string) => {
     // TODO: Phase 2 - Implement food item editing
     // Placeholder for food item editing functionality
+  }
+
+  const handleSaveAsTemplate = (meal: Meal) => {
+    setSavingMeal(meal)
+    setTemplateName(meal.name || `${meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)} Template`)
+    setTemplateDescription('')
+  }
+
+  const handleSaveTemplateSubmit = async () => {
+    if (!savingMeal || !templateName.trim()) {
+      toast.error('Please enter a template name')
+      return
+    }
+
+    setIsSavingTemplate(true)
+
+    try {
+      await createQuickMeal({
+        name: templateName.trim(),
+        description: templateDescription.trim() || undefined,
+        foods: savingMeal.foodItems.map((item, index) => ({
+          food_id: item.foodId,
+          quantity: item.quantity,
+          serving_id: item.servingId || undefined,
+          display_order: index
+        }))
+      })
+
+      toast.success('Quick meal template saved!')
+      setSavingMeal(null)
+      setTemplateName('')
+      setTemplateDescription('')
+    } catch (err) {
+      console.error('Failed to save template:', err)
+      toast.error('Failed to save template. Please try again.')
+    } finally {
+      setIsSavingTemplate(false)
+    }
   }
 
   // Set up Intersection Observer for smart summary transition
@@ -311,6 +357,7 @@ function NutritionPageContent() {
                     onEdit={() => handleEditMeal(meal.id)}
                     onDelete={() => handleDeleteMeal(meal.id)}
                     onEditFoodItem={(item) => handleEditFoodItem(meal.id, item.id)}
+                    onSaveAsTemplate={() => handleSaveAsTemplate(meal)}
                   />
                 </motion.div>
               ))}
@@ -335,6 +382,65 @@ function NutritionPageContent() {
 
       {/* Bottom Navigation */}
       <BottomNav />
+
+      {/* Save as Template Modal */}
+      {savingMeal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <div className="bg-iron-dark-gray border border-iron-gray max-w-md w-full p-6 rounded-xl">
+            <h3 className="font-heading text-xl text-iron-white uppercase tracking-wider mb-4">
+              Save as Quick Meal
+            </h3>
+
+            <p className="text-sm text-iron-gray mb-4">
+              Save this meal as a quick meal template to easily log it again in the future.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm text-iron-white font-medium mb-2">
+                Template Name *
+              </label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., Morning Protein Shake"
+                className="w-full bg-iron-black border border-iron-gray px-4 py-3 text-iron-white placeholder:text-iron-gray focus:border-iron-orange focus:outline-none rounded-lg"
+                autoFocus
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm text-iron-white font-medium mb-2">
+                Description (optional)
+              </label>
+              <input
+                type="text"
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                placeholder="e.g., My go-to pre-workout fuel"
+                className="w-full bg-iron-black border border-iron-gray px-4 py-3 text-iron-white placeholder:text-iron-gray focus:border-iron-orange focus:outline-none rounded-lg"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSavingMeal(null)}
+                disabled={isSavingTemplate}
+                className="flex-1 bg-iron-gray/10 text-iron-white py-3 font-medium hover:bg-iron-gray/20 transition-colors rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveTemplateSubmit}
+                disabled={isSavingTemplate || !templateName.trim()}
+                className="flex-1 bg-iron-orange text-iron-black py-3 font-medium hover:bg-iron-orange/90 transition-colors rounded-lg disabled:opacity-50"
+              >
+                {isSavingTemplate ? 'Saving...' : 'Save Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
