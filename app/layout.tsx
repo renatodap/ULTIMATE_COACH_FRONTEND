@@ -8,6 +8,19 @@ import { createClient } from '@/lib/supabase-server'
 export const metadata: Metadata = {
   title: 'SHARPENED - AI Fitness & Nutrition',
   description: 'Become a sharpened version of yourself with AI-powered fitness and nutrition coaching',
+  manifest: '/manifest.json',
+  themeColor: '#FF6B35',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SHARPENED',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 }
 
 export default async function RootLayout({
