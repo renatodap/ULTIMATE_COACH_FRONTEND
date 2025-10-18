@@ -37,7 +37,7 @@ import { useUserLanguage } from '@/lib/hooks/useUserLanguage'
 import { useTranslation } from '@/lib/i18n'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 import { toUTC } from '@/lib/utils/timezone'
-import { searchFoods, getRecentFoods } from '@/lib/api/foods'
+import { searchFoods, getRecentFoods, getFood } from '@/lib/api/foods'
 import { listQuickMeals, createQuickMeal, logQuickMeal } from '@/lib/api/quick-meals'
 import { createMeal } from '@/lib/api/nutrition'
 import { calculateFoodNutrition, formatNutrition } from '@/lib/utils/nutrition-calculator'
@@ -76,6 +76,10 @@ export default function LogMealPage() {
   const [modalQuantity, setModalQuantity] = useState<number>(100)
   const [modalUnit, setModalUnit] = useState<'grams' | 'serving'>('grams')
   const [modalServing, setModalServing] = useState<FoodServing | null>(null)
+  const [loadingFoodDetails, setLoadingFoodDetails] = useState(false)
+
+  // Smart defaults: Remember last entered quantity for better UX
+  const [lastEnteredQuantity, setLastEnteredQuantity] = useState<number>(100)
 
   // Save as quick meal modal
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -166,21 +170,46 @@ export default function LogMealPage() {
   }
 
   // Handle food selection
-  const handleSelectFood = (food: Food) => {
-    console.log('[LOG] Food selected:', {
+  const handleSelectFood = async (food: Food) => {
+    console.log('[LOG] Food selected (initial):', {
       name: food.name,
       id: food.id,
       servings_count: food.servings?.length || 0,
       servings: food.servings
     })
+
+    // Show modal immediately with loading state
     setSelectedFood(food)
+    setLoadingFoodDetails(true)
+
+    // CRITICAL FIX: Fetch full food details to get servings data
+    // Search results may not include servings to keep response light
+    try {
+      const fullFood = await getFood(food.id)
+      console.log('[LOG] Full food loaded:', {
+        name: fullFood.name,
+        servings_count: fullFood.servings?.length || 0,
+        servings: fullFood.servings
+      })
+
+      // Update with full food data
+      setSelectedFood(fullFood)
+      setModalServing(fullFood.servings?.find(s => s.is_default) || fullFood.servings?.[0] || null)
+    } catch (err) {
+      console.error('Failed to load full food details:', err)
+      // Fall back to original food data (already set above)
+      setModalServing(food.servings?.find(s => s.is_default) || food.servings?.[0] || null)
+    } finally {
+      setLoadingFoodDetails(false)
+    }
 
     // CRITICAL: Reset all modal state to defaults
-    // modalQuantity = 100 because default mode is grams
     // This is RESET POINT #1 (see NUTRITION_LOGGING_ARCHITECTURE.md)
-    setModalQuantity(100)
+    // UX IMPROVEMENT: Use last entered quantity instead of always 100
+    // This helps users who are adding multiple similar-sized foods
+    setModalQuantity(lastEnteredQuantity)
     setModalUnit('grams')
-    setModalServing(food.servings?.find(s => s.is_default) || food.servings?.[0] || null)
+    // Note: modalServing is now set in the try/catch above after fetching
   }
 
   // Handle add to meal
@@ -210,6 +239,14 @@ export default function LogMealPage() {
       }
 
       setMealItems([...mealItems, newItem])
+
+      // UX IMPROVEMENT: Remember the last quantity entered
+      // This helps when adding multiple foods of similar sizes
+      // Only remember if in grams mode (servings vary too much between foods)
+      if (modalUnit === 'grams') {
+        setLastEnteredQuantity(modalQuantity)
+      }
+
       setSelectedFood(null)
       setSearchQuery('')
       setSearchResults([])
@@ -742,9 +779,9 @@ export default function LogMealPage() {
                   onClick={() => {
                     setModalUnit('grams')
                     // RESET POINT #2a: Switching to grams mode
-                    // modalQuantity = 100 (standard default for grams)
+                    // UX IMPROVEMENT: Use last entered quantity instead of always 100
                     // See NUTRITION_LOGGING_ARCHITECTURE.md - State Management Rules
-                    setModalQuantity(100)
+                    setModalQuantity(lastEnteredQuantity)
                   }}
                   className={`flex-1 py-3 px-4 font-medium transition-colors rounded-lg flex items-center gap-2 justify-center ${
                     modalUnit === 'grams'
