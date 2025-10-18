@@ -181,7 +181,7 @@ export async function sendCoachMessage(request: SendMessageRequest): Promise<Sen
   if (response.log_preview) {
     const transformed = transformLogPreview(response.log_preview);
     console.log('[Coach API] Transformed log_preview:', transformed);
-    response.log_preview = transformed;
+    response.log_preview = transformed || undefined;
   }
 
   return response;
