@@ -71,22 +71,10 @@ export function ConfirmationModal({
   const activeLogs = logs.filter(log => {
     // If no ID, log can't be skipped (show it anyway)
     if (!log.id) {
-      console.warn('[ConfirmationModal] Log missing ID - cannot skip:', log)
       return true
     }
     // Otherwise, only show if not skipped
     return !skippedLogs.has(log.id)
-  })
-
-  console.log('[ConfirmationModal] Render:', {
-    isOpen,
-    isMultiLog,
-    totalLogs: logs.length,
-    activeLogs: activeLogs.length,
-    skippedCount: skippedLogs.size,
-    currentIndex,
-    preview,
-    previews
   })
 
   // Reset state when modal opens/closes
@@ -100,24 +88,21 @@ export function ConfirmationModal({
     }
   }, [isOpen])
 
-  // Early return if modal is closed or no logs
-  if (!isOpen || logs.length === 0) {
-    console.log('[ConfirmationModal] Early return - not open or no logs')
-    return null
-  }
-
   // CRITICAL: Auto-close if all logs skipped
   useEffect(() => {
     if (isMultiLog && activeLogs.length === 0 && skippedLogs.size > 0) {
-      console.log('[ConfirmationModal] All logs skipped - auto-closing')
       onCancel()
     }
   }, [activeLogs.length, skippedLogs.size, isMultiLog, onCancel])
 
+  // Early return if modal is closed or no logs
+  if (!isOpen || logs.length === 0) {
+    return null
+  }
+
   // Handle skip
   const handleSkip = (logId: string, index: number) => {
     if (!logId) {
-      console.error('[ConfirmationModal] Cannot skip log without ID')
       return
     }
 
@@ -145,8 +130,6 @@ export function ConfirmationModal({
         matched_food: { id: newFoodId } as any  // Will be merged with existing
       }
     }))
-
-    console.log('[ConfirmationModal] Food changed for item', selectedItemIndex, 'to', newFoodId)
   }
 
   // Handle confirm - batch or single
@@ -155,14 +138,7 @@ export function ConfirmationModal({
       // Batch confirm all non-skipped logs
       const logIds = activeLogs.map(log => log.id).filter(Boolean) as string[]
 
-      // CRITICAL: Warn if some logs missing IDs
-      const logsWithoutIds = activeLogs.filter(log => !log.id)
-      if (logsWithoutIds.length > 0) {
-        console.error('[ConfirmationModal] Some logs missing IDs:', logsWithoutIds)
-      }
-
       if (logIds.length === 0) {
-        console.error('[ConfirmationModal] No valid log IDs to confirm')
         return
       }
 
@@ -171,7 +147,6 @@ export function ConfirmationModal({
       // Single log confirm
       const logId = logs[0]?.id
       if (!logId) {
-        console.error('[ConfirmationModal] Cannot confirm log without ID:', logs[0])
         return
       }
 
@@ -186,16 +161,11 @@ export function ConfirmationModal({
   // Get current preview for single-log mode
   const currentPreview = logs[currentIndex]
   if (!currentPreview) {
-    console.error('[ConfirmationModal] No current preview')
     return null
   }
 
   // Only handle nutrition and workout types
   if (currentPreview.type !== 'nutrition' && currentPreview.type !== 'workout') {
-    console.error('[ConfirmationModal] BLOCKED - Unsupported type:', {
-      receivedType: currentPreview.type,
-      expectedTypes: ['nutrition', 'workout']
-    })
     return null
   }
 
@@ -211,14 +181,12 @@ export function ConfirmationModal({
   if (isNutrition) {
     if (data?.nutrition_summary) {
       // Backend provided enriched summary - use it
-      console.log('[ConfirmationModal] Using backend nutrition_summary:', data.nutrition_summary)
       totalCalories = data.nutrition_summary.calories || 0
       totalProtein = data.nutrition_summary.protein_g || 0
       totalCarbs = data.nutrition_summary.carbs_g || 0
       totalFat = data.nutrition_summary.fat_g || 0
     } else if (data?.meal_items) {
       // Fallback: Calculate from meal_items
-      console.log('[ConfirmationModal] Calculating nutrition from meal_items')
       data.meal_items.forEach((item: MealItem) => {
         totalCalories += item.calories
         totalProtein += item.protein_g
