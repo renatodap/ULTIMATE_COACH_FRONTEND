@@ -14,7 +14,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { sendCoachMessage, confirmLog, type SendMessageRequest, type SendMessageResponse, type LogPreview } from '@/lib/api/coach'
+import { sendCoachMessage, confirmLog, confirmLogs, type SendMessageRequest, type SendMessageResponse, type LogPreview } from '@/lib/api/coach'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
@@ -82,6 +82,8 @@ export default function CoachPage() {
     message: 'Coach is typing...'
   })
   const [logPreview, setLogPreview] = useState<LogPreview | null>(null)
+  const [logPreviews, setLogPreviews] = useState<LogPreview[]>([])
+  const [isMultiLog, setIsMultiLog] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
@@ -175,12 +177,62 @@ export default function CoachPage() {
         setConversationId(data.conversation_id)
       }
 
-      // Handle log preview
-      if (data.is_log_preview && data.log_preview) {
-        console.log('[Coach Page] Setting log preview:', data.log_preview)
-        console.log('[Coach Page] Preview type:', data.log_preview.type)
-        console.log('[Coach Page] Preview data:', data.log_preview.data)
-        setLogPreview(data.log_preview)
+      // Handle log preview - support both single and multi-logging
+      if (data.is_log_preview) {
+        console.log('[Coach Page] Log preview detected:', {
+          multi_log: data.multi_log,
+          log_count: data.log_count,
+          single_preview: !!data.log_preview,
+          previews_array: !!data.log_previews,
+          previews_length: data.log_previews?.length
+        })
+
+        // CRITICAL: Validate multi-log response
+        if (data.multi_log) {
+          if (!data.log_previews || data.log_previews.length === 0) {
+            console.error('[Coach Page] Multi-log flag set but no log_previews provided:', data)
+            setLoading({ isLoading: false, message: '' })
+
+            const errorMsg: Message = {
+              id: `error_${Date.now()}`,
+              role: 'assistant',
+              content: 'I detected multiple logs but couldn\'t process them. Please try again or log them separately.',
+              timestamp: new Date(),
+              type: 'error'
+            }
+            setMessages(prev => [...prev, errorMsg])
+            toast.error('Failed to process multiple logs')
+            return
+          }
+
+          // Multi-logging mode
+          console.log('[Coach Page] Setting multiple log previews:', data.log_previews)
+          setLogPreviews(data.log_previews)
+          setIsMultiLog(true)
+          setLogPreview(null)
+        } else if (data.log_preview) {
+          // Single log mode (backward compatible)
+          console.log('[Coach Page] Setting single log preview:', data.log_preview)
+          setLogPreview(data.log_preview)
+          setLogPreviews([])
+          setIsMultiLog(false)
+        } else {
+          // Edge case: is_log_preview true but no data
+          console.error('[Coach Page] is_log_preview true but no preview data:', data)
+          setLoading({ isLoading: false, message: '' })
+
+          const errorMsg: Message = {
+            id: `error_${Date.now()}`,
+            role: 'assistant',
+            content: 'I couldn\'t create a log preview. Please try again.',
+            timestamp: new Date(),
+            type: 'error'
+          }
+          setMessages(prev => [...prev, errorMsg])
+          toast.error('Failed to create log preview')
+          return
+        }
+
         setLoading({ isLoading: false, message: '' })
         return
       }
@@ -235,36 +287,82 @@ export default function CoachPage() {
     }
   }, [inputValue, loading.isLoading, conversationId])
 
-  // Handle log preview confirmation
-  const handleLogConfirm = useCallback(async () => {
-    if (!logPreview) return
+  // Handle batch log confirmation (multi-logging)
+  const handleBatchLogConfirm = useCallback(async (logIds: string[]) => {
+    if (logIds.length === 0) return
 
     hapticFeedback('medium')
 
-    console.log('[Confirm] Full logPreview:', logPreview)
-    console.log('[Confirm] logPreview.id:', logPreview.id)
-    console.log('[Confirm] logPreview.data:', logPreview.data)
-
-    // Get the quick_entry_id from the log preview (try multiple locations)
-    const quickEntryId = logPreview.id || (logPreview.data as any).quick_entry_id
-
-    console.log('[Confirm] quickEntryId:', quickEntryId)
-
-    if (!quickEntryId) {
-      console.error('No quick_entry_id in log preview:', logPreview)
-      toast.error('Missing log ID. Please try again.')
-      setLogPreview(null)
-      return
-    }
+    console.log('[Batch Confirm] Confirming multiple logs:', logIds)
 
     // Close modal immediately for better UX
     setLogPreview(null)
+    setLogPreviews([])
+    setIsMultiLog(false)
+
+    const toastId = toast.loading(`Saving ${logIds.length} logs...`)
+
+    try {
+      // NEW: Use batch confirmation endpoint (atomic backend processing)
+      const response = await confirmLogs({ quick_entry_ids: logIds })
+
+      const { success_count: successCount, failed_count: failedCount, results } = response
+
+      console.log('[Batch Confirm] Results:', { successCount, failedCount, results })
+
+      if (successCount > 0) {
+        toast.success(`${successCount} log${successCount > 1 ? 's' : ''} saved successfully!`, { id: toastId })
+
+        // Add success message
+        const successMessage: Message = {
+          id: `success_${Date.now()}`,
+          role: 'assistant',
+          content: `Successfully logged ${successCount} item${successCount > 1 ? 's' : ''}! 🎉${failedCount > 0 ? ` (${failedCount} failed)` : ''}`,
+          timestamp: new Date(),
+          type: 'text'
+        }
+
+        setMessages(prev => [...prev, successMessage])
+
+        // Log detailed results if any failed
+        if (failedCount > 0) {
+          const failedLogs = results.filter(r => !r.success)
+          console.warn('[Batch Confirm] Failed logs:', failedLogs)
+        }
+      } else {
+        throw new Error('All logs failed to save')
+      }
+
+    } catch (err: any) {
+      console.error('Failed to confirm logs:', err)
+      toast.error('Failed to save logs', { id: toastId })
+
+      const errorMsg: Message = {
+        id: `error_${Date.now()}`,
+        role: 'assistant',
+        content: 'Failed to save logs. Please try again.',
+        timestamp: new Date(),
+        type: 'error'
+      }
+      setMessages(prev => [...prev, errorMsg])
+    }
+  }, [])
+
+  // Handle single log confirmation
+  const handleSingleLogConfirm = useCallback(async (logId: string) => {
+    hapticFeedback('medium')
+
+    console.log('[Single Confirm] Confirming log:', logId)
+
+    // Close modal immediately for better UX
+    setLogPreview(null)
+    setLogPreviews([])
+    setIsMultiLog(false)
 
     const toastId = toast.loading('Saving log...')
 
     try {
-      // Call backend to confirm log (backend handles all the transformation)
-      const response = await confirmLog({ quick_entry_id: quickEntryId })
+      const response = await confirmLog({ quick_entry_id: logId })
 
       toast.success('Log saved successfully!', { id: toastId })
 
@@ -292,11 +390,20 @@ export default function CoachPage() {
       }
       setMessages(prev => [...prev, errorMsg])
     }
-  }, [logPreview])
+  }, [])
 
   // Handle log preview cancellation
   const handleLogCancel = useCallback(() => {
     setLogPreview(null)
+    setLogPreviews([])
+    setIsMultiLog(false)
+    hapticFeedback('light')
+  }, [])
+
+  // Handle skip individual log (multi-logging)
+  const handleLogSkip = useCallback((logId: string) => {
+    console.log('[Skip] Skipping log:', logId)
+    // Skip is handled locally in the carousel - just log for now
     hapticFeedback('light')
   }, [])
 
@@ -455,12 +562,15 @@ export default function CoachPage() {
           </>
         )}
 
-        {/* Confirmation Modal - Integrated with framer-motion */}
+        {/* Confirmation Modal - Supports single and multi-logging */}
         <ConfirmationModal
           preview={logPreview}
-          onConfirm={handleLogConfirm}
+          previews={logPreviews.length > 0 ? logPreviews : undefined}
+          onConfirm={handleBatchLogConfirm}
+          onConfirmSingle={handleSingleLogConfirm}
+          onSkip={handleLogSkip}
           onCancel={handleLogCancel}
-          isOpen={!!logPreview}
+          isOpen={!!logPreview || logPreviews.length > 0}
         />
       </div>
 

@@ -9,16 +9,15 @@
  * Part of Phase 4: Plan Generation System
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, Loader2, CheckCircle, Calendar } from 'lucide-react'
-import { generatePlan, regeneratePlan } from '@/lib/api/planning'
+import { generatePlan } from '@/lib/api/planning'
 import { useRouter } from 'next/navigation'
 
 interface GeneratePlanModalProps {
   isOpen: boolean
   onClose: () => void
-  userId: string
   isRegeneration?: boolean  // true if regenerating existing plan
   currentPlanId?: string
   onSuccess?: () => void  // Called after successful plan generation
@@ -29,7 +28,6 @@ type GenerationState = 'confirm' | 'generating' | 'success' | 'error'
 export function GeneratePlanModal({
   isOpen,
   onClose,
-  userId,
   isRegeneration = false,
   currentPlanId,
   onSuccess
@@ -40,6 +38,38 @@ export function GeneratePlanModal({
   const [currentStep, setCurrentStep] = useState('')
   const [generatedPlanId, setGeneratedPlanId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Accessibility: Focus management
+  const modalRef = useRef<HTMLDivElement>(null)
+  const previousActiveElement = useRef<HTMLElement | null>(null)
+
+  // Accessibility: Focus trap and restoration
+  useEffect(() => {
+    if (isOpen) {
+      // Store previously focused element
+      previousActiveElement.current = document.activeElement as HTMLElement
+
+      // Focus modal when opened
+      modalRef.current?.focus()
+
+      // Return focus on unmount
+      return () => {
+        previousActiveElement.current?.focus()
+      }
+    }
+  }, [isOpen])
+
+  // Accessibility: Escape key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && state !== 'generating' && isOpen) {
+        handleClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [state, isOpen])
 
   const steps = [
     { label: 'Analyzing your profile', duration: 1000 },
@@ -65,21 +95,14 @@ export function GeneratePlanModal({
     }
 
     try {
-      let result
-      if (isRegeneration) {
-        result = await regeneratePlan(userId, 'User requested regeneration')
-      } else {
-        result = await generatePlan(userId)
-      }
+      // Generate plan with forceRegenerate flag if regenerating
+      const result = await generatePlan({
+        forceRegenerate: isRegeneration
+      })
 
-      if (result.success) {
-        setGeneratedPlanId(result.program_id)
-        setState('success')
-      } else {
-        throw new Error('Plan generation failed')
-      }
+      setGeneratedPlanId(result.program_id)
+      setState('success')
     } catch (err) {
-      console.error('Plan generation error:', err)
       setError(err instanceof Error ? err.message : 'Failed to generate plan')
       setState('error')
     }
@@ -115,6 +138,11 @@ export function GeneratePlanModal({
         onClick={state !== 'generating' ? handleClose : undefined}
       >
         <motion.div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="generate-plan-modal-title"
+          tabIndex={-1}
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -125,7 +153,10 @@ export function GeneratePlanModal({
           <div className="p-6 border-b border-iron-gray flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Sparkles className="w-6 h-6 text-iron-orange" />
-              <h2 className="text-xl font-heading text-iron-white uppercase tracking-wider">
+              <h2
+                id="generate-plan-modal-title"
+                className="text-xl font-heading text-iron-white uppercase tracking-wider"
+              >
                 {isRegeneration ? 'Regenerate Plan' : 'Generate Your Plan'}
               </h2>
             </div>
@@ -195,10 +226,19 @@ export function GeneratePlanModal({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="space-y-6"
+                aria-live="polite"
+                aria-busy="true"
               >
                 {/* Progress bar */}
                 <div>
-                  <div className="h-2 bg-iron-gray/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-iron-gray/20 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={Math.round(progress)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Plan generation progress"
+                  >
                     <motion.div
                       className="h-full bg-iron-orange"
                       initial={{ width: '0%' }}
@@ -211,7 +251,7 @@ export function GeneratePlanModal({
 
                 {/* Current step */}
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 text-iron-orange animate-spin" />
+                  <Loader2 className="w-5 h-5 text-iron-orange animate-spin" aria-hidden="true" />
                   <p className="text-iron-white">{currentStep}</p>
                 </div>
 

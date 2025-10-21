@@ -144,7 +144,7 @@ export default function QuickMealCard({
           {onEdit && (
             <button
               onClick={() => onEdit(quickMeal.id)}
-              className="text-sm font-medium text-iron-white hover:text-iron-orange transition flex items-center gap-1"
+              className="text-sm font-medium text-iron-white hover:text-iron-orange transition flex items-center gap-1 min-h-[44px] px-2"
             >
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
@@ -153,7 +153,7 @@ export default function QuickMealCard({
           {onDelete && (
             <button
               onClick={() => onDelete(quickMeal.id)}
-              className="text-sm font-medium text-iron-gray hover:text-red-500 transition flex items-center gap-1"
+              className="text-sm font-medium text-iron-gray hover:text-red-500 transition flex items-center gap-1 min-h-[44px] px-2"
             >
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>

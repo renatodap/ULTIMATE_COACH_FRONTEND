@@ -33,8 +33,21 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function getCurrentProgram(userId: string, includeBundle = false) {
-  return http<{ program: any }>(`/api/v1/programs/current?user_id=${userId}&include_bundle=${includeBundle}`)
+/**
+ * Get the current active program for the authenticated user
+ * User ID is automatically obtained from authentication
+ */
+export async function getCurrentProgram() {
+  return http<{
+    program_id: string
+    primary_goal: string
+    program_start_date: string
+    next_reassessment_date: string
+    tdee: number
+    macros: any
+    training_sessions: any[]
+    meals: any[]
+  }>(`/api/v1/programs/current`)
 }
 
 export async function getCalendarFull(userId: string, dateISO: string, range: 'day' | 'week') {
@@ -97,41 +110,41 @@ export async function markNotificationRead(userId: string, notificationId: strin
 
 /**
  * Generate a new personalized fitness plan
- * Uses current user profile data (from onboarding + profile editing)
+ *
+ * Backend authentication provides user_id automatically via httpOnly cookie.
+ * No need to send user_id in request body.
+ *
+ * @param forceRegenerate - If true, creates new plan even if one exists
+ * @param programDurationWeeks - Program length in weeks (default: 12)
+ * @param mealsPerDay - Meals per day (default: 3)
+ *
  * Backend creates plan based on:
  * - Goals, experience level, workout frequency
  * - Training modalities, equipment access, schedule
  * - Dietary preferences, meal timing
  * - Constraints, challenges, improvement goals
  */
-export async function generatePlan(userId: string) {
+export async function generatePlan(options?: {
+  forceRegenerate?: boolean
+  programDurationWeeks?: number
+  mealsPerDay?: number
+}) {
   return http<{
-    success: boolean
     program_id: string
-    program: any
+    user_id: string
+    primary_goal: string
+    program_start_date: string
+    next_reassessment_date: string
+    training_sessions_per_week: number
+    daily_calorie_target: number
+    macro_targets: any
     message: string
   }>(`/api/v1/programs/generate`, {
     method: 'POST',
-    body: JSON.stringify({ user_id: userId }),
-  })
-}
-
-/**
- * Regenerate plan (when profile changes significantly)
- * Marks old plan as archived and creates new one
- */
-export async function regeneratePlan(userId: string, reason?: string) {
-  return http<{
-    success: boolean
-    program_id: string
-    program: any
-    previous_program_id: string
-    message: string
-  }>(`/api/v1/programs/regenerate`, {
-    method: 'POST',
     body: JSON.stringify({
-      user_id: userId,
-      reason: reason || 'User requested regeneration'
+      force_regenerate: options?.forceRegenerate || false,
+      program_duration_weeks: options?.programDurationWeeks || 12,
+      meals_per_day: options?.mealsPerDay || 3,
     }),
   })
 }

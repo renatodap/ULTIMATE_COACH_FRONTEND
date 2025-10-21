@@ -96,10 +96,6 @@ export default function TemplatesPage() {
     }
   }
 
-  const handleUseQuickMeal = (id: string) => {
-    router.push(`/nutrition/log?quick_meal=${id}`)
-  }
-
   // Activity Template handlers
   const handleEditTemplate = (id: string) => {
     router.push(`/activities/templates/${id}/edit`)
@@ -125,10 +121,6 @@ export default function TemplatesPage() {
 
   const handleViewStats = (id: string) => {
     router.push(`/activities/templates/${id}/stats`)
-  }
-
-  const handleUseTemplate = (id: string) => {
-    router.push(`/activities/log?template=${id}`)
   }
 
   if (loading) {
@@ -215,7 +207,7 @@ export default function TemplatesPage() {
                 Quick Meals
               </h2>
               <button
-                onClick={() => router.push('/nutrition/log')}
+                onClick={() => router.push('/nutrition/log?mode=create')}
                 className="bg-iron-orange text-iron-black px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -239,7 +231,6 @@ export default function TemplatesPage() {
                       onEdit={handleEditQuickMeal}
                       onDelete={handleDeleteQuickMeal}
                       onToggleFavorite={handleToggleFavorite}
-                      onUse={handleUseQuickMeal}
                     />
                   ))}
               </div>
@@ -250,13 +241,13 @@ export default function TemplatesPage() {
                   No quick meals yet
                 </h3>
                 <p className="text-iron-gray mb-6 max-w-md mx-auto">
-                  Create quick meals to save time when logging your nutrition. Add 2 or more foods to a meal and save it as a quick meal.
+                  Create quick meal templates to save time when logging your nutrition. Build reusable meal combinations with your favorite foods.
                 </p>
                 <button
-                  onClick={() => router.push('/nutrition/log')}
-                  className="bg-iron-orange text-iron-black px-6 py-3 rounded-lg font-medium hover:opacity-90 transition"
+                  onClick={() => router.push('/nutrition/log?mode=create')}
+                  className="bg-iron-orange text-iron-black px-6 py-3 rounded-lg font-medium hover:opacity-90 transition min-h-[48px]"
                 >
-                  Log a Meal
+                  Create Your First Quick Meal
                 </button>
               </div>
             )}
@@ -288,7 +279,6 @@ export default function TemplatesPage() {
                     onEdit={handleEditTemplate}
                     onDelete={handleDeleteTemplate}
                     onViewStats={handleViewStats}
-                    onUseTemplate={handleUseTemplate}
                   />
                 ))}
               </div>

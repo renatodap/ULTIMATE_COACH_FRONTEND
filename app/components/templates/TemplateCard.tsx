@@ -201,7 +201,7 @@ export default function TemplateCard({
           {onViewStats && template.use_count > 0 && (
             <button
               onClick={() => onViewStats(template.id)}
-              className="text-sm font-medium text-iron-white hover:text-iron-orange transition"
+              className="text-sm font-medium text-iron-white hover:text-iron-orange transition min-h-[44px] px-2"
             >
               View Stats
             </button>
@@ -209,7 +209,7 @@ export default function TemplateCard({
           {onUseTemplate && (
             <button
               onClick={() => onUseTemplate(template.id)}
-              className="text-sm font-medium text-iron-orange hover:underline transition"
+              className="text-sm font-medium text-iron-orange hover:underline transition min-h-[44px] px-2"
             >
               Use Template
             </button>
@@ -219,13 +219,13 @@ export default function TemplateCard({
         <div className="flex items-center gap-3">
           <button
             onClick={() => onEdit(template.id)}
-            className="text-sm font-medium text-iron-white hover:text-iron-orange transition"
+            className="text-sm font-medium text-iron-white hover:text-iron-orange transition min-h-[44px] px-2"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(template.id)}
-            className="text-sm font-medium text-iron-gray hover:text-red-500 transition"
+            className="text-sm font-medium text-iron-gray hover:text-red-500 transition min-h-[44px] px-2"
           >
             Delete
           </button>

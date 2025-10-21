@@ -26,7 +26,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock, Sparkles } from 'lucide-react'
 import { getDefaultMealType } from '@/lib/utils/meal-time'
 import { BottomNav } from '@/components/BottomNav'
@@ -46,6 +46,10 @@ import type { CreateMealRequest, CreateMealItemRequest } from '@/lib/api/nutriti
 
 export default function LogMealPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const mode = searchParams?.get('mode')
+  const isTemplateMode = mode === 'create'
+
   const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
   const { getFoodName, getBrandName } = useUserLanguage()
   const { t } = useTranslation()
@@ -326,16 +330,22 @@ export default function LogMealPage() {
         }))
       })
 
-      // Refresh quick meals list
-      const meals = await listQuickMeals()
-      setQuickMeals(meals)
-
       // Reset modal
       setShowSaveModal(false)
       setQuickMealName('')
       setQuickMealDescription('')
 
       setToast({ message: t('nutrition.quickMealSaved'), type: 'success' })
+
+      // Redirect based on mode
+      if (isTemplateMode) {
+        // In template creation mode, go back to templates page
+        router.push('/templates')
+      } else {
+        // In regular logging mode, refresh quick meals list
+        const meals = await listQuickMeals()
+        setQuickMeals(meals)
+      }
     } catch (error) {
       console.error('Failed to save quick meal:', error)
       setToast({ message: t('nutrition.failedToSaveQuickMeal'), type: 'error' })
@@ -426,62 +436,69 @@ export default function LogMealPage() {
       <header className="sticky top-0 z-40 bg-iron-black border-b border-iron-gray">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <button
-            onClick={() => router.push('/nutrition')}
-            className="text-iron-gray hover:text-iron-white transition-colors"
-            aria-label={t('nutrition.backToNutrition')}
+            onClick={() => router.push(isTemplateMode ? '/templates' : '/nutrition')}
+            className="text-iron-gray hover:text-iron-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95 transition-transform"
+            aria-label={isTemplateMode ? 'Back to Templates' : t('nutrition.backToNutrition')}
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex-1">
             <h1 className="font-heading text-2xl text-iron-white uppercase tracking-wider">
-              {t('nutrition.logMeal')}
+              {isTemplateMode ? 'Create Quick Meal' : t('nutrition.logMeal')}
             </h1>
+            {isTemplateMode && (
+              <p className="text-sm text-iron-gray mt-1">
+                Build a reusable meal template
+              </p>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Meal Type Selector - MOVED TO TOP for better UX */}
-        <div className="mb-6">
-          <h2 className="text-sm font-medium text-iron-gray uppercase tracking-wider mb-3">
-            What meal are you logging?
-          </h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {(['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const).map((type) => {
-              const isDefault = type === getDefaultMealType()
-              return (
-                <button
-                  key={type}
-                  onClick={() => setMealType(type)}
-                  className={`px-4 py-2.5 font-medium transition-colors whitespace-nowrap rounded-lg relative ${
-                    mealType === type
-                      ? 'bg-iron-orange text-iron-black'
-                      : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
-                  }`}
-                >
-                  {t(`nutrition.${type}`)}
-                  {isDefault && mealType === type && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-iron-orange opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-iron-orange">
-                        <Sparkles className="h-2 w-2 text-iron-black m-auto" />
+        {/* Meal Type Selector - Hidden in template mode */}
+        {!isTemplateMode && (
+          <div className="mb-6">
+            <h2 className="text-sm font-medium text-iron-gray uppercase tracking-wider mb-3">
+              What meal are you logging?
+            </h2>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {(['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const).map((type) => {
+                const isDefault = type === getDefaultMealType()
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setMealType(type)}
+                    className={`px-4 py-2.5 font-medium transition-colors whitespace-nowrap rounded-lg relative min-h-[44px] ${
+                      mealType === type
+                        ? 'bg-iron-orange text-iron-black'
+                        : 'bg-iron-gray/10 text-iron-white hover:bg-iron-gray/20'
+                    }`}
+                  >
+                    {t(`nutrition.${type}`)}
+                    {isDefault && mealType === type && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-iron-orange opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-iron-orange">
+                          <Sparkles className="h-2 w-2 text-iron-black m-auto" />
+                        </span>
                       </span>
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {mealType === getDefaultMealType() && (
+              <p className="text-xs text-iron-gray mt-2">
+                ✨ Suggested for this time of day
+              </p>
+            )}
           </div>
-          {mealType === getDefaultMealType() && (
-            <p className="text-xs text-iron-gray mt-2">
-              ✨ Suggested for this time of day
-            </p>
-          )}
-        </div>
+        )}
 
-        {/* Quick Meals Section - ENHANCED */}
-        {!initialLoading && showQuickMeals && quickMeals.length > 0 && (
+        {/* Quick Meals Section - Hidden in template mode */}
+        {!isTemplateMode && !initialLoading && showQuickMeals && quickMeals.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Star className="w-5 h-5 text-iron-orange fill-iron-orange" />
@@ -521,8 +538,8 @@ export default function LogMealPage() {
           </div>
         )}
 
-        {/* Recent Foods Section - ENHANCED */}
-        {!initialLoading && showRecentFoods && recentFoods.length > 0 && (
+        {/* Recent Foods Section - Hidden in template mode */}
+        {!isTemplateMode && !initialLoading && showRecentFoods && recentFoods.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-5 h-5 text-iron-gray" />
@@ -719,12 +736,18 @@ export default function LogMealPage() {
 
       </main>
 
-      {/* Sticky Log Button - Always visible above nav */}
+      {/* Sticky Action Button - Log Meal or Save Template */}
       {mealItems.length > 0 && (
         <FABFullWidth
-          label={logging ? t('nutrition.logging') : `${t('nutrition.logMeal')} (${Math.round(mealTotals.calories)} cal)`}
+          label={
+            isTemplateMode
+              ? `Save as Quick Meal (${mealItems.length} item${mealItems.length > 1 ? 's' : ''})`
+              : logging
+              ? t('nutrition.logging')
+              : `${t('nutrition.logMeal')} (${Math.round(mealTotals.calories)} cal)`
+          }
           icon={logging ? <Loader2 className="w-6 h-6 animate-spin" /> : <Plus className="w-6 h-6" />}
-          onClick={handleLogMeal}
+          onClick={isTemplateMode ? () => setShowSaveModal(true) : handleLogMeal}
           disabled={logging}
           variant="primary"
         />

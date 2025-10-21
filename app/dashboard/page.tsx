@@ -69,12 +69,12 @@ export default function DashboardPage() {
   // Check if user has an active plan
   useEffect(() => {
     async function checkPlanStatus() {
-      if (!userId || authLoading || !onboardingComplete) return
+      if (authLoading || !onboardingComplete) return
 
       try {
         setCheckingPlan(true)
-        const result = await getCurrentProgram(userId, false)
-        setHasActivePlan(!!result?.program)
+        const result = await getCurrentProgram()
+        setHasActivePlan(!!result?.program_id)
       } catch (err) {
         // No plan exists (404) or error - treat as no plan
         setHasActivePlan(false)
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     }
 
     checkPlanStatus()
-  }, [userId, authLoading, onboardingComplete])
+  }, [authLoading, onboardingComplete])
 
   const handleWeightLogged = () => {
     // Refresh dashboard data after logging weight
@@ -191,18 +191,18 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* AI Insights - Contextual feedback and suggestions */}
-        <motion.div variants={cardVariants}>
-          <InsightCardsGrid insights={generateInsights(dashboardData)} />
-        </motion.div>
-
-        {/* Hero Card - Today At A Glance */}
+        {/* Hero Card - Today At A Glance (most immediately useful) */}
         <motion.div variants={cardVariants}>
           <HeroCard
             nutrition={dashboardData.nutrition}
             activity={dashboardData.activity}
             netCalories={dashboardData.net_calories}
           />
+        </motion.div>
+
+        {/* AI Insights - Contextual feedback and suggestions */}
+        <motion.div variants={cardVariants}>
+          <InsightCardsGrid insights={generateInsights(dashboardData)} />
         </motion.div>
 
         {/* Smart Actions - Time-aware with Coach */}
@@ -233,15 +233,12 @@ export default function DashboardPage() {
       />
 
       {/* Generate Plan Modal */}
-      {userId && (
-        <GeneratePlanModal
-          isOpen={showGeneratePlanModal}
-          onClose={() => setShowGeneratePlanModal(false)}
-          userId={userId}
-          isRegeneration={false}
-          onSuccess={handlePlanGenerated}
-        />
-      )}
+      <GeneratePlanModal
+        isOpen={showGeneratePlanModal}
+        onClose={() => setShowGeneratePlanModal(false)}
+        isRegeneration={false}
+        onSuccess={handlePlanGenerated}
+      />
     </div>
   )
 }

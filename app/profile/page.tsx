@@ -139,8 +139,18 @@ export default function ProfilePage() {
   const [showConstraintsModal, setShowConstraintsModal] = useState(false)
   const [showRegeneratePlanModal, setShowRegeneratePlanModal] = useState(false)
 
-  // Plan status
-  const [currentPlan, setCurrentPlan] = useState<any | null>(null)
+  // Plan status - properly typed based on backend response
+  interface Program {
+    program_id: string
+    primary_goal: string
+    program_start_date: string
+    next_reassessment_date: string
+    tdee: number
+    macros: Record<string, number>
+    training_sessions: unknown[]
+    meals: unknown[]
+  }
+  const [currentPlan, setCurrentPlan] = useState<Program | null>(null)
   const [checkingPlan, setCheckingPlan] = useState(false)
 
   // Toast state
@@ -158,15 +168,14 @@ export default function ProfilePage() {
       setTrainingModalities(modalitiesData)
 
       // Check for current plan
-      if (profileData?.id) {
-        try {
-          setCheckingPlan(true)
-          const planResult = await getCurrentProgram(profileData.id, true)
-          setCurrentPlan(planResult?.program || null)
-        } catch {
-          setCurrentPlan(null)
-        } finally {
-          setCheckingPlan(false)
+      try {
+        setCheckingPlan(true)
+        const planResult = await getCurrentProgram()
+        setCurrentPlan(planResult || null)
+      } catch {
+        setCurrentPlan(null)
+      } finally {
+        setCheckingPlan(false)
         }
       }
     } catch (err) {
@@ -997,9 +1006,8 @@ export default function ProfilePage() {
             <GeneratePlanModal
               isOpen={showRegeneratePlanModal}
               onClose={() => setShowRegeneratePlanModal(false)}
-              userId={profile.id}
               isRegeneration={true}
-              currentPlanId={currentPlan.id}
+              currentPlanId={currentPlan.program_id}
               onSuccess={handlePlanRegenerated}
             />
           )}
