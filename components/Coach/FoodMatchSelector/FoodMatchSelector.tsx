@@ -93,7 +93,7 @@ export function FoodMatchSelector({
                     Change Food Match
                   </h3>
                   <p className="text-sm text-iron-white/60 mt-1">
-                    Original: "{originalText}"
+                    Original: &quot;{originalText}&quot;
                   </p>
                 </div>
                 <button
@@ -184,7 +184,7 @@ export function FoodMatchSelector({
                 {alternatives.length === 0 && (
                   <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
                     <p className="text-sm text-yellow-400">
-                      ⚠️ No alternative matches found. You may need to add a custom food if this isn't correct.
+                      ⚠️ No alternative matches found. You may need to add a custom food if this isn&apos;t correct.
                     </p>
                   </div>
                 )}

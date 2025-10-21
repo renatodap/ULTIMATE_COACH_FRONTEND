@@ -66,14 +66,12 @@ export function MultiLogCarousel({
   if (isNutrition) {
     if (data?.nutrition_summary) {
       // Backend provided enriched summary - use it
-      console.log('[MultiLogCarousel] Using backend nutrition_summary:', data.nutrition_summary)
       totalCalories = data.nutrition_summary.calories || 0
       totalProtein = data.nutrition_summary.protein_g || 0
       totalCarbs = data.nutrition_summary.carbs_g || 0
       totalFat = data.nutrition_summary.fat_g || 0
     } else if (data?.meal_items) {
       // Fallback: Calculate from meal_items
-      console.log('[MultiLogCarousel] Calculating nutrition from meal_items')
       data.meal_items.forEach((item: MealItem) => {
         totalCalories += item.calories
         totalProtein += item.protein_g
@@ -154,7 +152,6 @@ export function MultiLogCarousel({
 
   // Handle food selection change
   const handleFoodSelect = (newFoodId: string) => {
-    console.log('[MultiLogCarousel] Food changed for item', selectedItemIndex, 'to', newFoodId)
     // Note: Actual edits would be passed to parent via onEdit callback
     // For now, just log the change
   }
@@ -372,7 +369,7 @@ export function MultiLogCarousel({
                     {data.missing_foods && data.missing_foods.length > 0 && (
                       <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded mb-4">
                         <p className="text-sm text-yellow-400 font-semibold mb-2">
-                          ⚠️ Some foods couldn't be matched:
+                          ⚠️ Some foods couldn&apos;t be matched:
                         </p>
                         <ul className="text-xs text-yellow-400 space-y-1">
                           {data.missing_foods.map((missing: any, idx: number) => (
@@ -460,7 +457,7 @@ export function MultiLogCarousel({
                                 </span>
                               </div>
                               <p className="text-xs text-iron-white/60">
-                                You've logged this {data.matched_activity.times_logged} times
+                                You&apos;ve logged this {data.matched_activity.times_logged} times
                                 (avg: {data.matched_activity.avg_duration_minutes} min,
                                 {data.matched_activity.avg_calories} cal)
                               </p>

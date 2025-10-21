@@ -405,7 +405,7 @@ export function ConfirmationModal({
                   {data.missing_foods && data.missing_foods.length > 0 && (
                     <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
                       <p className="text-sm text-yellow-400 font-semibold mb-2">
-                        ⚠️ Some foods couldn't be matched:
+                        ⚠️ Some foods couldn&apos;t be matched:
                       </p>
                       <ul className="text-xs text-yellow-400 space-y-1">
                         {data.missing_foods.map((missing: any, idx: number) => (
@@ -568,7 +568,7 @@ export function ConfirmationModal({
                             )}
                           </div>
                           <p className="text-xs text-iron-white/60 mt-1">
-                            You've logged "{data.matched_activity.activity_name}" {data.matched_activity.times_logged}× before
+                            You&apos;ve logged &quot;{data.matched_activity.activity_name}&quot; {data.matched_activity.times_logged}× before
                             {data.matched_activity.avg_duration_minutes && ` (avg: ${data.matched_activity.avg_duration_minutes} min)`}
                           </p>
                         </div>
@@ -725,7 +725,7 @@ export function ConfirmationModal({
                         {data.validation.is_unusual && !data.validation.is_likely_typo && !data.validation.is_physiologically_impossible && (
                           <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
                             <p className="text-sm text-yellow-400">
-                              ℹ️ This measurement is outside your typical range. Please verify it's correct.
+                              ℹ️ This measurement is outside your typical range. Please verify it&apos;s correct.
                             </p>
                           </div>
                         )}
