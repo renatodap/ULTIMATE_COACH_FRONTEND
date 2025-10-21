@@ -40,13 +40,16 @@ export interface FullUserProfile {
   onboarding_completed_at?: string
 
   // Physical stats
+  birth_date?: string
   age?: number
   biological_sex?: 'male' | 'female'
   height_cm?: number
   current_weight_kg?: number
+  current_body_fat_percentage?: number
   goal_weight_kg?: number
 
   // Goals & Training
+  fitness_goals?: string[]  // Multiple goals from onboarding
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
@@ -54,16 +57,63 @@ export interface FullUserProfile {
   workout_frequency?: number
   fitness_notes?: string
 
+  // Training Schedule & Availability
+  weekly_schedule?: Array<{
+    day: number  // 1-7 (Monday-Sunday)
+    time_block: string  // e.g., "early_morning", "morning", etc.
+    duration_minutes?: number
+    location_type?: string
+  }>
+  equipment_access?: string[]
+
   // Dietary
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
+  dietary_restrictions?: string[]  // Detailed restrictions from onboarding
   food_allergies?: string[]
   foods_to_avoid?: string[]
   meals_per_day?: number
   cooks_regularly?: boolean
 
+  // Meal Timing Preferences
+  meal_timing_preferences?: Array<{
+    meal_time_id: string
+    typical_portion_size: 'small' | 'medium' | 'large'
+    flexibility_minutes?: number
+    is_non_negotiable?: boolean
+  }>
+
+  // Exercise Familiarity
+  exercise_familiarity?: Array<{
+    exercise_id: string
+    comfort_level: number  // 1-5
+    typical_weight_kg?: number
+    typical_reps?: number
+    typical_duration_minutes?: number
+    frequency?: 'rarely' | 'occasionally' | 'regularly' | 'frequently'
+    enjoys_it?: boolean
+  }>
+
   // Lifestyle
   sleep_hours?: number
   stress_level?: 'low' | 'medium' | 'high'
+
+  // Challenges/Difficulties
+  challenges?: string[]  // From onboarding
+  difficulties?: Array<{
+    difficulty_category: string
+    description: string
+    severity?: number
+    frequency?: string
+  }>
+
+  // Constraints (Non-Negotiables)
+  non_negotiables?: Array<{
+    constraint_type: string
+    description: string
+    reason?: string
+    excluded_exercise_ids?: string[]
+    excluded_food_ids?: string[]
+  }>
 
   // Macro targets
   estimated_tdee?: number
@@ -84,24 +134,85 @@ export interface FullUserProfile {
 }
 
 export interface UpdateProfileData {
+  // Basic info
   full_name?: string
+  birth_date?: string
   age?: number
+
+  // Physical stats
   height_cm?: number
   current_weight_kg?: number
+  current_body_fat_percentage?: number
   goal_weight_kg?: number
+
+  // Goals & Training
+  fitness_goals?: string[]
   primary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   secondary_goal?: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
   experience_level?: 'beginner' | 'intermediate' | 'advanced'
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active'
   workout_frequency?: number
   fitness_notes?: string
+
+  // Training Schedule & Equipment
+  weekly_schedule?: Array<{
+    day: number
+    time_block: string
+    duration_minutes?: number
+    location_type?: string
+  }>
+  equipment_access?: string[]
+
+  // Dietary
   dietary_preference?: 'none' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo'
+  dietary_restrictions?: string[]
   food_allergies?: string[]
   foods_to_avoid?: string[]
   meals_per_day?: number
   cooks_regularly?: boolean
+
+  // Meal Timing
+  meal_timing_preferences?: Array<{
+    meal_time_id: string
+    typical_portion_size: 'small' | 'medium' | 'large'
+    flexibility_minutes?: number
+    is_non_negotiable?: boolean
+  }>
+
+  // Exercise Familiarity
+  exercise_familiarity?: Array<{
+    exercise_id: string
+    comfort_level: number
+    typical_weight_kg?: number
+    typical_reps?: number
+    typical_duration_minutes?: number
+    frequency?: 'rarely' | 'occasionally' | 'regularly' | 'frequently'
+    enjoys_it?: boolean
+  }>
+
+  // Lifestyle
   sleep_hours?: number
   stress_level?: 'low' | 'medium' | 'high'
+
+  // Challenges
+  challenges?: string[]
+  difficulties?: Array<{
+    difficulty_category: string
+    description: string
+    severity?: number
+    frequency?: string
+  }>
+
+  // Constraints
+  non_negotiables?: Array<{
+    constraint_type: string
+    description: string
+    reason?: string
+    excluded_exercise_ids?: string[]
+    excluded_food_ids?: string[]
+  }>
+
+  // Preferences
   unit_system?: 'metric' | 'imperial'
   timezone?: string
   language?: string

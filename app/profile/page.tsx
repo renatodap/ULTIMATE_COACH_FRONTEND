@@ -36,6 +36,10 @@ import {
   ChevronUp,
   Link2,
   Star,
+  Dumbbell,
+  Clock,
+  Shield,
+  AlertCircle,
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
@@ -51,6 +55,12 @@ import EditDietaryModal from '@/app/components/profile/EditDietaryModal'
 import EditLifestyleModal from '@/app/components/profile/EditLifestyleModal'
 import EditPreferencesModal from '@/app/components/profile/EditPreferencesModal'
 import EditTrainingModalitiesModal from '@/app/components/profile/EditTrainingModalitiesModal'
+import EditEquipmentModal from '@/app/components/profile/EditEquipmentModal'
+import EditScheduleModal from '@/app/components/profile/EditScheduleModal'
+import EditMealTimingModal from '@/app/components/profile/EditMealTimingModal'
+import EditExerciseFamiliarityModal from '@/app/components/profile/EditExerciseFamiliarityModal'
+import EditChallengesModal from '@/app/components/profile/EditChallengesModal'
+import EditConstraintsModal from '@/app/components/profile/EditConstraintsModal'
 import Toast from '@/app/components/shared/Toast'
 import {
   formatGoal,
@@ -118,6 +128,12 @@ export default function ProfilePage() {
   const [showLifestyleModal, setShowLifestyleModal] = useState(false)
   const [showPreferencesModal, setShowPreferencesModal] = useState(false)
   const [showTrainingModalitiesModal, setShowTrainingModalitiesModal] = useState(false)
+  const [showEquipmentModal, setShowEquipmentModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showMealTimingModal, setShowMealTimingModal] = useState(false)
+  const [showExerciseFamiliarityModal, setShowExerciseFamiliarityModal] = useState(false)
+  const [showChallengesModal, setShowChallengesModal] = useState(false)
+  const [showConstraintsModal, setShowConstraintsModal] = useState(false)
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -648,6 +664,160 @@ export default function ProfilePage() {
           </div>
         </CollapsibleSection>
 
+        {/* Equipment Access Section */}
+        <CollapsibleSection
+          id="equipment"
+          title="Equipment Access"
+          icon={Dumbbell}
+          onEdit={() => setShowEquipmentModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.equipment_access && profile.equipment_access.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.equipment_access.map((item) => (
+                  <span key={item} className="px-3 py-1 bg-iron-orange/20 border border-iron-orange rounded-lg text-sm text-iron-white">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No equipment access specified</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Training Schedule Section */}
+        <CollapsibleSection
+          id="schedule"
+          title="Training Schedule"
+          icon={Calendar}
+          onEdit={() => setShowScheduleModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.weekly_schedule && profile.weekly_schedule.length > 0 ? (
+              <div className="text-sm text-iron-white">
+                <p className="mb-2 text-iron-gray">{profile.weekly_schedule.length} training slots per week</p>
+                <div className="space-y-1">
+                  {profile.weekly_schedule.slice(0, 5).map((slot, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-iron-orange">•</span>
+                      <span>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][slot.day - 1]}</span>
+                      <span className="text-iron-gray">-</span>
+                      <span className="capitalize">{slot.time_block.replace('_', ' ')}</span>
+                    </div>
+                  ))}
+                  {profile.weekly_schedule.length > 5 && (
+                    <p className="text-iron-gray text-xs mt-1">+ {profile.weekly_schedule.length - 5} more</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No training schedule set</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Meal Timing Section */}
+        <CollapsibleSection
+          id="meal-timing"
+          title="Meal Timing"
+          icon={Clock}
+          onEdit={() => setShowMealTimingModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.meal_timing_preferences && profile.meal_timing_preferences.length > 0 ? (
+              <div className="space-y-2">
+                {profile.meal_timing_preferences.map((mt, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2 border-b border-iron-gray/20 last:border-0">
+                    <span className="text-sm text-iron-white capitalize">{mt.meal_time_id.replace('-', ' ')}</span>
+                    <span className="text-xs text-iron-gray">{mt.typical_portion_size} portion</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No meal timing preferences set</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Exercise Familiarity Section */}
+        <CollapsibleSection
+          id="exercises"
+          title="Exercise Familiarity"
+          icon={Dumbbell}
+          onEdit={() => setShowExerciseFamiliarityModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.exercise_familiarity && profile.exercise_familiarity.length > 0 ? (
+              <div className="text-sm text-iron-white">
+                <p className="mb-2 text-iron-gray">{profile.exercise_familiarity.length} exercises tracked</p>
+                <div className="flex flex-wrap gap-2">
+                  {profile.exercise_familiarity.slice(0, 8).map((ex, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-iron-gray/20 rounded text-xs">
+                      Comfort: {ex.comfort_level}/5
+                    </span>
+                  ))}
+                  {profile.exercise_familiarity.length > 8 && (
+                    <span className="px-2 py-1 text-iron-gray text-xs">+ {profile.exercise_familiarity.length - 8} more</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No exercise familiarity data</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Challenges Section */}
+        <CollapsibleSection
+          id="challenges"
+          title="Challenges & Obstacles"
+          icon={AlertCircle}
+          onEdit={() => setShowChallengesModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.challenges && profile.challenges.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {profile.challenges.map((challenge) => (
+                  <span key={challenge} className="px-3 py-1 bg-iron-orange/20 border border-iron-orange rounded-lg text-sm text-iron-white">
+                    {challenge}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No challenges specified</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* Constraints/Non-Negotiables Section */}
+        <CollapsibleSection
+          id="constraints"
+          title="Non-Negotiables"
+          icon={Shield}
+          onEdit={() => setShowConstraintsModal(true)}
+        >
+          <div className="space-y-2">
+            {profile.non_negotiables && profile.non_negotiables.length > 0 ? (
+              <div className="space-y-3">
+                {profile.non_negotiables.map((constraint, idx) => (
+                  <div key={idx} className="p-3 bg-iron-orange/10 border border-iron-orange/30 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Shield className="w-4 h-4 text-iron-orange flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-iron-white font-medium capitalize">{constraint.constraint_type.replace('_', ' ')}</p>
+                        <p className="text-xs text-iron-gray mt-1">{constraint.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-iron-gray">No non-negotiables set</p>
+            )}
+          </div>
+        </CollapsibleSection>
+
         {/* Sign Out Button - Extra spacing to prevent accidental taps near nav */}
         <motion.button
           onClick={handleSignOut}
@@ -709,6 +879,48 @@ export default function ProfilePage() {
               loadProfile()
               setToast({ message: 'Training modalities updated', type: 'success' })
             }}
+            onError={handleUpdateError}
+          />
+          <EditEquipmentModal
+            profile={profile}
+            isOpen={showEquipmentModal}
+            onClose={() => setShowEquipmentModal(false)}
+            onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditScheduleModal
+            profile={profile}
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditMealTimingModal
+            profile={profile}
+            isOpen={showMealTimingModal}
+            onClose={() => setShowMealTimingModal(false)}
+            onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditExerciseFamiliarityModal
+            profile={profile}
+            isOpen={showExerciseFamiliarityModal}
+            onClose={() => setShowExerciseFamiliarityModal(false)}
+            onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditChallengesModal
+            profile={profile}
+            isOpen={showChallengesModal}
+            onClose={() => setShowChallengesModal(false)}
+            onSuccess={handleUpdateSuccess}
+            onError={handleUpdateError}
+          />
+          <EditConstraintsModal
+            profile={profile}
+            isOpen={showConstraintsModal}
+            onClose={() => setShowConstraintsModal(false)}
+            onSuccess={handleUpdateSuccess}
             onError={handleUpdateError}
           />
         </>
