@@ -69,6 +69,7 @@ export function GeneratePlanModal({
 
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, isOpen])
 
   const steps = [
@@ -274,7 +275,7 @@ export function GeneratePlanModal({
                   Plan Generated!
                 </h3>
                 <p className="text-iron-gray">
-                  Your personalized fitness plan is ready. Let's see what we've prepared for you.
+                  Your personalized fitness plan is ready. Let&apos;s see what we&apos;ve prepared for you.
                 </p>
                 <button
                   onClick={handleViewPlan}

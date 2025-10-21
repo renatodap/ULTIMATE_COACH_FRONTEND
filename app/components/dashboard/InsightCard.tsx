@@ -111,7 +111,7 @@ export function InsightCard({ insight }: InsightCardProps) {
         {/* Action button (if provided) */}
         {insight.action && (
           <button
-            onClick={() => router.push(insight.action.path)}
+            onClick={() => insight.action && router.push(insight.action.path)}
             className="w-full mt-3 px-4 py-2 bg-iron-gray/20 hover:bg-iron-gray/30 text-iron-white text-sm font-medium
               transition-colors border border-iron-gray/30 hover:border-iron-orange/50"
           >

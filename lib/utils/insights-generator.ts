@@ -18,18 +18,16 @@ export function generateInsights(data: DashboardSummary): Insight[] {
   const insights: Insight[] = []
 
   // Progress Insights
-  if (data.weight?.current_weight_kg && data.weight?.goal_weight_kg) {
-    const current = data.weight.current_weight_kg
-    const goal = data.weight.goal_weight_kg
-    const diff = Math.abs(current - goal)
-    const progressPercent = data.weight.progress_percent || 0
+  if (data.weight?.current_weight && data.weight?.goal_weight) {
+    const remaining = data.weight.remaining_kg || 0
+    const progressPercent = data.weight.progress_percentage || 0
 
     if (progressPercent > 0 && progressPercent < 100) {
       insights.push({
         id: 'weight-progress',
         type: 'progress',
         title: 'Weight Progress',
-        message: `You're ${progressPercent.toFixed(0)}% of the way to your goal! ${diff.toFixed(1)}kg to go.`,
+        message: `You're ${progressPercent.toFixed(0)}% of the way to your goal! ${Math.abs(remaining).toFixed(1)}kg to go.`,
         importance: 'high',
       })
     } else if (progressPercent >= 100) {
@@ -134,24 +132,25 @@ export function generateInsights(data: DashboardSummary): Insight[] {
   }
 
   // Weekly Pattern (if data available)
-  if (data.weekly?.days_logged > 0) {
-    const daysLogged = data.weekly.days_logged
-    const streak = data.weekly.current_streak || 0
+  if (data.weekly) {
+    const daysActive = data.weekly.days_active || 0
+    const daysWithMeals = data.weekly.days_with_meals || 0
+    const totalWorkouts = data.weekly.total_workouts || 0
 
-    if (streak >= 7) {
+    if (daysActive >= 5) {
       insights.push({
-        id: 'week-streak',
+        id: 'consistent-activity',
         type: 'encouragement',
-        title: 'Week Streak!',
-        message: `${streak} days of consistent logging. You're building great habits!`,
+        title: 'Strong Consistency!',
+        message: `${daysActive} active days this week. You're building great habits!`,
         importance: 'high',
       })
-    } else if (daysLogged >= 5) {
+    } else if (totalWorkouts >= 3) {
       insights.push({
-        id: 'consistent-logging',
+        id: 'workout-consistency',
         type: 'pattern',
-        title: 'Strong Consistency',
-        message: `${daysLogged} days logged this week. Keep the momentum going!`,
+        title: 'Great Effort',
+        message: `${totalWorkouts} workouts this week. Keep the momentum going!`,
         importance: 'medium',
       })
     }
@@ -206,8 +205,8 @@ export function getContextualGreeting(data: DashboardSummary, displayName?: stri
   const hour = new Date().getHours()
 
   // Weight progress context
-  if (data.weight?.progress_percent && data.weight.progress_percent > 0) {
-    const percent = data.weight.progress_percent
+  if (data.weight?.progress_percentage && data.weight.progress_percentage > 0) {
+    const percent = data.weight.progress_percentage
     if (percent >= 75) {
       return `${baseGreeting} You're almost there - ${percent.toFixed(0)}% to your goal!`
     } else if (percent >= 50) {
@@ -222,9 +221,9 @@ export function getContextualGreeting(data: DashboardSummary, displayName?: stri
     return `${baseGreeting} Amazing workout today!`
   }
 
-  // Streak context
-  if (data.weekly?.current_streak && data.weekly.current_streak >= 7) {
-    return `${baseGreeting} ${data.weekly.current_streak} day streak - unstoppable!`
+  // Consistency context
+  if (data.weekly?.days_active && data.weekly.days_active >= 5) {
+    return `${baseGreeting} ${data.weekly.days_active} active days this week - unstoppable!`
   }
 
   // Time-based defaults

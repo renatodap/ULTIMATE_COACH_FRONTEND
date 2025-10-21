@@ -176,7 +176,6 @@ export default function ProfilePage() {
         setCurrentPlan(null)
       } finally {
         setCheckingPlan(false)
-        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('profile.failedToLoad')
