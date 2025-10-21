@@ -40,6 +40,7 @@ import {
   Clock,
   Shield,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
@@ -49,6 +50,8 @@ import { updateFullUserProfile } from '@/lib/api/profile'
 import { displayWeight, displayHeight } from '@/lib/utils/units'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 import { formatDateDisplay } from '@/lib/utils/timezone'
+import { getCurrentProgram } from '@/lib/api/planning'
+import { GeneratePlanModal } from '@/app/components/dashboard/GeneratePlanModal'
 import EditPhysicalStatsModal from '@/app/components/profile/EditPhysicalStatsModal'
 import EditGoalsModal from '@/app/components/profile/EditGoalsModal'
 import EditDietaryModal from '@/app/components/profile/EditDietaryModal'
@@ -134,6 +137,11 @@ export default function ProfilePage() {
   const [showExerciseFamiliarityModal, setShowExerciseFamiliarityModal] = useState(false)
   const [showChallengesModal, setShowChallengesModal] = useState(false)
   const [showConstraintsModal, setShowConstraintsModal] = useState(false)
+  const [showRegeneratePlanModal, setShowRegeneratePlanModal] = useState(false)
+
+  // Plan status
+  const [currentPlan, setCurrentPlan] = useState<any | null>(null)
+  const [checkingPlan, setCheckingPlan] = useState(false)
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -148,6 +156,19 @@ export default function ProfilePage() {
       ])
       setProfile(profileData)
       setTrainingModalities(modalitiesData)
+
+      // Check for current plan
+      if (profileData?.id) {
+        try {
+          setCheckingPlan(true)
+          const planResult = await getCurrentProgram(profileData.id, true)
+          setCurrentPlan(planResult?.program || null)
+        } catch {
+          setCurrentPlan(null)
+        } finally {
+          setCheckingPlan(false)
+        }
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('profile.failedToLoad')
       setError(errorMessage)
@@ -184,6 +205,12 @@ export default function ProfilePage() {
 
   const handleUpdateError = (errorMessage: string) => {
     setToast({ message: errorMessage, type: 'error' })
+  }
+
+  const handlePlanRegenerated = () => {
+    setShowRegeneratePlanModal(false)
+    setToast({ message: 'Plan regenerated successfully!', type: 'success' })
+    loadProfile() // Reload to get new plan
   }
 
   if (isLoading) {
@@ -540,6 +567,47 @@ export default function ProfilePage() {
             </div>
           </div>
         </CollapsibleSection>
+
+        {/* Fitness Plan Section */}
+        {!checkingPlan && currentPlan && (
+          <CollapsibleSection id="fitness-plan" title="Fitness Plan" icon={Calendar}>
+            <div className="space-y-4">
+              {/* Plan Status */}
+              <div className="p-4 bg-green-900/20 border border-green-700/50 rounded-lg">
+                <div className="flex items-center gap-2 text-green-500 mb-2">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">Active Plan</span>
+                </div>
+                <p className="text-sm text-iron-gray">
+                  You have an active personalized fitness plan
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => router.push('/plan')}
+                  className="px-4 py-3 bg-iron-orange text-iron-black font-medium rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  View Plan
+                </button>
+                <button
+                  onClick={() => setShowRegeneratePlanModal(true)}
+                  className="px-4 py-3 bg-iron-gray/20 border border-iron-orange text-iron-orange font-medium rounded-lg hover:bg-iron-orange/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Regenerate Plan
+                </button>
+              </div>
+
+              {/* Info */}
+              <p className="text-xs text-iron-gray text-center">
+                Regenerate your plan when your profile changes significantly
+              </p>
+            </div>
+          </CollapsibleSection>
+        )}
 
         {/* Nutrition Plan Section (Prominent Display) */}
         <CollapsibleSection id="macros" title={t('profile.nutritionPlan')} icon={TrendingUp}>
@@ -923,6 +991,18 @@ export default function ProfilePage() {
             onSuccess={handleUpdateSuccess}
             onError={handleUpdateError}
           />
+
+          {/* Regenerate Plan Modal */}
+          {currentPlan && (
+            <GeneratePlanModal
+              isOpen={showRegeneratePlanModal}
+              onClose={() => setShowRegeneratePlanModal(false)}
+              userId={profile.id}
+              isRegeneration={true}
+              currentPlanId={currentPlan.id}
+              onSuccess={handlePlanRegenerated}
+            />
+          )}
         </>
       )}
 
