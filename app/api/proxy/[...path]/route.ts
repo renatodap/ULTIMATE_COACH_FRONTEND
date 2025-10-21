@@ -53,12 +53,21 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
 
     // Forward cookies from browser request to Railway
     const cookieHeader = req.headers.get('cookie')
+    console.log('[API Proxy] Cookie header present:', !!cookieHeader)
+    console.log('[API Proxy] Cookie header length:', cookieHeader?.length || 0)
+
     if (cookieHeader) {
       headers.set('cookie', cookieHeader)
+
+      // Log cookie names for debugging (not values for security)
+      const cookieNames = cookieHeader.split(';').map(c => c.trim().split('=')[0])
+      console.log('[API Proxy] Cookies present:', cookieNames.join(', '))
     }
 
     // If Authorization is missing, attempt to derive from cookies
     if (!headers.get('authorization') && cookieHeader) {
+      console.log('[API Proxy] No Authorization header found, attempting to extract from cookies')
+
       // Try multiple cookie names in order of preference
       // 1. Backend's expected cookie name
       const accessTokenMatch = cookieHeader.match(/access_token=([^;]+)/)
@@ -66,9 +75,11 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
         try {
           const token = decodeURIComponent(accessTokenMatch[1])
           headers.set('authorization', `Bearer ${token}`)
-          console.log('[API Proxy] Using access_token cookie for authorization')
+          console.log('[API Proxy] ✅ Using access_token cookie for authorization')
+          console.log('[API Proxy] Token length:', token.length)
+          console.log('[API Proxy] Token preview:', token.substring(0, 20) + '...')
         } catch (err) {
-          console.error('[API Proxy] Failed to decode access_token:', err)
+          console.error('[API Proxy] ❌ Failed to decode access_token:', err)
         }
       }
       // 2. Supabase cookie name (fallback)
@@ -78,12 +89,19 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
           try {
             const token = decodeURIComponent(sbAccessMatch[1])
             headers.set('authorization', `Bearer ${token}`)
-            console.log('[API Proxy] Using sb-access-token cookie for authorization')
+            console.log('[API Proxy] ✅ Using sb-access-token cookie for authorization')
+            console.log('[API Proxy] Token length:', token.length)
+            console.log('[API Proxy] Token preview:', token.substring(0, 20) + '...')
           } catch (err) {
-            console.error('[API Proxy] Failed to decode sb-access-token:', err)
+            console.error('[API Proxy] ❌ Failed to decode sb-access-token:', err)
           }
+        } else {
+          console.warn('[API Proxy] ⚠️ No access_token or sb-access-token cookie found')
+          console.log('[API Proxy] Available cookies:', cookieHeader.split(';').map(c => c.trim().split('=')[0]).join(', '))
         }
       }
+    } else if (headers.get('authorization')) {
+      console.log('[API Proxy] Authorization header already present (from request)')
     }
 
     // Log auth status for debugging
