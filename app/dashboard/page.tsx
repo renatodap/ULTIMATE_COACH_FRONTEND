@@ -7,10 +7,11 @@
  * Mobile-first, sharp design, NO rounded corners
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useDashboardData } from '@/lib/hooks/useDashboardData'
+import { getCurrentProgram } from '@/lib/api/planning'
 
 // Components
 import { BottomNav } from '@/components/BottomNav'
@@ -20,6 +21,8 @@ import HeroCard from '@/app/components/dashboard/HeroCard'
 import ProgressTrackerCard from '@/app/components/dashboard/ProgressTrackerCard'
 import SmartActionsGrid from '@/app/components/dashboard/SmartActionsGrid'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
+import { GeneratePlanModal } from '@/app/components/dashboard/GeneratePlanModal'
+import GeneratePlanCard from '@/app/components/dashboard/GeneratePlanCard'
 
 // Animation variants
 const containerVariants = {
@@ -42,7 +45,7 @@ const cardVariants = {
 }
 
 export default function DashboardPage() {
-  const { loading: authLoading, onboardingComplete } = useOnboardingCheck()
+  const { loading: authLoading, onboardingComplete, userId } = useOnboardingCheck()
 
   // Use the new dashboard data hook
   const {
@@ -57,6 +60,29 @@ export default function DashboardPage() {
   } = useDashboardData({ skip: authLoading || !onboardingComplete })
 
   const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [showGeneratePlanModal, setShowGeneratePlanModal] = useState(false)
+  const [hasActivePlan, setHasActivePlan] = useState<boolean | null>(null)
+  const [checkingPlan, setCheckingPlan] = useState(false)
+
+  // Check if user has an active plan
+  useEffect(() => {
+    async function checkPlanStatus() {
+      if (!userId || authLoading || !onboardingComplete) return
+
+      try {
+        setCheckingPlan(true)
+        const result = await getCurrentProgram(userId, false)
+        setHasActivePlan(!!result?.program)
+      } catch (err) {
+        // No plan exists (404) or error - treat as no plan
+        setHasActivePlan(false)
+      } finally {
+        setCheckingPlan(false)
+      }
+    }
+
+    checkPlanStatus()
+  }, [userId, authLoading, onboardingComplete])
 
   const handleWeightLogged = () => {
     // Refresh dashboard data after logging weight
@@ -64,6 +90,13 @@ export default function DashboardPage() {
   }
 
   const handleRefresh = () => {
+    refresh()
+  }
+
+  const handlePlanGenerated = () => {
+    // Mark as having active plan and close modal
+    setHasActivePlan(true)
+    setShowGeneratePlanModal(false)
     refresh()
   }
 
@@ -148,6 +181,13 @@ export default function DashboardPage() {
           />
         </motion.div>
 
+        {/* Generate Plan Card - Show if no active plan */}
+        {!checkingPlan && hasActivePlan === false && (
+          <motion.div variants={cardVariants}>
+            <GeneratePlanCard onGenerateClick={() => setShowGeneratePlanModal(true)} />
+          </motion.div>
+        )}
+
         {/* Hero Card - Today At A Glance */}
         <motion.div variants={cardVariants}>
           <HeroCard
@@ -183,6 +223,17 @@ export default function DashboardPage() {
         onSuccess={handleWeightLogged}
         defaultUnit={unitSystem === 'imperial' ? 'lbs' : 'kg'}
       />
+
+      {/* Generate Plan Modal */}
+      {userId && (
+        <GeneratePlanModal
+          isOpen={showGeneratePlanModal}
+          onClose={() => setShowGeneratePlanModal(false)}
+          userId={userId}
+          isRegeneration={false}
+          onSuccess={handlePlanGenerated}
+        />
+      )}
     </div>
   )
 }

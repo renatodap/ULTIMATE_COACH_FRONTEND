@@ -95,3 +95,44 @@ export async function markNotificationRead(userId: string, notificationId: strin
   })
 }
 
+/**
+ * Generate a new personalized fitness plan
+ * Uses current user profile data (from onboarding + profile editing)
+ * Backend creates plan based on:
+ * - Goals, experience level, workout frequency
+ * - Training modalities, equipment access, schedule
+ * - Dietary preferences, meal timing
+ * - Constraints, challenges, improvement goals
+ */
+export async function generatePlan(userId: string) {
+  return http<{
+    success: boolean
+    program_id: string
+    program: any
+    message: string
+  }>(`/api/v1/programs/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId }),
+  })
+}
+
+/**
+ * Regenerate plan (when profile changes significantly)
+ * Marks old plan as archived and creates new one
+ */
+export async function regeneratePlan(userId: string, reason?: string) {
+  return http<{
+    success: boolean
+    program_id: string
+    program: any
+    previous_program_id: string
+    message: string
+  }>(`/api/v1/programs/regenerate`, {
+    method: 'POST',
+    body: JSON.stringify({
+      user_id: userId,
+      reason: reason || 'User requested regeneration'
+    }),
+  })
+}
+

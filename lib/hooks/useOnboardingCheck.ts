@@ -16,11 +16,13 @@ export function useOnboardingCheck() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [onboardingComplete, setOnboardingComplete] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     async function checkOnboarding() {
       try {
         const user = await getCurrentUser()
+        setUserId(user.id)
 
         if (!user.onboarding_completed) {
           router.push('/onboarding')
@@ -57,5 +59,5 @@ export function useOnboardingCheck() {
     checkOnboarding()
   }, [router])
 
-  return { loading, onboardingComplete }
+  return { loading, onboardingComplete, userId }
 }
