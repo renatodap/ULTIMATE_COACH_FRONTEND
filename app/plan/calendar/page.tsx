@@ -14,7 +14,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     getCalendarFull(userId, dateISO, 'week').then((res) => setEvents(res.events)).catch(() => {})
-  }, [dateISO])
+  }, [dateISO, userId])
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, any[]> = {}

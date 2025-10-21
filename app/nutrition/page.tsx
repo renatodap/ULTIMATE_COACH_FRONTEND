@@ -210,13 +210,14 @@ function NutritionPageContent() {
       }
     )
 
-    if (bigCardRef.current) {
-      observer.observe(bigCardRef.current)
+    const currentRef = bigCardRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
     }
 
     return () => {
-      if (bigCardRef.current) {
-        observer.unobserve(bigCardRef.current)
+      if (currentRef) {
+        observer.unobserve(currentRef)
       }
     }
   }, [])
