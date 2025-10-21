@@ -23,6 +23,8 @@ import SmartActionsGrid from '@/app/components/dashboard/SmartActionsGrid'
 import WeightLogModal from '@/app/components/dashboard/WeightLogModal'
 import { GeneratePlanModal } from '@/app/components/dashboard/GeneratePlanModal'
 import GeneratePlanCard from '@/app/components/dashboard/GeneratePlanCard'
+import { InsightCardsGrid } from '@/app/components/dashboard/InsightCard'
+import { generateInsights } from '@/lib/utils/insights-generator'
 
 // Animation variants
 const containerVariants = {
@@ -162,6 +164,7 @@ export default function DashboardPage() {
         date={dashboardData.date}
         onRefresh={handleRefresh}
         refreshing={refreshing}
+        dashboardData={dashboardData}
       />
 
       {/* Main Content */}
@@ -187,6 +190,11 @@ export default function DashboardPage() {
             <GeneratePlanCard onGenerateClick={() => setShowGeneratePlanModal(true)} />
           </motion.div>
         )}
+
+        {/* AI Insights - Contextual feedback and suggestions */}
+        <motion.div variants={cardVariants}>
+          <InsightCardsGrid insights={generateInsights(dashboardData)} />
+        </motion.div>
 
         {/* Hero Card - Today At A Glance */}
         <motion.div variants={cardVariants}>

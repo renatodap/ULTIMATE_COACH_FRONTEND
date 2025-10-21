@@ -6,20 +6,24 @@
  * Intuitive: Clear greeting and refresh button
  * Mobile-first: Big tap targets, natural gestures
  * Easy to use: One tap to refresh all data
+ * Part of Phase 5: Contextual AI greetings
  */
 
 import { motion } from 'framer-motion'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz'
+import { getContextualGreeting } from '@/lib/utils/insights-generator'
+import type { DashboardSummary } from '@/lib/types/dashboard'
 
 interface DashboardHeaderProps {
   displayName?: string | null
   date: string
   onRefresh?: () => void
   refreshing?: boolean
+  dashboardData?: DashboardSummary | null
 }
 
-export default function DashboardHeader({ displayName, date, onRefresh, refreshing = false }: DashboardHeaderProps) {
+export default function DashboardHeader({ displayName, date, onRefresh, refreshing = false, dashboardData }: DashboardHeaderProps) {
   const { timezone } = useTimezone()
 
   // Format date: "Monday, Oct 13" in user's timezone
@@ -27,21 +31,20 @@ export default function DashboardHeader({ displayName, date, onRefresh, refreshi
   const dateObj = toZonedTime(new Date(date + 'T00:00:00'), timezone)
   const formattedDate = formatInTimeZone(dateObj, timezone, 'EEEE, MMM d')
 
-  // Get greeting based on current time in user's timezone
-  const currentTime = toZonedTime(new Date(), timezone)
-  const hour = currentTime.getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
+  // Get contextual greeting (AI-powered based on progress and activity)
+  const greeting = dashboardData
+    ? getContextualGreeting(dashboardData, displayName || undefined)
+    : `Good ${new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}${displayName ? `, ${displayName}` : ''}`
 
   return (
     <header className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30 backdrop-blur-sm">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-iron-white uppercase tracking-wider mb-1">
+          <div className="flex-1 min-w-0 pr-4">
+            <h1 className="text-lg sm:text-xl font-bold text-iron-white tracking-wide mb-1">
               {greeting}
-              {displayName && <span className="text-iron-orange">, {displayName}</span>}
             </h1>
-            <p className="text-sm text-iron-gray uppercase tracking-wider">
+            <p className="text-xs sm:text-sm text-iron-gray uppercase tracking-wider">
               {formattedDate}
             </p>
           </div>
