@@ -87,7 +87,7 @@ export function BottomNav({ hideOnScroll = true }: BottomNavProps) {
   }
 
   const tabs = FEATURE_PLAN_IN_NAV
-    ? [baseTabs[0], planTab, coachTab, profileTab]
+    ? [baseTabs[0], coachTab, profileTab, planTab]  // Home, Coach, Profile, Plan
     : [baseTabs[0], activitiesTab, coachTab, nutritionTab, profileTab]
 
   const isActive = (path: string) => {
