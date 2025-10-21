@@ -1,16 +1,19 @@
 'use client'
 
 /**
- * Streamlined Onboarding Flow - 4 Screens
- * Groups related questions for faster completion
+ * Enhanced Onboarding Flow - 12 Screens
+ * Comprehensive data collection for personalized coaching
  */
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { completeOnboarding, getTrainingModalities, type TrainingModality, type TrainingModalitySelection } from '@/lib/api/onboarding'
 import { getCurrentUser } from '@/lib/api/users'
+import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
+import { getUserFriendlyErrorMessage } from '@/components/auth/AuthErrorMessage'
 import {
   weightToKg,
   weightFromKg,
@@ -24,14 +27,63 @@ import { Message } from '@/components/onboarding/Message'
 import { ButtonGroup } from '@/components/onboarding/ButtonGroup'
 import { Input } from '@/components/onboarding/Input'
 
+// Import new consultation components
+import ModalitiesSearchSelector from '@/components/onboarding/ModalitiesSearchSelector'
+import ExerciseSearchSelector from '@/components/onboarding/ExerciseSearchSelector'
+import ScheduleCalendarGrid from '@/components/onboarding/ScheduleCalendarGrid'
+import MealTimesSelector from '@/components/onboarding/MealTimesSelector'
+import FoodSearchSelector from '@/components/onboarding/FoodSearchSelector'
+import EventsSelector from '@/components/onboarding/EventsSelector'
+import GoalsBuilder from '@/components/onboarding/GoalsBuilder'
+import DifficultiesForm from '@/components/onboarding/DifficultiesForm'
+import ConstraintsForm from '@/components/onboarding/ConstraintsForm'
+
+// Import types
+import type {
+  ExerciseFamiliarityEntry,
+  TrainingAvailabilitySlot,
+  MealTimingPreference,
+  TypicalFoodEntry,
+  EventEntry,
+  ImprovementGoalEntry,
+  DifficultyEntry,
+  NonNegotiableEntry,
+} from '@/lib/api/onboarding'
+
 type Step =
   | 'language'
-  | 'physical_stats'       // Screen 1: age, sex, height, weight, goal_weight
-  | 'goals_experience'     // Screen 2: primary + secondary goal, experience, frequency, activity, sleep
-  | 'training_modalities'  // Screen 3: training modalities selection (NEW)
-  | 'diet_lifestyle'       // Screen 4: fitness notes, diet, allergies, meals, stress
+  // Phase 1: Essentials (3 screens)
+  | 'physical_stats'
+  | 'goals_experience'
+  // Phase 2: Training Background (3 screens)
+  | 'training_modalities'
+  | 'exercise_familiarity'
+  | 'training_availability'
+  // Phase 3: Nutrition Profile (3 screens)
+  | 'diet_lifestyle'
+  | 'meal_timing'
+  | 'typical_foods'
+  // Phase 4: Goals & Context (3 screens)
+  | 'events'
+  | 'improvement_goals'
+  | 'difficulties_constraints'
   | 'calculating'
   | 'complete'
+
+const STEP_ORDER: Step[] = [
+  'language',
+  'physical_stats',
+  'goals_experience',
+  'training_modalities',
+  'exercise_familiarity',
+  'training_availability',
+  'diet_lifestyle',
+  'meal_timing',
+  'typical_foods',
+  'events',
+  'improvement_goals',
+  'difficulties_constraints',
+]
 
 export default function OnboardingPage() {
   const { t } = useTranslation()
@@ -40,28 +92,43 @@ export default function OnboardingPage() {
 
   const [data, setData] = useState({
     language: 'en' as SupportedLanguage,
-    // Physical Stats (Screen 1)
+    // Physical Stats (Screen 2)
     birth_date: '',
     biological_sex: '',
     height_cm: 0,
     current_weight_kg: 0,
     goal_weight_kg: 0,
-    // Goals & Experience (Screen 2)
+    // Goals & Experience (Screen 3)
     primary_goal: '',
     secondary_goal: '' as '' | 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance',
     experience_level: '',
     workout_frequency: 0,
     activity_level: '',
     sleep_hours: 7,
-    // Training Modalities (Screen 3)
+    // Training Modalities (Screen 4)
     training_modalities: [] as TrainingModalitySelection[],
-    // Diet & Lifestyle (Screen 4)
+    // Exercise Familiarity (Screen 5)
+    exercise_familiarity: [] as ExerciseFamiliarityEntry[],
+    // Training Availability (Screen 6)
+    training_availability: [] as TrainingAvailabilitySlot[],
+    // Diet & Lifestyle (Screen 7)
     fitness_notes: '',
     dietary_preference: 'none',
     food_allergies: [] as string[],
     meals_per_day: 3,
     stress_level: 'medium',
     cooks_regularly: true,
+    // Meal Timing (Screen 8)
+    meal_timing_preferences: [] as MealTimingPreference[],
+    // Typical Foods (Screen 9)
+    typical_foods: [] as TypicalFoodEntry[],
+    // Events (Screen 10)
+    upcoming_events: [] as EventEntry[],
+    // Improvement Goals (Screen 11)
+    improvement_goals: [] as ImprovementGoalEntry[],
+    // Difficulties & Constraints (Screen 12)
+    difficulties: [] as DifficultyEntry[],
+    non_negotiables: [] as NonNegotiableEntry[],
     // Auto-detected
     unit_system: 'imperial' as UnitSystem,
   })
@@ -74,8 +141,13 @@ export default function OnboardingPage() {
         const modalities = await getTrainingModalities()
         setAvailableModalities(modalities)
       } catch (error) {
-        console.error('[Onboarding] Failed to fetch training modalities:', error)
-        // Continue without modalities - not critical
+        ErrorLogger.log({
+          category: ErrorCategory.ONBOARDING_LOAD,
+          severity: ErrorSeverity.WARNING,
+          message: 'Failed to fetch training modalities',
+          error,
+          featureData: { note: 'Continuing without modalities - not critical' }
+        })
       }
     }
     fetchModalities()
@@ -87,6 +159,46 @@ export default function OnboardingPage() {
     setData(prev => ({ ...prev, language: detectedLanguage }))
   }, [])
 
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('onboarding_progress')
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData)
+        setData(prev => ({ ...prev, ...parsed }))
+        ErrorLogger.log({
+          category: ErrorCategory.ONBOARDING_LOAD,
+          severity: ErrorSeverity.INFO,
+          message: 'Restored onboarding progress from localStorage'
+        })
+      } catch (error) {
+        ErrorLogger.log({
+          category: ErrorCategory.ONBOARDING_LOAD,
+          severity: ErrorSeverity.WARNING,
+          message: 'Failed to parse saved onboarding data',
+          error
+        })
+      }
+    }
+  }, [])
+
+  // Auto-save data to localStorage whenever it changes
+  useEffect(() => {
+    // Don't save if we're in the initial language selection
+    if (step === 'language' && !data.birth_date) return
+
+    try {
+      localStorage.setItem('onboarding_progress', JSON.stringify(data))
+    } catch (error) {
+      ErrorLogger.log({
+        category: ErrorCategory.ONBOARDING_LOAD,
+        severity: ErrorSeverity.WARNING,
+        message: 'Failed to save onboarding progress to localStorage',
+        error
+      })
+    }
+  }, [data, step])
+
   // Check if user already completed onboarding - redirect if yes
   const [checkingOnboarding, setCheckingOnboarding] = useState(true)
   useEffect(() => {
@@ -94,25 +206,38 @@ export default function OnboardingPage() {
       try {
         const user = await getCurrentUser()
 
-        // If onboarding already completed, redirect to dashboard
         if (user.onboarding_completed) {
-          console.log('[Onboarding] User already completed onboarding, redirecting to dashboard')
+          ErrorLogger.log({
+            category: ErrorCategory.ONBOARDING_NAVIGATION,
+            severity: ErrorSeverity.INFO,
+            message: 'User already completed onboarding, redirecting to dashboard',
+            userId: user.id,
+            userEmail: user.email
+          })
           router.push('/dashboard')
           return
         }
 
-        // User hasn't completed onboarding yet - allow access
         setCheckingOnboarding(false)
       } catch (error: any) {
-        // If 401 (not authenticated), redirect to login
         if (error?.status === 401 || error?.message?.includes('401')) {
-          console.log('[Onboarding] User not authenticated, redirecting to login')
+          ErrorLogger.log({
+            category: ErrorCategory.ONBOARDING_NAVIGATION,
+            severity: ErrorSeverity.WARNING,
+            message: 'User not authenticated, redirecting to login',
+            statusCode: 401
+          })
           router.push('/login')
           return
         }
 
-        // For other errors, allow access (better UX than blocking)
-        console.error('[Onboarding] Error checking status:', error)
+        ErrorLogger.log({
+          category: ErrorCategory.ONBOARDING_LOAD,
+          severity: ErrorSeverity.ERROR,
+          message: 'Error checking onboarding status',
+          error,
+          featureData: { note: 'Allowing access anyway for better UX' }
+        })
         setCheckingOnboarding(false)
       }
     }
@@ -141,18 +266,42 @@ export default function OnboardingPage() {
     setData(prev => ({ ...prev, ...updates }))
   }, [])
 
+  // Progress calculation
+  const currentStepIndex = STEP_ORDER.indexOf(step)
+  const totalSteps = STEP_ORDER.length
+  const progressPercentage = ((currentStepIndex + 1) / totalSteps) * 100
+
+  // Navigation helpers
+  const goBack = () => {
+    const currentIndex = STEP_ORDER.indexOf(step)
+    if (currentIndex > 0) {
+      next(STEP_ORDER[currentIndex - 1])
+    }
+  }
+
+  const goNext = (validationFn?: () => boolean) => {
+    if (validationFn && !validationFn()) return
+
+    const currentIndex = STEP_ORDER.indexOf(step)
+    if (currentIndex < STEP_ORDER.length - 1) {
+      next(STEP_ORDER[currentIndex + 1])
+    }
+  }
+
   // Validation functions
   const validatePhysicalStats = (): boolean => {
     const errors: {[key: string]: string} = {}
 
     if (!data.birth_date) {
-      errors.birth_date = 'Birth date is required'
+      errors.birth_date = 'Please enter your birth date to continue'
     } else {
       const bd = new Date(data.birth_date)
       const today = new Date()
       const age = Math.floor((today.getTime() - bd.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-      if (age < 13 || age > 120) {
-        errors.birth_date = 'Age must be between 13 and 120'
+      if (age < 13) {
+        errors.birth_date = 'You must be at least 13 years old to use this app'
+      } else if (age > 120) {
+        errors.birth_date = 'Please check your birth date - the year seems incorrect'
       }
     }
 
@@ -172,11 +321,18 @@ export default function OnboardingPage() {
       errors.goal_weight = 'Goal weight must be between 30-300 kg (66-661 lbs)'
     }
 
-    // Goal weight must be within 50% of current weight
-    if (data.current_weight_kg && data.goal_weight_kg) {
+    // Goal-specific weight validation
+    if (data.current_weight_kg && data.goal_weight_kg && data.primary_goal) {
       const weightDiff = Math.abs(data.goal_weight_kg - data.current_weight_kg)
+
       if (weightDiff > data.current_weight_kg * 0.5) {
-        errors.goal_weight = 'Goal weight must be within 50% of current weight'
+        errors.goal_weight = 'Goal weight must be within 50% of current weight for safety'
+      }
+
+      if (data.primary_goal === 'lose_weight' && data.goal_weight_kg >= data.current_weight_kg) {
+        errors.goal_weight = 'Goal weight should be less than current weight for weight loss'
+      } else if (data.primary_goal === 'build_muscle' && data.goal_weight_kg <= data.current_weight_kg) {
+        errors.goal_weight = 'Goal weight should be greater than current weight for muscle building'
       }
     }
 
@@ -205,7 +361,13 @@ export default function OnboardingPage() {
       try {
         timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
       } catch (e) {
-        console.warn('Failed to detect timezone, using default:', e)
+        ErrorLogger.log({
+          category: ErrorCategory.ONBOARDING_LOAD,
+          severity: ErrorSeverity.WARNING,
+          message: 'Failed to detect timezone, using default',
+          error: e,
+          featureData: { defaultTimezone: 'America/New_York' }
+        })
       }
 
       const payload = {
@@ -230,26 +392,70 @@ export default function OnboardingPage() {
         cooks_regularly: data.cooks_regularly,
         unit_system: data.unit_system,
         timezone: timezone,
+        // Phase 2: Training Background
+        exercise_familiarity: data.exercise_familiarity.length > 0 ? data.exercise_familiarity : undefined,
+        training_availability: data.training_availability.length > 0 ? data.training_availability : undefined,
+        // Phase 3: Nutrition Profile
+        meal_timing_preferences: data.meal_timing_preferences.length > 0 ? data.meal_timing_preferences : undefined,
+        typical_foods: data.typical_foods.length > 0 ? data.typical_foods : undefined,
+        // Phase 4: Goals & Context
+        upcoming_events: data.upcoming_events.length > 0 ? data.upcoming_events : undefined,
+        improvement_goals: data.improvement_goals.length > 0 ? data.improvement_goals : undefined,
+        difficulties: data.difficulties.length > 0 ? data.difficulties : undefined,
+        non_negotiables: data.non_negotiables.length > 0 ? data.non_negotiables : undefined,
       }
 
-      console.log('[Onboarding] Submitting payload')
+      ErrorLogger.log({
+        category: ErrorCategory.ONBOARDING_SUBMIT,
+        severity: ErrorSeverity.INFO,
+        message: 'Submitting comprehensive onboarding data',
+        featureData: {
+          primary_goal: payload.primary_goal,
+          experience_level: payload.experience_level,
+          activity_level: payload.activity_level,
+          has_training_modalities: !!payload.training_modalities,
+          has_exercise_familiarity: !!payload.exercise_familiarity,
+          has_training_availability: !!payload.training_availability,
+          has_meal_timing: !!payload.meal_timing_preferences,
+          has_typical_foods: !!payload.typical_foods,
+          has_events: !!payload.upcoming_events,
+          has_goals: !!payload.improvement_goals,
+          has_difficulties: !!payload.difficulties,
+          has_non_negotiables: !!payload.non_negotiables,
+        }
+      })
       await completeOnboarding(payload)
 
-      next('complete')
-      setTimeout(() => router.push('/dashboard'), 2000)
+      // Clear saved progress from localStorage
+      try {
+        localStorage.removeItem('onboarding_progress')
+      } catch (error) {
+        // Ignore localStorage errors
+      }
+
+      // Immediate redirect with full page reload to ensure fresh app state
+      window.location.href = '/dashboard'
     } catch (err: any) {
-      console.error('[Onboarding] Submit error:', err)
+      ErrorLogger.log({
+        category: ErrorCategory.ONBOARDING_SUBMIT,
+        severity: ErrorSeverity.ERROR,
+        message: 'Onboarding submission failed',
+        error: err,
+        statusCode: err?.status,
+        featureData: {
+          errorMessage: err?.message
+        }
+      })
 
       if (err?.message?.includes('Session expired') ||
           err?.message?.includes('Authentication required') ||
           err?.status === 401) {
-        setError('Your session has expired. Please log in again.')
-        setTimeout(() => router.push('/login'), 2000)
+        window.location.href = '/login'
         return
       }
 
-      const detail = err?.detail || err?.message || (typeof err === 'string' ? err : '')
-      setError(detail || 'Failed to complete onboarding. Please try again.')
+      const friendlyError = getUserFriendlyErrorMessage(err)
+      setError(friendlyError || 'Failed to complete onboarding. Please try again.')
       setLoading(false)
     }
   }
@@ -257,18 +463,40 @@ export default function OnboardingPage() {
   // Show loading state while checking onboarding status
   if (checkingOnboarding) {
     return (
-      <div className="min-h-screen bg-neutral-black flex items-center justify-center">
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4 shadow-lg shadow-primary/50" />
-          <p className="text-neutral-300 text-lg">Checking your profile...</p>
+          <div className="w-12 h-12 border-4 border-iron-orange border-t-transparent animate-spin mx-auto mb-4 shadow-lg shadow-iron-orange/50" />
+          <p className="text-iron-gray text-lg">Checking your profile...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-neutral-black px-4 sm:px-6 md:px-8 py-8 sm:py-12 flex items-center justify-center">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen bg-iron-black px-4 sm:px-6 md:px-8 py-8 sm:py-12 flex flex-col">
+      {/* Progress Indicator */}
+      {step !== 'language' && step !== 'calculating' && step !== 'complete' && (
+        <div className="max-w-4xl w-full mx-auto mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-iron-gray">
+              Step {currentStepIndex + 1} of {totalSteps}
+            </span>
+            <span className="text-sm text-iron-gray">
+              {Math.round(progressPercentage)}% Complete
+            </span>
+          </div>
+          <div className="w-full h-2 bg-iron-dark-gray rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-iron-orange"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercentage}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-4xl w-full mx-auto flex-1 flex items-center">
         <AnimatePresence mode="wait">
           {/* Language Selection */}
           {step === 'language' && (
@@ -278,6 +506,7 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="w-full"
             >
               <Message text="Welcome to SHARPENED 🎯" isWelcome={true} />
               <Message text="First, let's choose your language." />
@@ -296,7 +525,7 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Screen 1: Physical Stats */}
+          {/* Screen 2: Physical Stats */}
           {step === 'physical_stats' && (
             <motion.div
               key="physical_stats"
@@ -304,19 +533,21 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-8"
+              className="w-full space-y-8"
             >
               <Message text="Let's start with your physical stats" />
 
-              <div className="space-y-6 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
+              <div className="space-y-6 bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
                 {/* Birth Date */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Birth Date</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Birth Date</label>
                   <input
                     type="date"
+                    name="birth_date"
+                    autoComplete="bday"
                     value={data.birth_date}
                     onChange={(e) => updateData({ birth_date: e.target.value })}
-                    className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-base sm:text-lg bg-neutral-900/50 text-neutral-white border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-base sm:text-lg bg-neutral-900/50 text-iron-white border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                   />
                   {validationErrors.birth_date && (
                     <p className="text-error text-sm mt-2">{validationErrors.birth_date}</p>
@@ -325,8 +556,8 @@ export default function OnboardingPage() {
 
                 {/* Biological Sex */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
-                    Biological Sex <span className="text-neutral-500 text-xs sm:text-sm">(for accurate calorie calculation)</span>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
+                    Biological Sex <span className="text-iron-gray text-xs sm:text-sm">(for accurate calorie calculation)</span>
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
@@ -338,8 +569,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ biological_sex: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.biological_sex === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -353,7 +584,7 @@ export default function OnboardingPage() {
 
                 {/* Unit System Toggle */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Preferred Units</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Preferred Units</label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: t('onboarding.imperial'), value: 'imperial', desc: 'lbs, ft/in' },
@@ -364,8 +595,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ unit_system: option.value as UnitSystem })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.unit_system === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         <div>{option.label}</div>
@@ -377,7 +608,7 @@ export default function OnboardingPage() {
 
                 {/* Height */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
                     Height {data.unit_system === 'imperial' ? '(feet and inches)' : '(cm)'}
                   </label>
                   {data.unit_system === 'imperial' ? (
@@ -385,6 +616,8 @@ export default function OnboardingPage() {
                       <div className="relative">
                         <input
                           type="number"
+                          inputMode="numeric"
+                          name="height_feet"
                           value={heightFeetInput}
                           onChange={(e) => {
                             const val = e.target.value
@@ -395,13 +628,15 @@ export default function OnboardingPage() {
                             updateData({ height_cm: cm })
                           }}
                           placeholder="e.g., 5"
-                          className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                          className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                         />
-                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">ft</span>
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-iron-gray text-base font-medium">ft</span>
                       </div>
                       <div className="relative">
                         <input
                           type="number"
+                          inputMode="numeric"
+                          name="height_inches"
                           value={heightInchesInput}
                           onChange={(e) => {
                             const val = e.target.value
@@ -412,15 +647,17 @@ export default function OnboardingPage() {
                             updateData({ height_cm: cm })
                           }}
                           placeholder="e.g., 10"
-                          className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                          className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                         />
-                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">in</span>
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-iron-gray text-base font-medium">in</span>
                       </div>
                     </div>
                   ) : (
                     <div className="relative">
                       <input
                         type="number"
+                        inputMode="numeric"
+                        name="height_cm"
                         value={heightInput}
                         onChange={(e) => {
                           const val = e.target.value
@@ -429,9 +666,9 @@ export default function OnboardingPage() {
                           if (!isNaN(num)) updateData({ height_cm: num })
                         }}
                         placeholder="e.g., 178"
-                        className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                        className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">cm</span>
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-iron-gray text-base font-medium">cm</span>
                     </div>
                   )}
                   {validationErrors.height && (
@@ -441,12 +678,14 @@ export default function OnboardingPage() {
 
                 {/* Current Weight */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
                     Current Weight {data.unit_system === 'imperial' ? '(lbs)' : '(kg)'}
                   </label>
                   <div className="relative">
                     <input
                       type="number"
+                      inputMode="decimal"
+                      name="current_weight"
                       step="0.1"
                       value={currentWeightInput}
                       onChange={(e) => {
@@ -459,9 +698,9 @@ export default function OnboardingPage() {
                         }
                       }}
                       placeholder={data.unit_system === 'imperial' ? 'e.g., 180' : 'e.g., 82'}
-                      className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                      className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                     />
-                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-iron-gray text-base font-medium">
                       {data.unit_system === 'imperial' ? 'lbs' : 'kg'}
                     </span>
                   </div>
@@ -472,12 +711,14 @@ export default function OnboardingPage() {
 
                 {/* Goal Weight */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
                     Goal Weight {data.unit_system === 'imperial' ? '(lbs)' : '(kg)'}
                   </label>
                   <div className="relative">
                     <input
                       type="number"
+                      inputMode="decimal"
+                      name="goal_weight"
                       step="0.1"
                       value={goalWeightInput}
                       onChange={(e) => {
@@ -490,9 +731,9 @@ export default function OnboardingPage() {
                         }
                       }}
                       placeholder={data.unit_system === 'imperial' ? 'e.g., 170' : 'e.g., 77'}
-                      className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                      className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                     />
-                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-medium">
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-iron-gray text-base font-medium">
                       {data.unit_system === 'imperial' ? 'lbs' : 'kg'}
                     </span>
                   </div>
@@ -503,19 +744,15 @@ export default function OnboardingPage() {
               </div>
 
               <button
-                onClick={() => {
-                  if (validatePhysicalStats()) {
-                    next('goals_experience')
-                  }
-                }}
-                className="w-full px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                onClick={() => goNext(validatePhysicalStats)}
+                className="w-full px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all"
               >
                 Continue
               </button>
             </motion.div>
           )}
 
-          {/* Screen 2: Goals & Experience */}
+          {/* Screen 3: Goals & Experience */}
           {step === 'goals_experience' && (
             <motion.div
               key="goals_experience"
@@ -523,14 +760,14 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-8"
+              className="w-full space-y-8"
             >
               <Message text="Tell us about your goals and lifestyle" />
 
-              <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
+              <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
                 {/* Primary Goal */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">What&apos;s your primary goal?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">What&apos;s your primary goal?</label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: t('onboarding.loseWeight'), value: 'lose_weight' },
@@ -543,8 +780,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ primary_goal: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.primary_goal === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -558,8 +795,8 @@ export default function OnboardingPage() {
 
                 {/* Secondary Goal (Optional) */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
-                    Secondary goal? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
+                    Secondary goal? <span className="text-iron-gray text-xs sm:text-sm">(optional)</span>
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     {[
@@ -576,8 +813,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ secondary_goal: option.value as '' | 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance' })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.secondary_goal === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -588,7 +825,7 @@ export default function OnboardingPage() {
 
                 {/* Experience Level */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Fitness experience level?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Fitness experience level?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.beginner'), value: 'beginner', desc: '< 1 year' },
@@ -600,8 +837,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ experience_level: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.experience_level === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         <div>{option.label}</div>
@@ -616,7 +853,7 @@ export default function OnboardingPage() {
 
                 {/* Workout Frequency */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">How often can you train per week?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">How often can you train per week?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '0-1', value: 0 },
@@ -629,8 +866,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ workout_frequency: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.workout_frequency === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -641,7 +878,7 @@ export default function OnboardingPage() {
 
                 {/* Activity Level */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Daily activity level (outside workouts)?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Daily activity level (outside workouts)?</label>
                   <div className="space-y-3">
                     {[
                       { label: t('onboarding.sedentary'), value: 'sedentary', desc: t('onboarding.sedentaryDesc') },
@@ -655,8 +892,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ activity_level: option.value })}
                         className={`w-full px-6 py-4 rounded-xl text-left transition-all ${
                           data.activity_level === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         <div className="font-medium text-lg">{option.label}</div>
@@ -671,7 +908,7 @@ export default function OnboardingPage() {
 
                 {/* Sleep Hours */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Average nightly sleep?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Average nightly sleep?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '< 6 hrs', value: 5 },
@@ -684,8 +921,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ sleep_hours: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.sleep_hours === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -697,26 +934,24 @@ export default function OnboardingPage() {
 
               <div className="flex gap-3 sm:gap-4">
                 <button
-                  onClick={() => next('physical_stats')}
-                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
                 >
+                  <ChevronLeft className="w-5 h-5" />
                   Back
                 </button>
                 <button
-                  onClick={() => {
-                    if (validateGoalsExperience()) {
-                      next('training_modalities')
-                    }
-                  }}
-                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                  onClick={() => goNext(validateGoalsExperience)}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
                 >
                   Continue
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* Screen 3: Training Modalities (NEW) */}
+          {/* Screen 4: Training Modalities */}
           {step === 'training_modalities' && (
             <motion.div
               key="training_modalities"
@@ -724,117 +959,116 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-8"
+              className="w-full space-y-8"
             >
               <Message text="What do you train?" />
-              <p className="text-neutral-400 text-base -mt-4">Select all that apply</p>
+              <p className="text-iron-gray text-base -mt-4">Select all that apply (optional)</p>
 
-              <div className="space-y-6 bg-neutral-900/30 rounded-2xl p-6 sm:p-8 border border-neutral-800">
-                {/* Training Modalities Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-                  {availableModalities.filter(m => m.name !== 'Other').map((modality) => {
-                    const isSelected = data.training_modalities.some(tm => tm.modality_id === modality.id)
-                    const selectedModality = data.training_modalities.find(tm => tm.modality_id === modality.id)
-
-                    return (
-                      <button
-                        key={modality.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            // Deselect
-                            updateData({
-                              training_modalities: data.training_modalities.filter(tm => tm.modality_id !== modality.id)
-                            })
-                          } else {
-                            // Select with default proficiency
-                            updateData({
-                              training_modalities: [...data.training_modalities, {
-                                modality_id: modality.id,
-                                proficiency_level: 'beginner',
-                                is_primary: data.training_modalities.length === 0 // First one is primary by default
-                              }]
-                            })
-                          }
-                        }}
-                        className={`min-h-[88px] px-4 py-3 rounded-xl text-left transition-all ${
-                          isSelected
-                            ? 'bg-primary/10 text-neutral-white border-2 border-primary shadow-lg shadow-primary/30'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-2xl">{modality.icon}</span>
-                          <span className="text-base sm:text-lg font-medium">{modality.name}</span>
-                        </div>
-                        {isSelected && selectedModality && (
-                          <select
-                            value={selectedModality.proficiency_level}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              updateData({
-                                training_modalities: data.training_modalities.map(tm =>
-                                  tm.modality_id === modality.id
-                                    ? { ...tm, proficiency_level: e.target.value as any }
-                                    : tm
-                                )
-                              })
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full mt-2 px-2 py-1 rounded-lg text-sm bg-neutral-800 text-neutral-white border border-neutral-700 focus:border-primary focus:outline-none"
-                          >
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate">Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                            <option value="expert">Expert</option>
-                          </select>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Selected Modalities Summary */}
-                {data.training_modalities.length > 0 && (
-                  <div className="pt-4 border-t border-neutral-700">
-                    <p className="text-neutral-400 text-sm mb-3">
-                      {data.training_modalities.length} selected
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {data.training_modalities.map((tm) => {
-                        const modality = availableModalities.find(m => m.id === tm.modality_id)
-                        return (
-                          <div
-                            key={tm.modality_id}
-                            className="px-3 py-1.5 rounded-lg bg-primary/20 text-neutral-white text-sm flex items-center gap-2"
-                          >
-                            {modality?.icon} {modality?.name}
-                            {tm.is_primary && <span className="text-yellow-400">★</span>}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <ModalitiesSearchSelector
+                  selectedModalities={data.training_modalities}
+                  onChange={(modalities) => updateData({ training_modalities: modalities })}
+                />
               </div>
 
               <div className="flex gap-3 sm:gap-4">
                 <button
-                  onClick={() => next('goals_experience')}
-                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
                 >
+                  <ChevronLeft className="w-5 h-5" />
                   Back
                 </button>
                 <button
-                  onClick={() => next('diet_lifestyle')}
-                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
                 >
                   Continue
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* Screen 3: Diet & Lifestyle */}
+          {/* Screen 5: Exercise Familiarity */}
+          {step === 'exercise_familiarity' && (
+            <motion.div
+              key="exercise_familiarity"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="Which exercises are you familiar with?" />
+              <p className="text-iron-gray text-base -mt-4">This helps us match your experience (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <ExerciseSearchSelector
+                  selectedExercises={data.exercise_familiarity}
+                  onChange={(exercises) => updateData({ exercise_familiarity: exercises })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 6: Training Availability */}
+          {step === 'training_availability' && (
+            <motion.div
+              key="training_availability"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="When are you available to train?" />
+              <p className="text-iron-gray text-base -mt-4">Select your typical weekly schedule (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <ScheduleCalendarGrid
+                  availabilitySlots={data.training_availability}
+                  onChange={(slots) => updateData({ training_availability: slots })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 7: Diet & Lifestyle */}
           {step === 'diet_lifestyle' && (
             <motion.div
               key="diet_lifestyle"
@@ -842,17 +1076,18 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-8"
+              className="w-full space-y-8"
             >
-              <Message text="Final step - diet and lifestyle preferences" />
+              <Message text="Let's talk about your nutrition habits" />
 
-              <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-8 border border-neutral-800">
+              <div className="space-y-8 bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
                 {/* Fitness Notes */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
-                    Any fitness considerations? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
+                    Tell us about your fitness journey <span className="text-iron-gray text-xs sm:text-sm">(optional)</span>
                   </label>
                   <textarea
+                    name="fitness_notes"
                     value={data.fitness_notes}
                     onChange={(e) => {
                       const value = e.target.value
@@ -860,23 +1095,18 @@ export default function OnboardingPage() {
                         updateData({ fitness_notes: value })
                       }
                     }}
-                    placeholder="Any injuries, preferences, or fitness considerations we should know about?"
-                    rows={4}
-                    className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all resize-none"
+                    placeholder="Share your fitness goals, injuries, limitations, or anything else that will help us personalize your experience..."
+                    rows={6}
+                    className="w-full px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all resize-none"
                   />
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-neutral-500 text-xs sm:text-sm">
-                      Share any relevant context that might help us personalize your experience
-                    </p>
-                    <p className={`text-xs sm:text-sm ${data.fitness_notes.length > 900 ? 'text-yellow-500' : 'text-neutral-500'}`}>
-                      {1000 - data.fitness_notes.length} characters remaining
-                    </p>
-                  </div>
+                  <p className={`text-xs sm:text-sm mt-2 ${data.fitness_notes.length > 900 ? 'text-yellow-500' : 'text-iron-gray'}`}>
+                    {1000 - data.fitness_notes.length} characters remaining
+                  </p>
                 </div>
 
                 {/* Dietary Preference */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Any dietary restrictions?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Any dietary restrictions?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.none'), value: 'none' },
@@ -891,8 +1121,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ dietary_preference: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.dietary_preference === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -903,12 +1133,13 @@ export default function OnboardingPage() {
 
                 {/* Food Allergies */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">
-                    Food allergies? <span className="text-neutral-500 text-xs sm:text-sm">(optional)</span>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">
+                    Food allergies? <span className="text-iron-gray text-xs sm:text-sm">(optional)</span>
                   </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
+                      name="food_allergy"
                       value={allergyInput}
                       onChange={(e) => setAllergyInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -918,7 +1149,7 @@ export default function OnboardingPage() {
                         }
                       }}
                       placeholder="e.g., Peanuts (press Enter to add)"
-                      className="flex-1 px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-neutral-white placeholder-neutral-500 border-2 border-neutral-700 focus:border-primary focus:outline-none focus:bg-neutral-800/80 transition-all"
+                      className="flex-1 px-6 py-4 rounded-xl text-lg bg-neutral-900/50 text-iron-white placeholder-iron-gray border-2 border-neutral-700 focus:border-iron-orange focus:outline-none focus:bg-neutral-800/80 transition-all"
                     />
                     {allergyInput.trim() && (
                       <button
@@ -926,7 +1157,7 @@ export default function OnboardingPage() {
                           updateData({ food_allergies: [...data.food_allergies, allergyInput.trim()] })
                           setAllergyInput('')
                         }}
-                        className="px-6 py-4 rounded-xl bg-primary text-neutral-white font-medium hover:bg-primary/90 transition-all"
+                        className="px-6 py-4 rounded-xl bg-iron-orange text-iron-white font-medium hover:bg-iron-orange/90 transition-all"
                       >
                         Add
                       </button>
@@ -937,7 +1168,7 @@ export default function OnboardingPage() {
                       {data.food_allergies.map((allergy, idx) => (
                         <div
                           key={idx}
-                          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 flex items-center gap-2"
+                          className="px-4 py-2 rounded-lg bg-neutral-800 text-iron-gray flex items-center gap-2"
                         >
                           {allergy}
                           <button
@@ -958,7 +1189,7 @@ export default function OnboardingPage() {
 
                 {/* Meals Per Day */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Preferred meals per day?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Preferred meals per day?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     {[
                       { label: '2 meals', value: 2 },
@@ -971,8 +1202,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ meals_per_day: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.meals_per_day === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -983,7 +1214,7 @@ export default function OnboardingPage() {
 
                 {/* Stress Level */}
                 <div>
-                  <label className="block text-neutral-300 text-base sm:text-lg mb-2 sm:mb-3">Typical stress level?</label>
+                  <label className="block text-iron-gray text-base sm:text-lg mb-2 sm:mb-3">Typical stress level?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {[
                       { label: t('onboarding.low'), value: 'low' },
@@ -995,8 +1226,8 @@ export default function OnboardingPage() {
                         onClick={() => updateData({ stress_level: option.value })}
                         className={`px-6 py-4 rounded-xl text-lg font-medium transition-all ${
                           data.stress_level === option.value
-                            ? 'bg-primary text-neutral-white shadow-lg shadow-primary/50'
-                            : 'bg-neutral-900/50 text-neutral-300 border-2 border-neutral-700 hover:border-neutral-600'
+                            ? 'bg-iron-orange text-iron-white shadow-lg shadow-iron-orange/50'
+                            : 'bg-neutral-900/50 text-iron-gray border-2 border-neutral-700 hover:border-neutral-600'
                         }`}
                       >
                         {option.label}
@@ -1008,9 +1239,218 @@ export default function OnboardingPage() {
 
               <div className="flex gap-3 sm:gap-4">
                 <button
-                  onClick={() => next('training_modalities')}
-                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-neutral-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all"
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
                 >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 8: Meal Timing */}
+          {step === 'meal_timing' && (
+            <motion.div
+              key="meal_timing"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="When do you typically eat?" />
+              <p className="text-iron-gray text-base -mt-4">This helps us plan meal timing (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <MealTimesSelector
+                  mealTimes={data.meal_timing_preferences}
+                  onChange={(mealTimes) => updateData({ meal_timing_preferences: mealTimes })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 9: Typical Foods */}
+          {step === 'typical_foods' && (
+            <motion.div
+              key="typical_foods"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="What do you typically eat?" />
+              <p className="text-iron-gray text-base -mt-4">This helps us personalize meal plans (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <FoodSearchSelector
+                  selectedFoods={data.typical_foods}
+                  onChange={(foods) => updateData({ typical_foods: foods })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 10: Upcoming Events */}
+          {step === 'events' && (
+            <motion.div
+              key="events"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="Any upcoming events or competitions?" />
+              <p className="text-iron-gray text-base -mt-4">This helps us plan around important dates (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <EventsSelector
+                  events={data.upcoming_events}
+                  onChange={(events) => updateData({ upcoming_events: events })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 11: Improvement Goals */}
+          {step === 'improvement_goals' && (
+            <motion.div
+              key="improvement_goals"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="What specific improvements do you want to make?" />
+              <p className="text-iron-gray text-base -mt-4">Set trackable goals for your progress (optional)</p>
+
+              <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                <GoalsBuilder
+                  goals={data.improvement_goals}
+                  onChange={(goals) => updateData({ improvement_goals: goals })}
+                />
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
+                </button>
+                <button
+                  onClick={() => goNext()}
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all flex items-center justify-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Screen 12: Difficulties & Constraints */}
+          {step === 'difficulties_constraints' && (
+            <motion.div
+              key="difficulties_constraints"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full space-y-8"
+            >
+              <Message text="Finally, let's talk about challenges and boundaries" />
+              <p className="text-iron-gray text-base -mt-4">This helps us create a realistic, sustainable plan (optional)</p>
+
+              <div className="space-y-6">
+                {/* Difficulties */}
+                <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                  <h3 className="text-iron-white text-xl font-bold mb-4">Challenges You're Facing</h3>
+                  <DifficultiesForm
+                    difficulties={data.difficulties}
+                    onChange={(difficulties) => updateData({ difficulties })}
+                  />
+                </div>
+
+                {/* Constraints */}
+                <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
+                  <h3 className="text-iron-white text-xl font-bold mb-4">Non-Negotiables</h3>
+                  <ConstraintsForm
+                    constraints={data.non_negotiables}
+                    onChange={(constraints) => updateData({ non_negotiables: constraints })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 sm:gap-4">
+                <button
+                  onClick={goBack}
+                  className="px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-neutral-800 text-iron-white border-2 border-neutral-700 hover:bg-neutral-700 transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
                   Back
                 </button>
                 <button
@@ -1018,7 +1458,7 @@ export default function OnboardingPage() {
                     next('calculating')
                     setTimeout(submit, 300)
                   }}
-                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-primary text-neutral-white shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all"
+                  className="flex-1 px-6 sm:px-8 py-4 sm:py-6 rounded-xl text-lg sm:text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all"
                 >
                   Complete Onboarding
                 </button>
@@ -1033,11 +1473,12 @@ export default function OnboardingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="w-full"
             >
-              <Message text="Calculating your personalized targets..." />
+              <Message text="Creating your personalized profile..." />
               {loading && (
                 <div className="flex justify-center py-12">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-lg shadow-primary/50" />
+                  <div className="w-12 h-12 border-4 border-iron-orange border-t-transparent rounded-full animate-spin shadow-lg shadow-iron-orange/50" />
                 </div>
               )}
               {error && (
@@ -1055,6 +1496,7 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
+              className="w-full"
             >
               <Message text="✅ Profile created!" />
               <Message text="Taking you to your dashboard..." />
