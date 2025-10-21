@@ -26,6 +26,79 @@ export interface TrainingModality {
   display_order: number
 }
 
+// ============================================================================
+// ENHANCED ONBOARDING - Consultation Data Types
+// ============================================================================
+
+export interface ExerciseFamiliarityEntry {
+  exercise_id: string
+  comfort_level: number  // 1-5
+  typical_weight_kg?: number
+  typical_reps?: number
+  typical_duration_minutes?: number
+  frequency?: 'rarely' | 'occasionally' | 'regularly' | 'frequently'
+  enjoys_it?: boolean
+}
+
+export interface TrainingAvailabilitySlot {
+  day_of_week: number  // 1=Monday, 7=Sunday
+  time_of_day: 'early_morning' | 'morning' | 'midday' | 'afternoon' | 'evening' | 'night'
+  typical_duration_minutes: number
+  location_type: 'home' | 'gym' | 'outdoor' | 'flexible'
+  is_preferred?: boolean
+}
+
+export interface MealTimingPreference {
+  meal_time_id: string
+  typical_portion_size: 'small' | 'medium' | 'large'
+  flexibility_minutes?: number  // Default 30
+  is_non_negotiable?: boolean
+}
+
+export interface TypicalFoodEntry {
+  food_id: string
+  meal_time_id?: string
+  frequency: 'daily' | 'several_times_week' | 'weekly' | 'occasionally'
+  typical_quantity_grams?: number
+  typical_serving_id?: string
+}
+
+export interface EventEntry {
+  event_type_id?: string
+  event_name: string
+  event_date?: string  // ISO date
+  priority?: number  // 1-5, default 3
+  specific_goals?: string[]
+}
+
+export interface ImprovementGoalEntry {
+  goal_type: 'strength' | 'endurance' | 'skill' | 'aesthetic' | 'body_composition' | 'mobility' | 'performance' | 'health'
+  target_description: string
+  current_value?: number
+  target_value?: number
+  target_date?: string  // ISO date
+  exercise_id?: string
+}
+
+export interface DifficultyEntry {
+  difficulty_category: 'motivation' | 'time_management' | 'injury' | 'nutrition' | 'knowledge' | 'consistency' | 'energy' | 'social_support' | 'equipment_access' | 'travel' | 'other'
+  description: string
+  severity?: number  // 1-5, default 3
+  frequency?: 'daily' | 'weekly' | 'monthly' | 'occasionally'
+}
+
+export interface NonNegotiableEntry {
+  constraint_type: 'rest_days' | 'meal_timing' | 'equipment' | 'exercises_excluded' | 'foods_excluded' | 'time_blocks' | 'social' | 'religious' | 'medical' | 'other'
+  description: string
+  reason?: string
+  excluded_exercise_ids?: string[]
+  excluded_food_ids?: string[]
+}
+
+// ============================================================================
+// MAIN ONBOARDING DATA TYPE
+// ============================================================================
+
 export interface OnboardingData {
   // Step 1: Goals
   primary_goal: 'lose_weight' | 'build_muscle' | 'maintain' | 'improve_performance'
@@ -65,6 +138,24 @@ export interface OnboardingData {
   // Preferences
   unit_system: 'metric' | 'imperial'
   timezone?: string
+
+  // ========================================================================
+  // ENHANCED ONBOARDING - Consultation Data (ALL OPTIONAL)
+  // ========================================================================
+
+  // Phase 2: Training Background
+  exercise_familiarity?: ExerciseFamiliarityEntry[]
+  training_availability?: TrainingAvailabilitySlot[]
+
+  // Phase 3: Nutrition Profile
+  meal_timing_preferences?: MealTimingPreference[]
+  typical_foods?: TypicalFoodEntry[]
+
+  // Phase 4: Goals & Context
+  upcoming_events?: EventEntry[]
+  improvement_goals?: ImprovementGoalEntry[]
+  difficulties?: DifficultyEntry[]
+  non_negotiables?: NonNegotiableEntry[]
 }
 
 export interface MacroTargets {
