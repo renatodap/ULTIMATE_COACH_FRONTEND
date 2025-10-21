@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
+
+// Simple server-side logging (route handlers cannot import client components)
+function logError(message: string, context?: any) {
+  console.error(`[AUTH_CALLBACK] ${message}`, context)
+}
+
+function logInfo(message: string, context?: any) {
+  console.log(`[AUTH_CALLBACK] ${message}`, context)
+}
 
 /**
  * Auth Callback Route
@@ -28,22 +36,19 @@ export async function GET(request: Request) {
 
   // Handle errors from Supabase (email verification or OAuth)
   if (error) {
-    ErrorLogger.log({
-      category: type === 'signup' ? ErrorCategory.AUTH_SIGNUP_EMAIL : ErrorCategory.AUTH_SIGNIN_GOOGLE,
-      severity: ErrorSeverity.ERROR,
-      message: 'Auth callback failed with error',
-      error: new Error(errorDescription || error),
+    logError('Auth callback failed with error', {
+      type,
+      error,
+      errorDescription,
       url: request.url
     })
     return NextResponse.redirect(new URL(`/login?error=${error}`, request.url))
   }
 
   if (!code) {
-    ErrorLogger.log({
-      category: ErrorCategory.AUTH,
-      severity: ErrorSeverity.ERROR,
-      message: 'Auth callback failed - no code parameter',
-      url: request.url
+    logError('Auth callback failed - no code parameter', {
+      url: request.url,
+      type
     })
     return NextResponse.redirect(new URL('/login?error=no_code', request.url))
   }
@@ -54,25 +59,20 @@ export async function GET(request: Request) {
 
     // Determine if this is email verification or OAuth based on 'type' param
     const isEmailVerification = type === 'signup' || type === 'recovery' || type === 'email'
-    const authCategory = isEmailVerification ? ErrorCategory.AUTH_SIGNUP_EMAIL : ErrorCategory.AUTH_SIGNIN_GOOGLE
 
     if (error) {
-      ErrorLogger.log({
-        category: authCategory,
-        severity: ErrorSeverity.ERROR,
-        message: `Failed to exchange ${isEmailVerification ? 'email verification' : 'OAuth'} code for session`,
+      logError(`Failed to exchange ${isEmailVerification ? 'email verification' : 'OAuth'} code for session`, {
         error,
-        url: request.url
+        url: request.url,
+        type
       })
       return NextResponse.redirect(new URL('/login?error=exchange_failed', request.url))
     }
 
     if (!data.session) {
-      ErrorLogger.log({
-        category: authCategory,
-        severity: ErrorSeverity.ERROR,
-        message: `No session in ${isEmailVerification ? 'email verification' : 'OAuth'} exchange response`,
-        url: request.url
+      logError(`No session in ${isEmailVerification ? 'email verification' : 'OAuth'} exchange response`, {
+        url: request.url,
+        type
       })
       return NextResponse.redirect(new URL('/login?error=no_session', request.url))
     }
@@ -100,38 +100,29 @@ export async function GET(request: Request) {
         const profile = await profileResponse.json()
         onboardingCompleted = profile.onboarding_completed || false
       } else {
-        ErrorLogger.log({
-          category: ErrorCategory.AUTH_SIGNIN_GOOGLE,
-          severity: ErrorSeverity.WARNING,
-          message: 'Failed to fetch user profile after OAuth',
+        logError('Failed to fetch user profile after auth', {
           statusCode: profileResponse.status,
-          userId: data.user?.id
+          userId: data.user?.id,
+          type
         })
         // Default to false - redirect to onboarding to be safe
       }
     } catch (profileError) {
-      ErrorLogger.log({
-        category: ErrorCategory.AUTH_SIGNIN_GOOGLE,
-        severity: ErrorSeverity.WARNING,
-        message: 'Error fetching profile after OAuth',
+      logError('Error fetching profile after auth', {
         error: profileError,
-        userId: data.user?.id
+        userId: data.user?.id,
+        type
       })
       // Default to false - redirect to onboarding to be safe
     }
 
     // Log successful authentication
-    ErrorLogger.log({
-      category: authCategory,
-      severity: ErrorSeverity.INFO,
-      message: isEmailVerification ? 'Email verified successfully' : 'User logged in via Google OAuth',
+    logInfo(isEmailVerification ? 'Email verified successfully' : 'User logged in via OAuth', {
       userId: data.user?.id,
       userEmail: data.user?.email,
-      featureData: {
-        onboardingCompleted,
-        redirectUrl: onboardingCompleted ? '/dashboard' : '/onboarding',
-        authType: isEmailVerification ? 'email_verification' : 'oauth'
-      }
+      onboardingCompleted,
+      redirectUrl: onboardingCompleted ? '/dashboard' : '/onboarding',
+      authType: isEmailVerification ? 'email_verification' : 'oauth'
     })
 
     // Step 4: Set httpOnly cookies with session tokens
@@ -159,14 +150,11 @@ export async function GET(request: Request) {
   } catch (error) {
     // Determine error category based on type parameter
     const isEmailVerification = type === 'signup' || type === 'recovery' || type === 'email'
-    const authCategory = isEmailVerification ? ErrorCategory.AUTH_SIGNUP_EMAIL : ErrorCategory.AUTH_SIGNIN_GOOGLE
 
-    ErrorLogger.log({
-      category: authCategory,
-      severity: ErrorSeverity.CRITICAL,
-      message: `Unexpected error in ${isEmailVerification ? 'email verification' : 'OAuth'} callback`,
+    logError(`Unexpected error in ${isEmailVerification ? 'email verification' : 'OAuth'} callback`, {
       error,
-      url: request.url
+      url: request.url,
+      type
     })
     return NextResponse.redirect(new URL('/login?error=auth_failed', request.url))
   }
