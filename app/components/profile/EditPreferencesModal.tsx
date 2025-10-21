@@ -16,8 +16,6 @@ import { getLanguageDisplayName, type SupportedLanguage } from '@/lib/utils/lang
 
 const LANGUAGE_OPTIONS: Array<{ value: SupportedLanguage; label: string }> = [
   { value: 'en', label: 'English' },
-  { value: 'pt', label: 'Português (Portuguese)' },
-  { value: 'es', label: 'Español (Coming Soon)' },
   { value: 'fr', label: 'Français (Coming Soon)' },
   { value: 'de', label: 'Deutsch (Coming Soon)' },
   { value: 'it', label: 'Italiano (Coming Soon)' },
@@ -120,8 +118,8 @@ export default function EditPreferencesModal({
               value={language}
               onChange={(e) => {
                 const value = e.target.value as SupportedLanguage
-                // Only allow en and pt for now
-                if (value === 'en' || value === 'pt') {
+                // Only allow en for now
+                if (value === 'en') {
                   setLanguage(value)
                 }
               }}
@@ -131,14 +129,14 @@ export default function EditPreferencesModal({
                 <option
                   key={option.value}
                   value={option.value}
-                  disabled={option.value !== 'en' && option.value !== 'pt'}
+                  disabled={option.value !== 'en'}
                 >
                   {option.label}
                 </option>
               ))}
             </select>
             <p className="mt-2 text-xs text-iron-gray">
-              Portuguese food names available! More languages coming soon.
+              Currently English only. More languages coming soon.
             </p>
           </div>
 
