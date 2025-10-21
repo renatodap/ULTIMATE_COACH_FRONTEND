@@ -286,6 +286,7 @@ export function MultiLogCarousel({
                 <>
                   {/* Food Items - ENRICHED or STANDARD */}
                   {(data.items && data.items.length > 0) || (data.meal_items && data.meal_items.length > 0) ? (
+                    <>
                     <div className="space-y-2 mb-4">
                       {/* ENRICHED ITEMS (with food matching) */}
                       {data.items && data.items.map((item: any, index: number) => (
@@ -383,35 +384,36 @@ export function MultiLogCarousel({
                       </div>
                     )}
 
-                  {/* Nutrition Summary */}
-                  <div className="p-4 bg-iron-orange/10 border border-iron-orange/30">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-iron-white/80">Total Calories</span>
-                      <span className="text-2xl font-bold text-iron-orange">
-                        {Math.round(totalCalories)}
-                      </span>
+                      {/* Nutrition Summary */}
+                    <div className="p-4 bg-iron-orange/10 border border-iron-orange/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-iron-white/80">Total Calories</span>
+                        <span className="text-2xl font-bold text-iron-orange">
+                          {Math.round(totalCalories)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="text-center">
+                          <div className="text-xs text-iron-white/60">Protein</div>
+                          <div className="text-iron-white font-semibold">
+                            {Math.round(totalProtein)}g
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-iron-white/60">Carbs</div>
+                          <div className="text-iron-white font-semibold">
+                            {Math.round(totalCarbs)}g
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-iron-white/60">Fat</div>
+                          <div className="text-iron-white font-semibold">
+                            {Math.round(totalFat)}g
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="text-center">
-                        <div className="text-xs text-iron-white/60">Protein</div>
-                        <div className="text-iron-white font-semibold">
-                          {Math.round(totalProtein)}g
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-iron-white/60">Carbs</div>
-                        <div className="text-iron-white font-semibold">
-                          {Math.round(totalCarbs)}g
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-iron-white/60">Fat</div>
-                        <div className="text-iron-white font-semibold">
-                          {Math.round(totalFat)}g
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    </>
                   ) : (
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm">
                       ⚠️ No food items found in this meal log
