@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/api/users'
 import { ApiRequestError } from '@/lib/api/client'
+import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
 
 export function useOnboardingCheck() {
   const router = useRouter()
@@ -29,13 +30,24 @@ export function useOnboardingCheck() {
       } catch (error) {
         // Check if it's a 401 error (unauthorized/session expired)
         if (error instanceof ApiRequestError && error.status === 401) {
-          console.warn('[Auth] Session expired or invalid. Redirecting to login...')
+          ErrorLogger.log({
+            category: ErrorCategory.AUTH_SESSION,
+            severity: ErrorSeverity.WARNING,
+            message: 'Session expired or invalid during onboarding check',
+            statusCode: 401,
+            error
+          })
           // Note: Global 401 handler in API client will also trigger
           // But we add this as a backup in case the redirect didn't happen
           router.push('/login')
         } else {
           // Other errors (network, etc.) - log but don't redirect
-          console.error('Failed to check onboarding status:', error)
+          ErrorLogger.log({
+            category: ErrorCategory.AUTH_SESSION,
+            severity: ErrorSeverity.ERROR,
+            message: 'Failed to check onboarding status',
+            error
+          })
         }
       } finally {
         setLoading(false)

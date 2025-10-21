@@ -233,8 +233,8 @@ export default function ConstraintsForm({
         <div className="flex gap-2">
           <AlertCircle className="w-4 h-4 text-iron-orange flex-shrink-0 mt-0.5" />
           <p>
-            Non-negotiables are constraints we'll always respect when creating your personalized plan.
-            Be specific about what can't be changed.
+            Non-negotiables are constraints we&apos;ll always respect when creating your personalized plan.
+            Be specific about what can&apos;t be changed.
           </p>
         </div>
       </div>

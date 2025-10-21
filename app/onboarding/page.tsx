@@ -1271,7 +1271,7 @@ export default function OnboardingPage() {
 
               <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
                 <MealTimesSelector
-                  mealTimes={data.meal_timing_preferences}
+                  selectedMealTimes={data.meal_timing_preferences}
                   onChange={(mealTimes) => updateData({ meal_timing_preferences: mealTimes })}
                 />
               </div>
@@ -1422,13 +1422,13 @@ export default function OnboardingPage() {
               transition={{ duration: 0.3 }}
               className="w-full space-y-8"
             >
-              <Message text="Finally, let's talk about challenges and boundaries" />
+              <Message text="Finally, let&apos;s talk about challenges and boundaries" />
               <p className="text-iron-gray text-base -mt-4">This helps us create a realistic, sustainable plan (optional)</p>
 
               <div className="space-y-6">
                 {/* Difficulties */}
                 <div className="bg-neutral-900/30 rounded-2xl p-4 sm:p-6 md:p-8 border border-neutral-800">
-                  <h3 className="text-iron-white text-xl font-bold mb-4">Challenges You're Facing</h3>
+                  <h3 className="text-iron-white text-xl font-bold mb-4">Challenges You&apos;re Facing</h3>
                   <DifficultiesForm
                     difficulties={data.difficulties}
                     onChange={(difficulties) => updateData({ difficulties })}

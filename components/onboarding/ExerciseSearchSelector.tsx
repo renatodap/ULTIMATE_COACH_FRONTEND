@@ -319,7 +319,7 @@ export default function ExerciseSearchSelector({
       {/* Empty State */}
       {selectedExercises.length === 0 && searchQuery.length === 0 && (
         <div className="text-center py-8 text-iron-gray">
-          <p>Search to add exercises you're familiar with</p>
+          <p>Search to add exercises you&apos;re familiar with</p>
           <p className="text-sm mt-1">This helps us personalize your workout plans</p>
         </div>
       )}

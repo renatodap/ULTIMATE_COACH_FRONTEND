@@ -79,7 +79,9 @@ export default function MealTimesSelector({
   const getTimelinePosition = (time: string): number => {
     // Convert time to hour (0-24)
     const [timeStr, period] = time.split(' ')
-    let [hours, minutes] = timeStr.split(':').map(Number)
+    const timeParts = timeStr.split(':').map(Number)
+    let hours = timeParts[0]
+    const minutes = timeParts[1]
 
     if (period === 'PM' && hours !== 12) hours += 12
     if (period === 'AM' && hours === 12) hours = 0
@@ -247,7 +249,7 @@ export default function MealTimesSelector({
                       </span>
                     </label>
                     <p className="text-xs text-iron-gray mt-1 ml-7">
-                      We'll prioritize workouts around this meal time
+                      We&apos;ll prioritize workouts around this meal time
                     </p>
                   </div>
                 </div>
