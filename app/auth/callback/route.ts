@@ -128,23 +128,82 @@ export async function GET(request: Request) {
     // Step 4: Set httpOnly cookies with session tokens
     const redirectUrl = onboardingCompleted ? '/dashboard' : '/onboarding'
 
-    const response = NextResponse.redirect(new URL(redirectUrl, request.url))
+    // CRITICAL FIX: Use client-side redirect instead of server-side redirect
+    // Server-side redirects can cause cookie timing issues where the browser
+    // redirects before cookies are fully processed/stored
+    // Client-side redirect ensures cookies are set before navigation
 
-    response.cookies.set('access_token', data.session.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
-
-    if (data.session.refresh_token) {
-      response.cookies.set('refresh_token', data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      })
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #0A0A0B;
+      color: #FAFAFA;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
+    .container {
+      text-align: center;
+    }
+    .spinner {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border: 3px solid #71717A;
+      border-top-color: #FF6B35;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+    p {
+      color: #71717A;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>${isEmailVerification ? 'Email Verified!' : 'Logged In Successfully'}</h1>
+    <p>Redirecting to your dashboard...</p>
+  </div>
+  <script>
+    // Wait a moment for cookies to be processed, then redirect
+    setTimeout(function() {
+      window.location.href = '${redirectUrl}';
+    }, 500);
+  </script>
+</body>
+</html>`
+
+    const response = new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        // Manually set Set-Cookie headers for better reliability
+        'Set-Cookie': [
+          `access_token=${data.session.access_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
+          data.session.refresh_token
+            ? `refresh_token=${data.session.refresh_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`
+            : ''
+        ].filter(Boolean).join(', ')
+      }
+    })
 
     return response
   } catch (error) {
