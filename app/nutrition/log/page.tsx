@@ -25,7 +25,7 @@
  * - Backend Rejection: >50 servings (nutrition_service.py:693-698)
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Plus, X, Loader2, Edit2, Check, Star, Clock, Sparkles } from 'lucide-react'
 import { getDefaultMealType } from '@/lib/utils/meal-time'
@@ -44,7 +44,7 @@ import { calculateFoodNutrition, formatNutrition } from '@/lib/utils/nutrition-c
 import type { Food, FoodServing, MealItemPreview, QuickMeal } from '@/lib/types/food'
 import type { CreateMealRequest, CreateMealItemRequest } from '@/lib/api/nutrition'
 
-export default function LogMealPage() {
+function LogMealPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const mode = searchParams?.get('mode')
@@ -1001,5 +1001,18 @@ export default function LogMealPage() {
         />
       )}
     </div>
+  )
+}
+
+// Wrap in Suspense for useSearchParams() - Next.js 14 requirement
+export default function LogMealPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-iron-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-iron-orange animate-spin" />
+      </div>
+    }>
+      <LogMealPageContent />
+    </Suspense>
   )
 }
