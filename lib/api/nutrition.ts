@@ -60,6 +60,11 @@ export interface MealItemAPI {
   display_label: string | null
   display_order: number
   created_at: string
+  // Joined food data (from backend SELECT "foods(name, brand_name)")
+  foods?: {
+    name: string
+    brand_name: string | null
+  }
 }
 
 export interface MealAPI {
