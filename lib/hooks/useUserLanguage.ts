@@ -20,12 +20,22 @@ export function useUserLanguage() {
     async function fetchUserLanguage() {
       try {
         const user = await getCurrentUser()
-        setLanguage(user.language || 'en')
+        const userLang = user.language || 'en'
+
+        // Validate that user's language is currently supported
+        // If user has pt/es from before, default to en
+        const supportedLanguages: SupportedLanguage[] = ['en', 'fr', 'de', 'it', 'ja', 'ko', 'zh']
+        if (supportedLanguages.includes(userLang as SupportedLanguage)) {
+          setLanguage(userLang as SupportedLanguage)
+        } else {
+          // User has unsupported language (pt/es) - default to en
+          setLanguage('en')
+        }
       } catch (error) {
         console.error('Failed to fetch user language:', error)
         // Fallback to browser language
         const browserLang = navigator.language.split('-')[0]
-        const supportedLanguages: SupportedLanguage[] = ['en', 'pt', 'es', 'fr', 'de', 'it', 'ja', 'ko', 'zh']
+        const supportedLanguages: SupportedLanguage[] = ['en', 'fr', 'de', 'it', 'ja', 'ko', 'zh']
         if (supportedLanguages.includes(browserLang as SupportedLanguage)) {
           setLanguage(browserLang as SupportedLanguage)
         }

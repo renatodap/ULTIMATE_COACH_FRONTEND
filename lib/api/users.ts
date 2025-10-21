@@ -6,6 +6,7 @@
 
 import { apiClient } from './client'
 import { supabase } from '@/lib/supabase'
+import type { SupportedLanguage } from '@/lib/utils/language'
 
 export interface FullUserProfile {
   // Basic info
@@ -56,7 +57,7 @@ export interface FullUserProfile {
   // Preferences
   unit_system?: 'metric' | 'imperial'
   timezone?: string
-  language?: 'en' | 'pt' | 'es' | 'fr' | 'de' | 'it' | 'ja' | 'ko' | 'zh'
+  language?: SupportedLanguage
 
   // Consultation
   consultation_completed?: boolean
@@ -84,7 +85,7 @@ export interface UpdateProfileData {
   stress_level?: 'low' | 'medium' | 'high'
   unit_system?: 'metric' | 'imperial'
   timezone?: string
-  language?: 'en' | 'pt' | 'es' | 'fr' | 'de' | 'it' | 'ja' | 'ko' | 'zh'
+  language?: SupportedLanguage
 }
 
 /**

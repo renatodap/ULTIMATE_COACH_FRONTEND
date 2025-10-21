@@ -6,13 +6,13 @@
  */
 
 import { en, type TranslationKey } from './translations/en'
-import { pt } from './translations/pt'
+// import { pt } from './translations/pt' // Removed - Portuguese not currently supported
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-type Language = 'en' | 'es' | 'pt' | 'fr' | 'de'
+type Language = 'en' | 'fr' | 'de' | 'it' | 'ja' | 'ko' | 'zh'
 
 type DeepKeyOf<T> = T extends object
   ? {
@@ -36,11 +36,13 @@ let currentLanguage: Language = 'en'
 
 const translations: Record<Language, TranslationKey> = {
   en,
-  pt,
   // Future languages:
-  // es: () => import('./translations/es').then(m => m.default),
   // fr: () => import('./translations/fr').then(m => m.default),
   // de: () => import('./translations/de').then(m => m.default),
+  // it: () => import('./translations/it').then(m => m.default),
+  // ja: () => import('./translations/ja').then(m => m.default),
+  // ko: () => import('./translations/ko').then(m => m.default),
+  // zh: () => import('./translations/zh').then(m => m.default),
 } as any
 
 // ============================================================================
@@ -137,11 +139,13 @@ export function initI18n(): void {
 export function getAvailableLanguages(): { code: Language; name: string }[] {
   return [
     { code: 'en', name: 'English' },
-    { code: 'pt', name: 'Português' },
     // Future:
-    // { code: 'es', name: 'Español' },
     // { code: 'fr', name: 'Français' },
     // { code: 'de', name: 'Deutsch' },
+    // { code: 'it', name: 'Italiano' },
+    // { code: 'ja', name: '日本語' },
+    // { code: 'ko', name: '한국어' },
+    // { code: 'zh', name: '中文' },
   ]
 }
 
