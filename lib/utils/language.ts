@@ -6,33 +6,31 @@
 
 import { Food } from '@/lib/types/food'
 
-export type SupportedLanguage = 'en' | 'pt' | 'es' | 'fr' | 'de' | 'it' | 'ja' | 'ko' | 'zh'
+export type SupportedLanguage = 'en' | 'fr' | 'de' | 'it' | 'ja' | 'ko' | 'zh'
 
 /**
  * Get localized food name based on user's language preference
  *
- * @param food - Food object with name and name_pt
- * @param language - User's language preference ('en' | 'pt')
+ * @param food - Food object with name
+ * @param language - User's language preference
  * @returns Localized food name, falling back to English if translation unavailable
  */
 export function getLocalizedFoodName(food: Food, language: SupportedLanguage = 'en'): string {
-  if (language === 'pt' && food.name_pt) {
-    return food.name_pt
-  }
+  // Currently only English is supported
+  // Future: Add support for other languages when translations are available
   return food.name
 }
 
 /**
  * Get localized brand name based on user's language preference
  *
- * @param food - Food object with brand_name and brand_name_pt
- * @param language - User's language preference ('en' | 'pt')
+ * @param food - Food object with brand_name
+ * @param language - User's language preference
  * @returns Localized brand name or null, falling back to English if translation unavailable
  */
 export function getLocalizedBrandName(food: Food, language: SupportedLanguage = 'en'): string | null {
-  if (language === 'pt' && food.brand_name_pt) {
-    return food.brand_name_pt
-  }
+  // Currently only English is supported
+  // Future: Add support for other languages when translations are available
   return food.brand_name
 }
 
@@ -44,7 +42,6 @@ export function getLocalizedBrandName(food: Food, language: SupportedLanguage = 
  * @returns "Brand Name - Food Name" or just "Food Name" if no brand
  *
  * @example
- * getFullFoodName(food, 'pt') // "Chobani - Iogurte Grego Morango"
  * getFullFoodName(food, 'en') // "Chobani - Greek Yogurt Strawberry"
  */
 export function getFullFoodName(food: Food, language: SupportedLanguage = 'en'): string {
@@ -71,7 +68,7 @@ export function detectBrowserLanguage(): SupportedLanguage {
   const browserLang = navigator.language.split('-')[0]
 
   // Check if supported
-  const supportedLanguages: SupportedLanguage[] = ['en', 'pt', 'es', 'fr', 'de', 'it', 'ja', 'ko', 'zh']
+  const supportedLanguages: SupportedLanguage[] = ['en', 'fr', 'de', 'it', 'ja', 'ko', 'zh']
 
   if (supportedLanguages.includes(browserLang as SupportedLanguage)) {
     return browserLang as SupportedLanguage
@@ -89,8 +86,6 @@ export function detectBrowserLanguage(): SupportedLanguage {
 export function getLanguageDisplayName(language: SupportedLanguage): string {
   const displayNames: Record<SupportedLanguage, string> = {
     en: 'English',
-    pt: 'Português',
-    es: 'Español',
     fr: 'Français',
     de: 'Deutsch',
     it: 'Italiano',

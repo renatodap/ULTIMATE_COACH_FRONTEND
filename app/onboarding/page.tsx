@@ -509,15 +509,13 @@ export default function OnboardingPage() {
               className="w-full"
             >
               <Message text="Welcome to SHARPENED 🎯" isWelcome={true} />
-              <Message text="First, let's choose your language." />
+              <Message text="First, let&apos;s choose your language." />
               <ButtonGroup
                 options={[
                   { label: 'English', value: 'en' },
-                  { label: 'Português 🇧🇷', value: 'pt' },
-                  { label: 'Español (Coming Soon)', value: 'es' },
                 ]}
                 onSelect={(val) => {
-                  if (val !== 'en' && val !== 'pt') return
+                  if (val !== 'en') return
                   updateData({ language: val as SupportedLanguage })
                   setTimeout(() => next('physical_stats'), 200)
                 }}
