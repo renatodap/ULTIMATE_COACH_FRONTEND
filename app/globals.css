@@ -8,6 +8,7 @@
   --iron-white: #FFFFFF;
   --iron-gray: #4A4A4A;
   --iron-dark-gray: #1A1A1B;
+  --success: #10B981;
 }
 
 @layer base {
@@ -182,12 +183,24 @@
     color: var(--iron-gray);
   }
 
+  .text-success {
+    color: var(--success);
+  }
+
+  .bg-success {
+    background-color: var(--success);
+  }
+
   .border-iron-gray {
     border-color: var(--iron-gray);
   }
 
   .border-iron-orange {
     border-color: var(--iron-orange);
+  }
+
+  .border-success {
+    border-color: var(--success);
   }
 
   /* Text gradients for 2027 touch */

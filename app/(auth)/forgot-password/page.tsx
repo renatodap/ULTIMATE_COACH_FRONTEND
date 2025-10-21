@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import AuthErrorMessage, { AuthSuccessMessage, getUserFriendlyErrorMessage } from '@/components/auth/AuthErrorMessage'
+import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -16,7 +18,7 @@ export default function ForgotPasswordPage() {
     setSuccess(false)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/forgot-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/password-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -27,21 +29,39 @@ export default function ForgotPasswordPage() {
         throw new Error(error.detail || 'Failed to send reset email')
       }
 
+      // Log successful password reset request
+      ErrorLogger.log({
+        category: ErrorCategory.AUTH_VERIFICATION,
+        severity: ErrorSeverity.INFO,
+        message: 'Password reset email requested',
+        userEmail: email
+      })
+
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email')
+      // Log error with ErrorLogger
+      ErrorLogger.log({
+        category: ErrorCategory.AUTH_VERIFICATION,
+        severity: ErrorSeverity.ERROR,
+        message: 'Password reset request failed',
+        error: err,
+        userEmail: email
+      })
+
+      // Show user-friendly error message
+      setError(getUserFriendlyErrorMessage(err))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-12 animate-fade-in">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-black to-iron-dark-gray -z-10" />
 
       {/* Main container */}
-      <div className="relative z-10 w-full max-w-md space-y-8">
+      <div className="relative z-10 w-full max-w-md space-y-6 sm:space-y-8">
         {/* Back link */}
         <Link
           href="/login"
@@ -51,56 +71,55 @@ export default function ForgotPasswordPage() {
         </Link>
 
         {/* Header */}
-        <div className="text-center space-y-2 animate-slide-in">
-          <h1 className="text-5xl font-bold text-gradient-orange">
-            RESET PASSWORD
+        <div className="text-center space-y-2 sm:space-y-4 animate-slide-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gradient-orange uppercase">
+            Reset Password
           </h1>
-          <p className="text-iron-gray text-sm uppercase tracking-wider">
+          <p className="text-iron-gray text-xs sm:text-sm sm:text-base uppercase tracking-wider">
             Enter your email to receive a reset link
           </p>
         </div>
 
-        {/* Form card with glassmorphism */}
-        <div className="card-glass p-8 space-y-6 border-2 border-iron-gray/20 animate-fade-in">
+        {/* Form card */}
+        <div className="bg-iron-dark-gray border-2 border-iron-gray p-4 sm:p-6 md:p-8 space-y-6 animate-fade-in">
           {!success ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email input */}
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-xs text-iron-gray uppercase tracking-widest">
+                <label htmlFor="email" className="block text-xs text-iron-gray uppercase tracking-widest font-semibold">
                   Email Address
                 </label>
                 <input
                   id="email"
+                  name="email"
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input"
                   placeholder="you@example.com"
-                  autoComplete="email"
+                  disabled={loading}
                 />
               </div>
 
               {/* Error message */}
-              {error && (
-                <div className="p-4 bg-iron-orange/10 border-2 border-iron-orange text-iron-orange text-sm animate-fade-in">
-                  <strong>ERROR:</strong> {error}
-                </div>
-              )}
+              {error && <AuthErrorMessage message={error} onDismiss={() => setError('')} />}
 
               {/* Submit button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary w-full text-lg"
+                className="btn btn-primary w-full text-base sm:text-lg"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="w-5 h-5 border-2 border-iron-black border-t-transparent animate-spin" />
-                    SENDING...
+                    Sending...
                   </span>
                 ) : (
-                  'SEND RESET LINK'
+                  'Send Reset Link'
                 )}
               </button>
             </form>
@@ -140,9 +159,9 @@ export default function ForgotPasswordPage() {
               {/* Back to login button */}
               <Link
                 href="/login"
-                className="btn btn-secondary w-full text-lg inline-block"
+                className="btn btn-secondary w-full text-base sm:text-lg inline-block"
               >
-                BACK TO LOGIN
+                Back to Login
               </Link>
             </div>
           )}
@@ -150,7 +169,7 @@ export default function ForgotPasswordPage() {
 
         {/* Footer text */}
         <div className="text-center space-y-2">
-          <p className="text-xs text-iron-gray">
+          <p className="text-xs sm:text-sm text-iron-gray">
             Remember your password?{' '}
             <Link href="/login" className="text-iron-orange hover:underline">
               Log in here

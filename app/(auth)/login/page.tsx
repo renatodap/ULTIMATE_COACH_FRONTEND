@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { login } from '@/lib/api/auth'
 import { getCurrentUser } from '@/lib/api/users'
 import { supabase } from '@/lib/supabase'
+import AuthErrorMessage, { AuthSuccessMessage, getUserFriendlyErrorMessage } from '@/components/auth/AuthErrorMessage'
+import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
 
 function LoginPageContent() {
   const [email, setEmail] = useState('')
@@ -61,15 +63,31 @@ function LoginPageContent() {
       // CRITICAL: Sync Supabase client session with backend tokens
       // This ensures getSession() works in onboarding and other pages
       if (response.session?.access_token && response.session?.refresh_token) {
-        console.log('[Login] Syncing Supabase session with backend tokens...')
         await supabase.auth.setSession({
           access_token: response.session.access_token,
           refresh_token: response.session.refresh_token,
         })
-        console.log('[Login] Supabase session synced successfully')
       } else {
-        console.warn('[Login] No session tokens in response, skipping Supabase sync')
+        ErrorLogger.log({
+          category: ErrorCategory.AUTH_SESSION,
+          severity: ErrorSeverity.WARNING,
+          message: 'Login successful but no session tokens in response',
+          userId: response.user.id,
+          userEmail: response.user.email
+        })
       }
+
+      // Log successful login
+      ErrorLogger.log({
+        category: ErrorCategory.AUTH_SIGNIN_EMAIL,
+        severity: ErrorSeverity.INFO,
+        message: 'User logged in successfully',
+        userId: response.user.id,
+        userEmail: response.user.email,
+        featureData: {
+          onboardingCompleted: response.user.onboarding_completed
+        }
+      })
 
       // Use window.location.href for hard redirect to ensure cookies are loaded
       // router.push() can fail because middleware checks cookies before they're set
@@ -79,15 +97,11 @@ function LoginPageContent() {
         window.location.href = '/dashboard'
       }
     } catch (err: any) {
-      // Log error silently for debugging
-      console.error('[Login] Login error:', err)
+      // Log error with ErrorLogger (structured, comprehensive)
+      ErrorLogger.authError('signin', 'email', err, { email })
 
-      // Show detailed error message
-      if (err?.type === 'NetworkError') {
-        setError('Unable to connect to server. Please check the Railway CORS configuration.')
-      } else {
-        setError(err?.detail || err?.message || 'Invalid email or password')
-      }
+      // Show user-friendly error message
+      setError(getUserFriendlyErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -107,7 +121,8 @@ function LoginPageContent() {
 
       if (error) throw error
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to login with Google')
+      ErrorLogger.authError('signin', 'google', err, {})
+      setError(getUserFriendlyErrorMessage(err))
       setLoading(false)
     }
   }
@@ -125,15 +140,15 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-iron-black flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-iron-black flex items-center justify-center px-4 sm:px-6 py-12">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-dark-gray to-iron-black -z-10" />
 
-      <div className="relative z-10 w-full max-w-md space-y-8">
+      <div className="relative z-10 w-full max-w-md space-y-6 sm:space-y-8">
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center text-iron-gray hover:text-iron-orange transition-colors"
+          className="inline-flex items-center text-iron-gray hover:text-iron-orange transition-colors text-sm"
         >
           <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -142,31 +157,25 @@ function LoginPageContent() {
         </Link>
 
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl md:text-6xl font-black text-gradient-orange uppercase">
+        <div className="text-center space-y-2 sm:space-y-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gradient-orange uppercase">
             Welcome Back
           </h1>
-          <p className="text-iron-gray uppercase tracking-wider">
+          <p className="text-sm sm:text-base text-iron-gray uppercase tracking-wider">
             Sign in to continue your journey
           </p>
         </div>
 
         {/* Form container */}
-        <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-6">
+        <div className="bg-iron-dark-gray border-2 border-iron-gray p-4 sm:p-6 md:p-8 space-y-6">
           {/* Post-signup email verification banner */}
           {verifyEmailBanner && (
-            <div className="bg-iron-orange/10 border-2 border-iron-orange text-iron-orange p-4">
-              <p className="font-semibold">
-                {`Account created${justSignedUpEmail ? ` for ${justSignedUpEmail}` : ''}. Please check your email and confirm your account before signing in.`}
-              </p>
-            </div>
+            <AuthSuccessMessage
+              message={`Account created${justSignedUpEmail ? ` for ${justSignedUpEmail}` : ''}. Please check your email and confirm your account before signing in.`}
+            />
           )}
           {/* Error message */}
-          {error && (
-            <div className="bg-iron-orange/10 border-2 border-iron-orange text-iron-orange p-4">
-              <p className="font-semibold">Error: {error}</p>
-            </div>
-          )}
+          {error && <AuthErrorMessage message={error} onDismiss={() => setError('')} />}
 
           {/* Login form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,11 +186,14 @@ function LoginPageContent() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
+                className="input"
                 placeholder="your@email.com"
                 disabled={loading}
               />
@@ -194,11 +206,13 @@ function LoginPageContent() {
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
+                className="input"
                 placeholder="••••••••"
                 disabled={loading}
               />
@@ -221,7 +235,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-8 py-4 bg-iron-orange text-iron-black font-bold text-lg uppercase tracking-wider hover:bg-[#FF5722] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full text-base sm:text-lg"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -242,7 +256,7 @@ function LoginPageContent() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full px-8 py-4 border-2 border-iron-gray text-iron-white font-bold text-lg uppercase tracking-wider hover:border-iron-orange hover:text-iron-orange transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="btn btn-secondary w-full text-base sm:text-lg flex items-center justify-center gap-3"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -267,7 +281,7 @@ function LoginPageContent() {
 
           {/* Sign up link */}
           <div className="text-center pt-4">
-            <p className="text-iron-gray">
+            <p className="text-sm sm:text-base text-iron-gray">
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-iron-orange hover:text-[#FF5722] font-semibold transition-colors">
                 Sign up
@@ -278,10 +292,10 @@ function LoginPageContent() {
 
         {/* Footer */}
         <div className="text-center space-y-3">
-          <p className="text-xs text-iron-gray">
+          <p className="text-xs sm:text-sm text-iron-gray">
             Protected by modern encryption and security standards
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs">
+          <div className="flex items-center justify-center gap-4 text-xs sm:text-sm">
             <Link href="/privacy" className="text-iron-gray hover:text-iron-orange transition-colors">
               Privacy Policy
             </Link>

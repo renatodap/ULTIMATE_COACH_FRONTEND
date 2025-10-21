@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { signup } from '@/lib/api/auth'
 import { supabase } from '@/lib/supabase'
+import AuthErrorMessage, { getUserFriendlyErrorMessage } from '@/components/auth/AuthErrorMessage'
+import { ErrorLogger, ErrorCategory, ErrorSeverity } from '@/lib/logging/ErrorLogger'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -49,28 +51,42 @@ export default function SignupPage() {
       // Tokens exist = Email confirmation disabled or already confirmed → Go to onboarding
       // No tokens = Email confirmation required → Go to login
       if (response.session?.access_token && response.session?.refresh_token) {
-        console.log('[Signup] Tokens received - syncing session and going to onboarding...')
-
         // Sync Supabase client session with backend tokens
         await supabase.auth.setSession({
           access_token: response.session.access_token,
           refresh_token: response.session.refresh_token,
         })
-        console.log('[Signup] Supabase session synced successfully')
+
+        // Log successful signup
+        ErrorLogger.log({
+          category: ErrorCategory.AUTH_SIGNUP_EMAIL,
+          severity: ErrorSeverity.INFO,
+          message: 'User signed up successfully - no email confirmation required',
+          userId: response.user.id,
+          userEmail: response.user.email
+        })
 
         // Redirect directly to onboarding (user is authenticated!)
         window.location.href = '/onboarding'
       } else {
         // No tokens - email confirmation is required
-        console.log('[Signup] No session tokens (email confirmation required) - redirecting to login')
+        ErrorLogger.log({
+          category: ErrorCategory.AUTH_VERIFICATION,
+          severity: ErrorSeverity.INFO,
+          message: 'User signed up - email confirmation required',
+          userEmail: email
+        })
 
         // Redirect to login with a banner prompting email confirmation
         const params = new URLSearchParams({ verifyEmail: '1', email })
         router.push(`/login?${params.toString()}`)
       }
     } catch (err) {
-      console.error('[Signup] Signup error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create account')
+      // Log error with ErrorLogger (structured, comprehensive)
+      ErrorLogger.authError('signup', 'email', err, { email, hasFullName: !!fullName })
+
+      // Show user-friendly error message
+      setError(getUserFriendlyErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -90,21 +106,22 @@ export default function SignupPage() {
 
       if (error) throw error
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up with Google')
+      ErrorLogger.authError('signup', 'google', err, {})
+      setError(getUserFriendlyErrorMessage(err))
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-iron-black flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-iron-black flex items-center justify-center px-4 sm:px-6 py-12">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-iron-black via-iron-dark-gray to-iron-black -z-10" />
 
-      <div className="relative z-10 w-full max-w-md space-y-8">
+      <div className="relative z-10 w-full max-w-md space-y-6 sm:space-y-8">
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center text-iron-gray hover:text-iron-orange transition-colors"
+          className="inline-flex items-center text-iron-gray hover:text-iron-orange transition-colors text-sm"
         >
           <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -113,23 +130,19 @@ export default function SignupPage() {
         </Link>
 
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl md:text-6xl font-black text-gradient-orange uppercase">
+        <div className="text-center space-y-2 sm:space-y-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gradient-orange uppercase">
             Get Started
           </h1>
-          <p className="text-iron-gray uppercase tracking-wider">
+          <p className="text-sm sm:text-base text-iron-gray uppercase tracking-wider">
             Create your account and transform
           </p>
         </div>
 
         {/* Form container */}
-        <div className="bg-iron-dark-gray border-2 border-iron-gray p-8 space-y-6">
+        <div className="bg-iron-dark-gray border-2 border-iron-gray p-4 sm:p-6 md:p-8 space-y-6">
           {/* Error message */}
-          {error && (
-            <div className="bg-iron-orange/10 border-2 border-iron-orange text-iron-orange p-4">
-              <p className="font-semibold">Error: {error}</p>
-            </div>
-          )}
+          {error && <AuthErrorMessage message={error} onDismiss={() => setError('')} />}
 
           {/* Signup form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -140,10 +153,12 @@ export default function SignupPage() {
               </label>
               <input
                 id="fullName"
+                name="name"
                 type="text"
+                autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
+                className="input"
                 placeholder="John Doe"
                 disabled={loading}
               />
@@ -156,11 +171,14 @@ export default function SignupPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
+                className="input"
                 placeholder="your@email.com"
                 disabled={loading}
               />
@@ -173,13 +191,15 @@ export default function SignupPage() {
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
+                autoComplete="new-password"
                 required
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setShowPasswordRequirements(true)}
-                className="w-full px-4 py-3 bg-iron-black border-2 border-iron-gray text-iron-white focus:border-iron-orange focus:outline-none transition-colors"
+                className="input"
                 placeholder="••••••••"
                 disabled={loading}
               />
@@ -192,32 +212,62 @@ export default function SignupPage() {
                   </p>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 ${passwordRequirements.minLength ? 'bg-success' : 'bg-iron-gray'}`} />
-                      <span className={`text-xs ${passwordRequirements.minLength ? 'text-success' : 'text-iron-gray'}`}>
+                      {passwordRequirements.minLength ? (
+                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-iron-gray rounded-full" />
+                      )}
+                      <span className={`text-xs ${passwordRequirements.minLength ? 'text-success font-medium' : 'text-iron-gray'}`}>
                         At least 8 characters
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasLowercase ? 'bg-success' : 'bg-iron-gray'}`} />
-                      <span className={`text-xs ${passwordRequirements.hasLowercase ? 'text-success' : 'text-iron-gray'}`}>
+                      {passwordRequirements.hasLowercase ? (
+                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-iron-gray rounded-full" />
+                      )}
+                      <span className={`text-xs ${passwordRequirements.hasLowercase ? 'text-success font-medium' : 'text-iron-gray'}`}>
                         One lowercase letter (a-z)
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasUppercase ? 'bg-success' : 'bg-iron-gray'}`} />
-                      <span className={`text-xs ${passwordRequirements.hasUppercase ? 'text-success' : 'text-iron-gray'}`}>
+                      {passwordRequirements.hasUppercase ? (
+                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-iron-gray rounded-full" />
+                      )}
+                      <span className={`text-xs ${passwordRequirements.hasUppercase ? 'text-success font-medium' : 'text-iron-gray'}`}>
                         One uppercase letter (A-Z)
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasDigit ? 'bg-success' : 'bg-iron-gray'}`} />
-                      <span className={`text-xs ${passwordRequirements.hasDigit ? 'text-success' : 'text-iron-gray'}`}>
+                      {passwordRequirements.hasDigit ? (
+                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-iron-gray rounded-full" />
+                      )}
+                      <span className={`text-xs ${passwordRequirements.hasDigit ? 'text-success font-medium' : 'text-iron-gray'}`}>
                         One number (0-9)
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 ${passwordRequirements.hasSymbol ? 'bg-success' : 'bg-iron-gray'}`} />
-                      <span className={`text-xs ${passwordRequirements.hasSymbol ? 'text-success' : 'text-iron-gray'}`}>
+                      {passwordRequirements.hasSymbol ? (
+                        <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-iron-gray rounded-full" />
+                      )}
+                      <span className={`text-xs ${passwordRequirements.hasSymbol ? 'text-success font-medium' : 'text-iron-gray'}`}>
                         One symbol (!@#$%^&*...)
                       </span>
                     </div>
@@ -229,8 +279,8 @@ export default function SignupPage() {
             {/* Submit button */}
             <button
               type="submit"
-              disabled={loading}
-              className="w-full px-8 py-4 bg-iron-orange text-iron-black font-bold text-lg uppercase tracking-wider hover:bg-[#FF5722] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !isPasswordValid || !email}
+              className="btn btn-primary w-full text-base sm:text-lg"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -251,7 +301,7 @@ export default function SignupPage() {
             type="button"
             onClick={handleGoogleSignup}
             disabled={loading}
-            className="w-full px-8 py-4 border-2 border-iron-gray text-iron-white font-bold text-lg uppercase tracking-wider hover:border-iron-orange hover:text-iron-orange transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="btn btn-secondary w-full text-base sm:text-lg flex items-center justify-center gap-3"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
@@ -276,7 +326,7 @@ export default function SignupPage() {
 
           {/* Login link */}
           <div className="text-center pt-4">
-            <p className="text-iron-gray">
+            <p className="text-sm sm:text-base text-iron-gray">
               Already have an account?{' '}
               <Link href="/login" className="text-iron-orange hover:text-[#FF5722] font-semibold transition-colors">
                 Sign in
@@ -286,7 +336,7 @@ export default function SignupPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-iron-gray">
+        <p className="text-center text-xs sm:text-sm text-iron-gray">
           By signing up, you agree to our{' '}
           <Link href="/terms" className="text-iron-orange hover:underline">
             Terms
