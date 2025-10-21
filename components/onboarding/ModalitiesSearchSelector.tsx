@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Search, X, Check } from 'lucide-react'
-import { TrainingModality, TrainingModalitySelection } from '@/lib/api/onboarding'
-import { apiClient } from '@/lib/api/client'
+import { TrainingModality, TrainingModalitySelection, getTrainingModalities } from '@/lib/api/onboarding'
 
 interface ModalitiesSearchSelectorProps {
   selectedModalities: TrainingModalitySelection[]
@@ -15,33 +14,44 @@ export default function ModalitiesSearchSelector({
   onChange
 }: ModalitiesSearchSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<TrainingModality[]>([])
-  const [isSearching, setIsSearching] = useState(false)
+  const [allModalities, setAllModalities] = useState<TrainingModality[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Debounced search
+  // Fetch all modalities once on mount
   useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([])
-      return
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearching(true)
+    async function fetchModalities() {
+      setIsLoading(true)
       try {
-        const results = await apiClient.get<TrainingModality[]>(
-          `/api/v1/onboarding/training-modalities/search?query=${encodeURIComponent(searchQuery)}&limit=20`
-        )
-        setSearchResults(results)
+        const modalities = await getTrainingModalities()
+        setAllModalities(modalities)
       } catch (error) {
-        console.error('Failed to search modalities:', error)
-        setSearchResults([])
+        console.error('Failed to fetch modalities:', error)
+        setAllModalities([])
       } finally {
-        setIsSearching(false)
+        setIsLoading(false)
       }
-    }, 300)
+    }
+    fetchModalities()
+  }, [])
 
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  // Client-side filtering with useMemo for performance
+  const searchResults = useMemo(() => {
+    if (searchQuery.length < 2) return []
+
+    const query = searchQuery.toLowerCase()
+    return allModalities
+      .filter(modality =>
+        modality.name.toLowerCase().includes(query) ||
+        modality.description?.toLowerCase().includes(query)
+      )
+      .slice(0, 20) // Limit to 20 results
+  }, [searchQuery, allModalities])
+
+  // Helper to get modality name by ID
+  const getModalityName = (modalityId: string): string => {
+    const modality = allModalities.find(m => m.id === modalityId)
+    return modality?.name || 'Unknown Modality'
+  }
 
   const handleSelectModality = (modality: TrainingModality) => {
     // Check if already selected
@@ -57,7 +67,6 @@ export default function ModalitiesSearchSelector({
 
     onChange([...selectedModalities, newSelection])
     setSearchQuery('')
-    setSearchResults([])
   }
 
   const handleRemoveModality = (modalityId: string) => {
@@ -102,7 +111,7 @@ export default function ModalitiesSearchSelector({
           placeholder="Search for sports, activities, or training styles..."
           className="w-full pl-10 pr-4 py-3 bg-iron-dark-gray border border-iron-gray rounded-lg text-iron-white placeholder-iron-gray focus:outline-none focus:ring-2 focus:ring-iron-orange focus:border-transparent"
         />
-        {isSearching && (
+        {isLoading && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             <div className="animate-spin h-5 w-5 border-2 border-iron-orange border-t-transparent rounded-full" />
           </div>
@@ -161,8 +170,7 @@ export default function ModalitiesSearchSelector({
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1">
                   <span className="text-iron-white font-medium">
-                    {/* We'd need to fetch the modality name here, or store it in selection */}
-                    Modality
+                    {getModalityName(selection.modality_id)}
                   </span>
                   {selection.is_primary && (
                     <span className="ml-2 px-2 py-0.5 bg-iron-orange text-iron-black text-xs font-medium rounded">
