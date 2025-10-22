@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { useOnboardingCheck } from '@/lib/hooks/useOnboardingCheck'
 import { useDashboardData } from '@/lib/hooks/useDashboardData'
 import { getCurrentProgram } from '@/lib/api/planning'
@@ -47,6 +48,7 @@ const cardVariants = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { loading: authLoading, onboardingComplete, userId } = useOnboardingCheck()
 
   // Use the new dashboard data hook
@@ -100,6 +102,9 @@ export default function DashboardPage() {
     setHasActivePlan(true)
     setShowGeneratePlanModal(false)
     refresh()
+
+    // Redirect to today's plan
+    router.push('/plan/today')
   }
 
   // Show loading state while checking authentication
