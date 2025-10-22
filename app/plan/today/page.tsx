@@ -156,7 +156,7 @@ export default function TodayPage() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-iron-orange"></div>
-          <p className="mt-2 text-iron-gray">Loading today's plan...</p>
+          <p className="mt-2 text-iron-gray">Loading today&apos;s plan...</p>
         </div>
       </div>
     )
@@ -192,7 +192,7 @@ export default function TodayPage() {
       {/* Header */}
       <div className="bg-iron-dark-gray border border-iron-gray rounded-lg p-4">
         <h2 className="text-lg font-semibold text-iron-white mb-1">
-          Today's Plan
+          Today&apos;s Plan
         </h2>
         <p className="text-sm text-iron-gray">
           {new Date(plan.date).toLocaleDateString('en-US', {
@@ -261,7 +261,7 @@ export default function TodayPage() {
       {plan.training_session ? (
         <div>
           <h3 className="text-sm font-semibold text-iron-gray mb-2 px-1">
-            Today's Workout
+            Today&apos;s Workout
           </h3>
           <WorkoutCard
             session={plan.training_session}
@@ -283,7 +283,7 @@ export default function TodayPage() {
       {/* Meals */}
       <div>
         <h3 className="text-sm font-semibold text-iron-gray mb-2 px-1">
-          Today's Meals
+          Today&apos;s Meals
         </h3>
         <div className="space-y-3">
           {plan.meals.map((meal) => (

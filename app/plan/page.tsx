@@ -117,7 +117,7 @@ export default function PlanSummaryPage() {
           onClick={() => router.push('/plan/today')}
           className="w-full py-3 bg-iron-orange text-iron-black rounded-lg font-semibold hover:bg-iron-orange/90 transition-colors"
         >
-          View Today's Plan
+          View Today&apos;s Plan
         </button>
         <button
           onClick={() => router.push('/plan/week')}
