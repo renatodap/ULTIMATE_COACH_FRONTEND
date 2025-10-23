@@ -210,11 +210,11 @@ export default function OnboardingPage() {
           ErrorLogger.log({
             category: ErrorCategory.ONBOARDING_NAVIGATION,
             severity: ErrorSeverity.INFO,
-            message: 'User already completed onboarding, redirecting to dashboard',
+            message: 'User already completed onboarding, redirecting to coach',
             userId: user.id,
             userEmail: user.email
           })
-          router.push('/dashboard')
+          router.push('/coach')
           return
         }
 
@@ -434,7 +434,7 @@ export default function OnboardingPage() {
       }
 
       // Immediate redirect with full page reload to ensure fresh app state
-      window.location.href = '/dashboard'
+      window.location.href = '/coach'
     } catch (err: any) {
       ErrorLogger.log({
         category: ErrorCategory.ONBOARDING_SUBMIT,

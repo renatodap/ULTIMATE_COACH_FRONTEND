@@ -14,14 +14,14 @@
  *
  * AUTHENTICATION FLOW:
  * - Unauthenticated + protected route → Redirect to / (landing)
- * - Authenticated + auth page → Redirect to /dashboard
+ * - Authenticated + auth page → Redirect to /coach (handled by login page)
  * - Public routes → Allow access for everyone
  *
  * ONBOARDING ENFORCEMENT:
  * Onboarding is NOT enforced here because Next.js middleware cannot make
  * async API calls to check user profile data. Instead:
  * - Login page checks onboarding_completed and redirects appropriately
- * - Dashboard and all protected pages use useOnboardingCheck() hook
+ * - Coach page and all protected pages use useOnboardingCheck() hook
  * - Hook fetches user profile and redirects to /onboarding if incomplete
  */
 
