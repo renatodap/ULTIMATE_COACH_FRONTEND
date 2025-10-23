@@ -102,6 +102,21 @@ class ApiClient {
    * Process API response and handle errors
    */
   private async processResponse<T>(response: Response, requestData?: { method: string; body?: any }): Promise<T> {
+    // Handle 204 No Content - no body to parse
+    if (response.status === 204) {
+      // If response is not ok (shouldn't happen for 204, but check anyway)
+      if (!response.ok) {
+        throw new ApiRequestError(
+          'Request failed with status 204',
+          response.status,
+          'No content',
+          'ApiError'
+        )
+      }
+      // Return void/null for 204 No Content
+      return undefined as T
+    }
+
     // Try to parse JSON response
     let data: any
     const contentType = response.headers.get('content-type')
