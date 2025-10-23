@@ -37,7 +37,7 @@ export function BottomNav({ hideOnScroll = true, alwaysOnTop = false }: BottomNa
   }
 
   const nutritionTab = {
-    name: 'Meals',
+    name: 'Nutrition',
     path: '/nutrition',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
