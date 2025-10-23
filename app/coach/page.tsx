@@ -612,10 +612,10 @@ export default function CoachPage() {
         )}
       </AnimatePresence>
 
-      {/* Floating Input - Overlays nav when keyboard is up */}
+      {/* Floating Input - Always above bottom nav */}
       <motion.div
         className={`
-          fixed left-0 right-0 z-[400]
+          fixed left-0 right-0 z-[600]
           px-4 pt-3 border-t border-iron-gray/20 bg-iron-black
           transition-all duration-300 ease-in-out
           ${keyboardVisible ? 'bottom-0 pb-4' : 'bottom-16 pb-2'}
