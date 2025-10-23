@@ -17,9 +17,10 @@ import { useScrollDirection } from '@/hooks/useScrollDirection'
 
 interface BottomNavProps {
   hideOnScroll?: boolean
+  alwaysOnTop?: boolean // For coach page - ensures nav is always accessible
 }
 
-export function BottomNav({ hideOnScroll = true }: BottomNavProps) {
+export function BottomNav({ hideOnScroll = true, alwaysOnTop = false }: BottomNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const scrollDirection = useScrollDirection()
@@ -68,7 +69,8 @@ export function BottomNav({ hideOnScroll = true }: BottomNavProps) {
   return (
     <nav
       className={`
-        fixed bottom-0 left-0 right-0 z-[300]
+        fixed bottom-0 left-0 right-0
+        ${alwaysOnTop ? 'z-[500]' : 'z-[300]'}
         bg-iron-black border-t border-iron-gray/30
         transition-transform duration-300 ease-in-out
         ${shouldHide ? 'translate-y-full' : 'translate-y-0'}

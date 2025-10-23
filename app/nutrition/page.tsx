@@ -1,40 +1,68 @@
 'use client'
 
 /**
- * Nutrition Page - Simple Meals List
+ * Nutrition Page - Full CRUD Meals List
  *
- * Week 2.5: Basic meals list for quick verification
- * - Shows recent meals logged by coach
- * - No daily summary (keeping it minimal)
+ * Features:
+ * - Shows recent meals logged by coach or manually
+ * - Edit/Delete actions for each meal
+ * - No daily summary component (removed as requested)
  * - Proper bottom spacing for nav
  */
 
 import { useEffect, useState } from 'react'
-import { getMeals, MealAPI } from '@/lib/api/nutrition'
+import { getMeals, deleteMeal, MealAPI } from '@/lib/api/nutrition'
 import { BottomNav } from '@/components/BottomNav'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 
 export default function NutritionPage() {
+  const router = useRouter()
   const [meals, setMeals] = useState<MealAPI[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchMeals() {
-      try {
-        setLoading(true)
-        const mealsData = await getMeals({ limit: 50 })
-        setMeals(mealsData.meals)
-      } catch (err) {
-        console.error('Failed to fetch meals:', err)
-        setError('Failed to load meals')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchMeals()
   }, [])
+
+  async function fetchMeals() {
+    try {
+      setLoading(true)
+      const mealsData = await getMeals({ limit: 50 })
+      setMeals(mealsData.meals)
+    } catch (err) {
+      console.error('Failed to fetch meals:', err)
+      setError('Failed to load meals')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleDelete(mealId: string) {
+    if (!confirm('Delete this meal? This cannot be undone.')) {
+      return
+    }
+
+    try {
+      setDeleteLoading(mealId)
+      await deleteMeal(mealId)
+      // Optimistic update - remove from list
+      setMeals(meals.filter(m => m.id !== mealId))
+    } catch (err) {
+      console.error('Failed to delete meal:', err)
+      alert('Failed to delete meal. Please try again.')
+    } finally {
+      setDeleteLoading(null)
+    }
+  }
+
+  function handleEdit(mealId: string) {
+    // TODO: Implement edit page
+    router.push(`/nutrition/edit/${mealId}`)
+  }
 
   if (loading) {
     return (
@@ -68,8 +96,19 @@ export default function NutritionPage() {
     <div className="min-h-screen bg-iron-black text-iron-white pb-40">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-iron-black border-b border-iron-gray/30 px-4 py-4">
-        <h1 className="text-2xl font-bold">Meals</h1>
-        <p className="text-sm text-iron-gray">Recent meals logged</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Meals</h1>
+            <p className="text-sm text-iron-gray">Recent meals logged</p>
+          </div>
+          <button
+            onClick={() => router.push('/nutrition/log')}
+            className="flex items-center gap-2 px-4 py-2 bg-iron-orange text-iron-black rounded-lg font-medium active-press focus-ring-iron"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Log Meal</span>
+          </button>
+        </div>
       </div>
 
       {/* Meals List */}
@@ -90,19 +129,44 @@ export default function NutritionPage() {
             >
               {/* Meal Header */}
               <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-iron-white capitalize">
-                    {meal.meal_type}
-                  </h3>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-iron-white capitalize">
+                      {meal.meal_type}
+                    </h3>
+                    {meal.source === 'coach_chat' && (
+                      <span className="text-xs bg-iron-orange/20 text-iron-orange px-2 py-1 rounded">
+                        AI Logged
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-iron-gray">
                     {format(new Date(meal.logged_at), 'MMM d, h:mm a')}
                   </p>
                 </div>
-                {meal.source === 'coach_chat' && (
-                  <span className="text-xs bg-iron-orange/20 text-iron-orange px-2 py-1 rounded">
-                    AI Logged
-                  </span>
-                )}
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(meal.id)}
+                    className="p-2 text-iron-orange hover:bg-iron-gray/10 rounded-lg transition-colors active-press"
+                    aria-label="Edit meal"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(meal.id)}
+                    disabled={deleteLoading === meal.id}
+                    className="p-2 text-red-400 hover:bg-iron-gray/10 rounded-lg transition-colors active-press disabled:opacity-50"
+                    aria-label="Delete meal"
+                  >
+                    {deleteLoading === meal.id ? (
+                      <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Meal Items */}

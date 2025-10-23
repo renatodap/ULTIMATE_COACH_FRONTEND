@@ -639,8 +639,8 @@ export default function CoachPage() {
         />
       </motion.div>
 
-      {/* Bottom Navigation - Keep visible on Coach page (input is above nav) */}
-      <BottomNav hideOnScroll={false} />
+      {/* Bottom Navigation - Always accessible on Coach page */}
+      <BottomNav hideOnScroll={false} alwaysOnTop={true} />
     </div>
   )
 }
