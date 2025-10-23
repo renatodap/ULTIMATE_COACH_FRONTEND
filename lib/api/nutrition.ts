@@ -278,3 +278,99 @@ export async function updateMeal(
   await deleteMeal(mealId);
   return await apiClient.post<MealAPI>('api/v1/meals', updatedMealData, { headers });
 }
+
+/**
+ * Delete a food item from a meal
+ *
+ * Uses the updateMeal pattern (delete + recreate) but filters out the specified item
+ *
+ * @param mealId - ID of the meal containing the item
+ * @param itemId - ID of the food item to remove
+ * @returns The updated meal
+ */
+export async function deleteMealItem(mealId: string, itemId: string): Promise<MealAPI> {
+  const currentMeal = await getMeal(mealId)
+
+  // Filter out the item to delete
+  const updatedItems = currentMeal.items
+    .filter(item => item.id !== itemId)
+    .map((item, index) => ({
+      food_id: item.food_id,
+      quantity: item.quantity,
+      serving_id: item.serving_id,
+      grams: item.grams,
+      calories: item.calories,
+      protein_g: item.protein_g,
+      carbs_g: item.carbs_g,
+      fat_g: item.fat_g,
+      display_unit: item.display_unit,
+      display_label: item.display_label,
+      display_order: index // Reorder after deletion
+    }))
+
+  // If no items left, delete the entire meal
+  if (updatedItems.length === 0) {
+    await deleteMeal(mealId)
+    throw new Error('MEAL_DELETED') // Special error to indicate meal was deleted
+  }
+
+  return updateMeal(mealId, { items: updatedItems })
+}
+
+/**
+ * Update a single food item within a meal
+ *
+ * @param mealId - ID of the meal containing the item
+ * @param itemId - ID of the food item to update
+ * @param updates - Fields to update (quantity, serving_id, etc.)
+ * @returns The updated meal
+ */
+export async function updateMealItem(
+  mealId: string,
+  itemId: string,
+  updates: {
+    quantity?: number
+    serving_id?: string | null
+    grams?: number
+    calories?: number
+    protein_g?: number
+    carbs_g?: number
+    fat_g?: number
+  }
+): Promise<MealAPI> {
+  const currentMeal = await getMeal(mealId)
+
+  // Find and update the specific item
+  const updatedItems = currentMeal.items.map(item => {
+    if (item.id !== itemId) return {
+      food_id: item.food_id,
+      quantity: item.quantity,
+      serving_id: item.serving_id,
+      grams: item.grams,
+      calories: item.calories,
+      protein_g: item.protein_g,
+      carbs_g: item.carbs_g,
+      fat_g: item.fat_g,
+      display_unit: item.display_unit,
+      display_label: item.display_label,
+      display_order: item.display_order
+    }
+
+    // Apply updates to this item
+    return {
+      food_id: item.food_id,
+      quantity: updates.quantity ?? item.quantity,
+      serving_id: updates.serving_id !== undefined ? updates.serving_id : item.serving_id,
+      grams: updates.grams ?? item.grams,
+      calories: updates.calories ?? item.calories,
+      protein_g: updates.protein_g ?? item.protein_g,
+      carbs_g: updates.carbs_g ?? item.carbs_g,
+      fat_g: updates.fat_g ?? item.fat_g,
+      display_unit: item.display_unit,
+      display_label: item.display_label,
+      display_order: item.display_order
+    }
+  })
+
+  return updateMeal(mealId, { items: updatedItems })
+}
