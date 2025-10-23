@@ -65,7 +65,7 @@ export function DailySummaryCard({
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-sm font-medium text-iron-gray uppercase tracking-wider">
-                Today's Nutrition
+                Today&apos;s Nutrition
               </h2>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-4xl font-bold text-iron-orange">
