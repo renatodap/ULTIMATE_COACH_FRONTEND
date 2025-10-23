@@ -24,7 +24,7 @@ export default function NutritionPage() {
       try {
         setLoading(true)
         const mealsData = await getMeals({ limit: 50 })
-        setMeals(mealsData)
+        setMeals(mealsData.meals)
       } catch (err) {
         console.error('Failed to fetch meals:', err)
         setError('Failed to load meals')
