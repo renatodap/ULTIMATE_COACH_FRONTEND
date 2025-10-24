@@ -134,7 +134,16 @@ async function proxyRequest(req: NextRequest, method: string): Promise<NextRespo
     // Make request to Railway backend
     const response = await fetch(targetUrl, requestOptions)
 
-    // Read response body
+    // Handle 204 No Content specially (no body to read)
+    if (response.status === 204) {
+      console.log('[API Proxy] Received 204 No Content - returning empty response')
+      return new NextResponse(null, {
+        status: 204,
+        statusText: response.statusText || 'No Content',
+      })
+    }
+
+    // Read response body (only if not 204)
     const responseBody = await response.text()
 
     // Build response headers
