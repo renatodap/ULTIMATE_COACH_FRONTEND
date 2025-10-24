@@ -230,12 +230,10 @@ export async function getDailyNutrition(date: string, timezone: string) {
 }
 
 /**
- * Update a meal (DELETE + CREATE pattern since backend has no UPDATE endpoint)
+ * Update a meal (DEPRECATED - use updateMealItem for item updates)
  *
- * This function:
- * 1. Fetches the current meal data
- * 2. Deletes the old meal
- * 3. Creates a new meal with updated data
+ * This function still uses DELETE + CREATE pattern for meal metadata updates.
+ * For updating individual items, use updateMealItem() instead.
  *
  * @param mealId - ID of meal to update
  * @param updates - Partial meal data to update
@@ -282,43 +280,37 @@ export async function updateMeal(
 /**
  * Delete a food item from a meal
  *
- * Uses the updateMeal pattern (delete + recreate) but filters out the specified item
+ * Uses new backend endpoint DELETE /meals/{meal_id}/items/{item_id}
+ * Backend automatically deletes meal if this is the last item.
  *
  * @param mealId - ID of the meal containing the item
  * @param itemId - ID of the food item to remove
- * @returns The updated meal
+ * @returns The updated meal, or null if meal was deleted (last item removed)
  */
-export async function deleteMealItem(mealId: string, itemId: string): Promise<MealAPI> {
-  const currentMeal = await getMeal(mealId)
+export async function deleteMealItem(mealId: string, itemId: string): Promise<MealAPI | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
-  // Filter out the item to delete
-  const updatedItems = currentMeal.items
-    .filter(item => item.id !== itemId)
-    .map((item, index) => ({
-      food_id: item.food_id,
-      quantity: item.quantity,
-      serving_id: item.serving_id,
-      grams: item.grams,
-      calories: item.calories,
-      protein_g: item.protein_g,
-      carbs_g: item.carbs_g,
-      fat_g: item.fat_g,
-      display_unit: item.display_unit,
-      display_label: item.display_label,
-      display_order: index // Reorder after deletion
-    }))
+  const result = await apiClient.delete<MealAPI | null>(
+    `api/v1/meals/${mealId}/items/${itemId}`,
+    { headers }
+  );
 
-  // If no items left, delete the entire meal
-  if (updatedItems.length === 0) {
-    await deleteMeal(mealId)
-    throw new Error('MEAL_DELETED') // Special error to indicate meal was deleted
+  // If null, meal was deleted (last item removed)
+  if (result === null) {
+    throw new Error('MEAL_DELETED');
   }
 
-  return updateMeal(mealId, { items: updatedItems })
+  return result;
 }
 
 /**
  * Update a single food item within a meal
+ *
+ * Uses new backend endpoint PATCH /meals/{meal_id}/items/{item_id}
+ * Backend recalculates nutrition values automatically.
  *
  * @param mealId - ID of the meal containing the item
  * @param itemId - ID of the food item to update
@@ -336,41 +328,47 @@ export async function updateMealItem(
     protein_g?: number
     carbs_g?: number
     fat_g?: number
+    display_unit?: string
+    display_label?: string | null
   }
 ): Promise<MealAPI> {
-  const currentMeal = await getMeal(mealId)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
-  // Find and update the specific item
-  const updatedItems = currentMeal.items.map(item => {
-    if (item.id !== itemId) return {
-      food_id: item.food_id,
-      quantity: item.quantity,
-      serving_id: item.serving_id,
-      grams: item.grams,
-      calories: item.calories,
-      protein_g: item.protein_g,
-      carbs_g: item.carbs_g,
-      fat_g: item.fat_g,
-      display_unit: item.display_unit,
-      display_label: item.display_label,
-      display_order: item.display_order
-    }
+  return apiClient.patch<MealAPI>(
+    `api/v1/meals/${mealId}/items/${itemId}`,
+    updates,
+    { headers }
+  );
+}
 
-    // Apply updates to this item
-    return {
-      food_id: item.food_id,
-      quantity: updates.quantity ?? item.quantity,
-      serving_id: updates.serving_id !== undefined ? updates.serving_id : item.serving_id,
-      grams: updates.grams ?? item.grams,
-      calories: updates.calories ?? item.calories,
-      protein_g: updates.protein_g ?? item.protein_g,
-      carbs_g: updates.carbs_g ?? item.carbs_g,
-      fat_g: updates.fat_g ?? item.fat_g,
-      display_unit: item.display_unit,
-      display_label: item.display_label,
-      display_order: item.display_order
-    }
-  })
+/**
+ * Add a new food item to an existing meal
+ *
+ * Uses new backend endpoint POST /meals/{meal_id}/items
+ *
+ * @param mealId - ID of the meal to add item to
+ * @param item - Food item data
+ * @returns The updated meal with new item
+ */
+export async function addMealItem(
+  mealId: string,
+  item: CreateMealItemRequest
+): Promise<MealAPI> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
-  return updateMeal(mealId, { items: updatedItems })
+  return apiClient.post<MealAPI>(
+    `api/v1/meals/${mealId}/items`,
+    item,
+    { headers }
+  );
 }

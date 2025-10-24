@@ -85,8 +85,8 @@ export default function NutritionPage() {
   /**
    * Delete food item from meal
    *
-   * CRITICAL FIX: Backend does DELETE+CREATE, so meal ID changes
-   * We must handle this properly to avoid duplicates
+   * Uses new backend endpoint DELETE /meals/{meal_id}/items/{item_id}
+   * Backend returns null if meal was deleted (last item removed)
    */
   const handleDeleteFood = async (mealId: string, itemId: string) => {
     // Find the meal and item
@@ -142,18 +142,19 @@ export default function NutritionPage() {
       setDeleteLoadingItemId(itemId)
       const updatedMeal = await deleteMealItem(mealId, itemId)
 
-      // SUCCESS: API returns new meal with NEW ID
-      // Replace old meal (optimistic) with new meal (from API)
-      setMeals(prevMeals => {
-        // Remove old meal by ID
-        const withoutOld = prevMeals.filter(m => m.id !== mealId)
-        // Add new meal from API
-        const withNew = [...withoutOld, updatedMeal]
-        // Sort chronologically
-        return withNew.sort((a, b) =>
-          new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
+      // updatedMeal is null if meal was deleted (last item removed)
+      if (updatedMeal === null) {
+        // Meal was deleted - optimistic update already removed it
+        // Just clear loading state
+        setDeleteLoadingItemId(null)
+      } else {
+        // SUCCESS: API returns updated meal (same ID with new backend!)
+        // Replace the meal in state with updated version from API
+        setMeals(prevMeals =>
+          prevMeals.map(m => m.id === mealId ? updatedMeal : m)
         )
-      })
+        setDeleteLoadingItemId(null)
+      }
 
       // Clear undo after 10 seconds
       setTimeout(() => {
@@ -171,7 +172,7 @@ export default function NutritionPage() {
 
       // Check if meal was deleted (last item removed)
       if (err.message === 'MEAL_DELETED') {
-        // Already removed from UI optimistically - this is correct
+        // Meal was deleted - optimistic update already removed it
         // Clear undo after 10s
         setTimeout(() => setUndoState(null), 10000)
         return
