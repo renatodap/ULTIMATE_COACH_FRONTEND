@@ -12,7 +12,7 @@
  * - Mobile-first design
  */
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { getMeal, updateMealItem, type MealAPI, type MealItemAPI } from '@/lib/api/nutrition'
@@ -21,12 +21,11 @@ import { calculateFoodNutrition } from '@/lib/utils/nutrition-calculator'
 import type { Food, FoodServing } from '@/lib/types/food'
 
 interface EditFoodPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default function EditFoodPage({ params }: EditFoodPageProps) {
-  const resolvedParams = use(params)
-  const itemId = resolvedParams.id
+  const itemId = params.id
   const router = useRouter()
   const searchParams = useSearchParams()
   const mealId = searchParams?.get('meal')

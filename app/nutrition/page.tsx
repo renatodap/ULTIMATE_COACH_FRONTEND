@@ -98,6 +98,18 @@ export default function NutritionPage() {
       return
     }
 
+    // Check if this is the last item in the meal
+    if (meal.items.length === 1) {
+      const itemName = item.foods?.name || 'item'
+      const mealTypeName = meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)
+      const confirmed = window.confirm(
+        `This is the last item in your ${mealTypeName} meal. Deleting "${itemName}" will delete the entire meal.\n\nAre you sure?`
+      )
+      if (!confirmed) {
+        return // User cancelled
+      }
+    }
+
     // Save COMPLETE previous state for rollback
     const previousMeals = [...meals]
 
