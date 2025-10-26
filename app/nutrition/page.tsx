@@ -15,7 +15,7 @@
  * - Mobile-first design with generous bottom spacing
  */
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, addDays, subDays, startOfDay, endOfDay, isToday, parseISO } from 'date-fns'
 import { Plus, Loader2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
@@ -27,7 +27,7 @@ import { MealCard } from '@/components/MealCard'
 import { UndoToast } from '@/components/UndoToast'
 import { ErrorToast } from '@/components/ErrorToast'
 
-export default function NutritionPage() {
+function NutritionPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -567,5 +567,13 @@ export default function NutritionPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function NutritionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-iron-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-iron-orange animate-spin" /></div>}>
+      <NutritionPageContent />
+    </Suspense>
   )
 }
