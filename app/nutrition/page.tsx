@@ -16,9 +16,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
-import { Plus, Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { format, addDays, subDays, startOfDay, endOfDay, isToday, parseISO } from 'date-fns'
+import { Plus, Loader2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { getMeals, deleteMeal, deleteMealItem, type MealAPI } from '@/lib/api/nutrition'
 import { BottomNav } from '@/components/BottomNav'
 import { FAB } from '@/components/shared/FAB'
@@ -29,6 +29,20 @@ import { ErrorToast } from '@/components/ErrorToast'
 
 export default function NutritionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Date state - Read from URL param or default to today
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const dateParam = searchParams?.get('date')
+    if (dateParam) {
+      try {
+        return parseISO(dateParam)
+      } catch {
+        return new Date()
+      }
+    }
+    return new Date()
+  })
 
   // Data state
   const [meals, setMeals] = useState<MealAPI[]>([])
@@ -52,16 +66,34 @@ export default function NutritionPage() {
     details?: string
   } | null>(null)
 
-  // Fetch meals on mount
+  // Fetch meals when date changes
   useEffect(() => {
     fetchMeals()
-  }, [])
+  }, [selectedDate])
+
+  // Sync URL param when date changes
+  useEffect(() => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+    const currentDateParam = searchParams?.get('date')
+    if (currentDateParam !== dateStr) {
+      router.replace(`/nutrition?date=${dateStr}`, { scroll: false })
+    }
+  }, [selectedDate, router, searchParams])
 
   async function fetchMeals() {
     try {
       setLoading(true)
       setError(null)
-      const response = await getMeals({ limit: 50 })
+
+      // Calculate start and end of the selected day in ISO format
+      const start = startOfDay(selectedDate).toISOString()
+      const end = endOfDay(selectedDate).toISOString()
+
+      const response = await getMeals({
+        start_date: start,
+        end_date: end,
+        limit: 50
+      })
       setMeals(response.meals)
     } catch (err) {
       console.error('Failed to fetch meals:', err)
@@ -69,6 +101,19 @@ export default function NutritionPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Date navigation functions
+  const handlePreviousDay = () => {
+    setSelectedDate(prev => subDays(prev, 1))
+  }
+
+  const handleNextDay = () => {
+    setSelectedDate(prev => addDays(prev, 1))
+  }
+
+  const handleToday = () => {
+    setSelectedDate(new Date())
   }
 
   // Calculate daily totals
@@ -376,16 +421,17 @@ export default function NutritionPage() {
     )
   }
 
+  // Check if viewing today
+  const viewingToday = isToday(selectedDate)
+
   return (
     <div className="min-h-screen bg-iron-black text-iron-white pb-40">
       {/* Header */}
-      <div className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30 px-4 py-4">
-        <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-[100] bg-iron-black border-b border-iron-gray/30">
+        {/* Title and Log Button */}
+        <div className="flex items-center justify-between px-4 py-4">
           <div>
             <h1 className="text-2xl font-bold uppercase tracking-wider">Nutrition</h1>
-            <p className="text-sm text-iron-gray">
-              {format(new Date(), 'EEEE, MMMM d')}
-            </p>
           </div>
           <button
             onClick={() => router.push('/nutrition/log')}
@@ -394,6 +440,54 @@ export default function NutritionPage() {
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">Log Meal</span>
           </button>
+        </div>
+
+        {/* Date Navigation */}
+        <div className="px-4 pb-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Previous Day */}
+            <button
+              onClick={handlePreviousDay}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-iron-dark-gray border border-iron-gray/30 text-iron-white hover:bg-iron-gray/20 active-press"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* Date Display */}
+            <div className="flex-1 text-center">
+              <div className={`text-lg font-semibold ${!viewingToday ? 'text-iron-orange' : 'text-iron-white'}`}>
+                {format(selectedDate, 'EEEE, MMMM d')}
+              </div>
+              {!viewingToday && (
+                <div className="text-xs text-iron-gray mt-1">
+                  {format(selectedDate, 'yyyy')}
+                </div>
+              )}
+            </div>
+
+            {/* Next Day */}
+            <button
+              onClick={handleNextDay}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-iron-dark-gray border border-iron-gray/30 text-iron-white hover:bg-iron-gray/20 active-press"
+              aria-label="Next day"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Today Button - Only show when not viewing today */}
+          {!viewingToday && (
+            <div className="mt-3 flex justify-center">
+              <button
+                onClick={handleToday}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-iron-orange/10 border border-iron-orange text-iron-orange hover:bg-iron-orange/20 active-press text-sm font-medium"
+              >
+                <Calendar className="w-4 h-4" />
+                Back to Today
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -415,16 +509,20 @@ export default function NutritionPage() {
         {meals.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🍽️</div>
-            <h2 className="text-xl font-semibold mb-2 text-iron-white">No meals logged today</h2>
+            <h2 className="text-xl font-semibold mb-2 text-iron-white">
+              {viewingToday ? 'No meals logged today' : `No meals logged on ${format(selectedDate, 'MMM d')}`}
+            </h2>
             <p className="text-iron-gray mb-6">
-              Start tracking your nutrition!
+              {viewingToday ? 'Start tracking your nutrition!' : 'No nutrition data for this date'}
             </p>
-            <button
-              onClick={() => router.push('/nutrition/log')}
-              className="px-6 py-3 bg-iron-orange text-iron-black rounded-lg font-medium active-press"
-            >
-              Log Your First Meal
-            </button>
+            {viewingToday && (
+              <button
+                onClick={() => router.push('/nutrition/log')}
+                className="px-6 py-3 bg-iron-orange text-iron-black rounded-lg font-medium active-press"
+              >
+                Log Your First Meal
+              </button>
+            )}
           </div>
         ) : (
           meals.map(meal => (
