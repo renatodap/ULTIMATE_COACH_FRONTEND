@@ -129,6 +129,7 @@ export interface FullUserProfile {
   language?: string
 
   // Consultation
+  consultation_enabled?: boolean
   consultation_completed?: boolean
   consultation_completed_at?: string
 }

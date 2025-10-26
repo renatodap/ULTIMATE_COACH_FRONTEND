@@ -12,7 +12,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Globe, Scale, Clock } from 'lucide-react'
+import { LogOut, Globe, Scale, Clock, MessageSquare } from 'lucide-react'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { getFullUserProfile, updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
@@ -102,6 +102,49 @@ export default function SettingsPage() {
               <h2 className="text-lg font-bold truncate">{profile.full_name || profile.email}</h2>
               <p className="text-sm text-iron-gray">{profile.email}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Consultation Card */}
+        <div className="rounded-xl border border-iron-gray/40 bg-iron-dark-gray/50 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1">
+              <MessageSquare className="w-5 h-5 text-iron-orange" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-heading text-lg text-iron-white uppercase tracking-wider">AI Consultation</h3>
+                  {/* Status badge */}
+                  {!profile.consultation_enabled ? (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-iron-gray/30 text-iron-gray rounded">
+                      Not Available
+                    </span>
+                  ) : profile.consultation_completed ? (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-900/30 text-green-400 rounded">
+                      Completed ✓
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-iron-orange/20 text-iron-orange rounded">
+                      Available
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-iron-gray mt-1">
+                  {!profile.consultation_enabled
+                    ? "Contact support to enable personalized coaching consultation"
+                    : profile.consultation_completed
+                    ? "You've completed your consultation. Your coach is personalized!"
+                    : "Get a personalized coaching plan through AI conversation"}
+                </p>
+              </div>
+            </div>
+            {profile.consultation_enabled && !profile.consultation_completed && (
+              <button
+                onClick={() => router.push('/dashboard/consultation')}
+                className="ml-4 px-4 py-2 bg-iron-orange text-iron-white font-heading text-sm uppercase tracking-wider rounded-lg hover:bg-iron-orange/90 transition-colors whitespace-nowrap"
+              >
+                Start
+              </button>
+            )}
           </div>
         </div>
 
