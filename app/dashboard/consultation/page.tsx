@@ -393,9 +393,6 @@ export default function ConsultationPage() {
                 disabled={isSending || isStarting}
                 rows={1}
                 className="flex-1 min-h-[44px] max-h-32 px-4 py-3 bg-iron-dark-gray border border-iron-gray text-iron-white placeholder-iron-gray rounded-xl focus:outline-none focus:border-iron-orange resize-none disabled:opacity-50"
-                style={{
-                  fieldSizing: 'content',
-                }}
               />
               <button
                 onClick={handleSendMessage}
