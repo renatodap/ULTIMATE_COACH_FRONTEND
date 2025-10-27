@@ -74,14 +74,24 @@ export default function ConsultationPage() {
         setSectionsCompleted(response.sections_completed)
         setTotalSections(response.total_sections)
 
-        // Add initial AI message
-        setMessages([
-          {
-            role: 'assistant',
-            content: response.message,
-            timestamp: new Date(),
-          },
-        ])
+        // If resuming session, load full conversation history
+        if (response.conversation_history && response.conversation_history.length > 0) {
+          const formattedMessages = response.conversation_history.map((msg: any) => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+          }))
+          setMessages(formattedMessages)
+        } else {
+          // New session - just add initial AI message
+          setMessages([
+            {
+              role: 'assistant',
+              content: response.message,
+              timestamp: new Date(),
+            },
+          ])
+        }
       } catch (error: any) {
         console.error('Failed to start consultation:', error)
 

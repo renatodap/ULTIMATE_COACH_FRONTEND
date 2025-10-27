@@ -23,6 +23,11 @@ export interface StartConsultationResponse {
   sections_completed: number
   total_sections: number
   progress_percentage: number
+  conversation_history?: Array<{
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: string
+  }>
 }
 
 /**
