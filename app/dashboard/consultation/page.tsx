@@ -85,8 +85,22 @@ export default function ConsultationPage() {
       } catch (error: any) {
         console.error('Failed to start consultation:', error)
 
+        // Handle 422 (session already exists - this is OK, just means user refreshed)
+        if (error.status === 422 || error.message?.includes('422')) {
+          setMessages([
+            {
+              role: 'assistant',
+              content:
+                'Welcome back! It looks like you already have a consultation in progress. Please continue where you left off, or refresh the page to start over.',
+              timestamp: new Date(),
+            },
+          ])
+          setIsStarting(false)
+          return
+        }
+
         // Handle 403 (consultation not enabled)
-        if (error.message?.includes('403') || error.message?.includes('not enabled')) {
+        if (error.status === 403 || error.message?.includes('403') || error.message?.includes('not enabled')) {
           setMessages([
             {
               role: 'assistant',
