@@ -283,7 +283,7 @@ export default function ConsultationPage() {
           <div className="bg-iron-dark-gray border border-iron-gray/40 rounded-xl p-8 space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-iron-white mb-4">
-                What You'll Get:
+                What You&apos;ll Get:
               </h2>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
@@ -369,7 +369,7 @@ export default function ConsultationPage() {
           </div>
 
           <div className="bg-iron-dark-gray border-2 border-green-500/30 rounded-xl p-8 space-y-4">
-            <h3 className="text-xl font-bold text-iron-white mb-4">What's Next:</h3>
+            <h3 className="text-xl font-bold text-iron-white mb-4">What&apos;s Next:</h3>
             <ul className="space-y-3 text-left">
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />

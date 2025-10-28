@@ -1525,7 +1525,7 @@ export default function OnboardingPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-iron-orange">✓</span>
-                        <span>Design personalized meal plans you'll actually enjoy</span>
+                        <span>Design personalized meal plans you&apos;ll actually enjoy</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-iron-orange">✓</span>
