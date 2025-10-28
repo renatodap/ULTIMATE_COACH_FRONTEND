@@ -279,7 +279,7 @@ export default function ActivitiesPage() {
             </button>
           </div>
         ) : activities.length === 0 ? (
-          <EmptyState onLogActivity={() => router.push('/activities/log')} />
+          <EmptyState />
         ) : (
           <div className="space-y-6">
             {Object.entries(groupedActivities).map(([date, dateActivities]) => (
