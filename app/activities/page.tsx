@@ -14,6 +14,7 @@ import { getActivities, getDailySummary, deleteActivity } from '@/lib/api/activi
 import type { Activity, DailySummary, ActivityListResponse } from '@/lib/types/activities'
 import ActivityCard from '@/app/components/activities/ActivityCard'
 import EmptyState from '@/app/components/activities/EmptyState'
+import { BottomNav } from '@/components/BottomNav'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function ActivitiesPage() {
@@ -326,6 +327,9 @@ export default function ActivitiesPage() {
       >
         <span className="text-2xl font-light">+</span>
       </button>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   )
 }

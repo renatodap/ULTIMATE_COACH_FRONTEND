@@ -54,6 +54,8 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* PWA mobile app capabilities */}
+        <meta name="mobile-web-app-capable" content="yes" />
         {/* Force black status bar on iOS PWA - prevents white bezel on notch area */}
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <meta name="theme-color" content="#0A0A0B" />
