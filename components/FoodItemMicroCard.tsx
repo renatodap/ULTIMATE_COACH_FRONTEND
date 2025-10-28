@@ -12,7 +12,7 @@ import type { MealItemAPI } from '@/lib/api/nutrition'
 
 interface FoodItemMicroCardProps {
   item: MealItemAPI
-  onEdit: (itemId: string) => void
+  onEdit?: (itemId: string) => void
   onDelete: (itemId: string) => void
   deleteLoading?: boolean
 }
@@ -66,13 +66,15 @@ export function FoodItemMicroCard({
 
         {/* Action buttons */}
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            onClick={() => onEdit(item.id)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-iron-orange hover:text-iron-orange/80 transition-colors active-press"
-            aria-label="Edit food item"
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
+          {onEdit && (
+            <button
+              onClick={() => onEdit(item.id)}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-iron-orange hover:text-iron-orange/80 transition-colors active-press"
+              aria-label="Edit food item"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => onDelete(item.id)}
             disabled={deleteLoading}

@@ -119,7 +119,7 @@ export function MealCard({
                     <FoodItemMicroCard
                       key={item.id}
                       item={item}
-                      onEdit={onEditFood ? () => onEditFood(meal.id, item.id) : undefined}
+                      onEdit={onEditFood ? (itemId) => onEditFood(meal.id, itemId) : undefined}
                       onDelete={() => onDeleteFood(meal.id, item.id)}
                       deleteLoading={deleteLoadingItemId === item.id}
                     />
