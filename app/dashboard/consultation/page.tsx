@@ -44,8 +44,10 @@ export default function ConsultationPage() {
   const [isSending, setIsSending] = useState<boolean>(false)
 
   // Loading states
-  const [isStarting, setIsStarting] = useState<boolean>(true)
+  const [showIntro, setShowIntro] = useState<boolean>(true)
+  const [isStarting, setIsStarting] = useState<boolean>(false)
   const [isCompleting, setIsCompleting] = useState<boolean>(false)
+  const [showSuccess, setShowSuccess] = useState<boolean>(false)
   const [completionError, setCompletionError] = useState<string | null>(null)
 
   // UI state
@@ -61,81 +63,80 @@ export default function ConsultationPage() {
     scrollToBottom()
   }, [messages, showTypingIndicator])
 
-  // Start consultation on mount
-  useEffect(() => {
-    async function initConsultation() {
-      try {
-        setIsStarting(true)
-        const response = await startConsultation()
+  // Start consultation handler (manual)
+  const handleStartConsultation = async () => {
+    try {
+      setShowIntro(false)
+      setIsStarting(true)
+      const response = await startConsultation()
 
-        setSessionId(response.session_id)
-        setCurrentSection(response.current_section)
-        setProgressPercentage(response.progress_percentage)
-        setSectionsCompleted(response.sections_completed)
-        setTotalSections(response.total_sections)
+      setSessionId(response.session_id)
+      setCurrentSection(response.current_section)
+      setProgressPercentage(response.progress_percentage)
+      setSectionsCompleted(response.sections_completed)
+      setTotalSections(response.total_sections)
 
-        // If resuming session, load full conversation history
-        if (response.conversation_history && response.conversation_history.length > 0) {
-          const formattedMessages = response.conversation_history.map((msg: any) => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-          }))
-          setMessages(formattedMessages)
-        } else {
-          // New session - just add initial AI message
-          setMessages([
-            {
-              role: 'assistant',
-              content: response.message,
-              timestamp: new Date(),
-            },
-          ])
-        }
-      } catch (error: any) {
-        console.error('Failed to start consultation:', error)
-
-        // Handle 422 (session already exists - this is OK, just means user refreshed)
-        if (error.status === 422 || error.message?.includes('422')) {
-          setMessages([
-            {
-              role: 'assistant',
-              content:
-                'Welcome back! It looks like you already have a consultation in progress. Please continue where you left off, or refresh the page to start over.',
-              timestamp: new Date(),
-            },
-          ])
-          setIsStarting(false)
-          return
-        }
-
-        // Handle 403 (consultation not enabled)
-        if (error.status === 403 || error.message?.includes('403') || error.message?.includes('not enabled')) {
-          setMessages([
-            {
-              role: 'assistant',
-              content:
-                "I'm sorry, but consultation access isn't enabled for your account yet. Please contact support to get started with personalized coaching.",
-              timestamp: new Date(),
-            },
-          ])
-        } else {
-          setMessages([
-            {
-              role: 'assistant',
-              content:
-                'Sorry, I encountered an error starting the consultation. Please refresh the page to try again.',
-              timestamp: new Date(),
-            },
-          ])
-        }
-      } finally {
-        setIsStarting(false)
+      // If resuming session, load full conversation history
+      if (response.conversation_history && response.conversation_history.length > 0) {
+        const formattedMessages = response.conversation_history.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+        }))
+        setMessages(formattedMessages)
+      } else {
+        // New session - just add initial AI message
+        setMessages([
+          {
+            role: 'assistant',
+            content: response.message,
+            timestamp: new Date(),
+          },
+        ])
       }
-    }
+    } catch (error: any) {
+      console.error('Failed to start consultation:', error)
 
-    initConsultation()
-  }, [])
+      setShowIntro(false)
+
+      // Handle 422 (session already exists - this is OK, just means user refreshed)
+      if (error.status === 422 || error.message?.includes('422')) {
+        setMessages([
+          {
+            role: 'assistant',
+            content:
+              'Welcome back! It looks like you already have a consultation in progress. Please continue where you left off, or refresh the page to start over.',
+            timestamp: new Date(),
+          },
+        ])
+        setIsStarting(false)
+        return
+      }
+
+      // Handle 403 (consultation not enabled)
+      if (error.status === 403 || error.message?.includes('403') || error.message?.includes('not enabled')) {
+        setMessages([
+          {
+            role: 'assistant',
+            content:
+              "I'm sorry, but consultation access isn't enabled for your account yet. Please contact support to get started with personalized coaching.",
+            timestamp: new Date(),
+          },
+        ])
+      } else {
+        setMessages([
+          {
+            role: 'assistant',
+            content:
+              'Sorry, I encountered an error starting the consultation. Please refresh the page to try again.',
+            timestamp: new Date(),
+          },
+        ])
+      }
+    } finally {
+      setIsStarting(false)
+    }
+  }
 
   // Send message handler
   const handleSendMessage = async () => {
@@ -234,10 +235,12 @@ export default function ConsultationPage() {
       const response = await completeConsultation(sessionId)
 
       if (response.success && response.consultation_completed) {
-        // Success! Show success message then redirect
+        // Success! Show success screen then redirect
+        setIsCompleting(false)
+        setShowSuccess(true)
         setTimeout(() => {
-          router.push('/dashboard')
-        }, 2000)
+          window.location.href = '/coach'
+        }, 4000)
       } else {
         setCompletionError(response.message || 'Failed to complete consultation')
         setIsCompleting(false)
@@ -261,6 +264,141 @@ export default function ConsultationPage() {
 
   // Check if consultation is complete
   const isConsultationComplete = progressPercentage >= 100
+
+  // Intro Screen (Value Preview)
+  if (showIntro) {
+    return (
+      <div className="min-h-screen bg-iron-black flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full space-y-8">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🎯</div>
+            <h1 className="text-4xl font-bold text-iron-white mb-3">
+              AI Consultation
+            </h1>
+            <p className="text-xl text-iron-gray">
+              5-minute conversation to create your personalized fitness plan
+            </p>
+          </div>
+
+          <div className="bg-iron-dark-gray border border-iron-gray/40 rounded-xl p-8 space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-iron-white mb-4">
+                What You'll Get:
+              </h2>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-iron-orange/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-iron-orange">1</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-iron-white mb-1">Custom Training Program</h3>
+                    <p className="text-iron-gray">
+                      Workouts designed for your goals, experience level, and available time
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-iron-orange/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-iron-orange">2</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-iron-white mb-1">Personalized Meal Plans</h3>
+                    <p className="text-iron-gray">
+                      Nutrition strategy based on your preferences, lifestyle, and goals
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-iron-orange/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-iron-orange">3</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-iron-white mb-1">AI Coach That Knows You</h3>
+                    <p className="text-iron-gray">
+                      Your coach will understand your challenges, motivations, and what works for you
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div className="border-t border-iron-gray/40 pt-6">
+              <h3 className="text-lg font-bold text-iron-white mb-3">How It Works:</h3>
+              <div className="space-y-2 text-iron-gray">
+                <p>• Answer questions about your fitness background and goals</p>
+                <p>• Share your preferences and challenges</p>
+                <p>• Our AI creates your personalized coaching profile</p>
+                <p className="text-sm text-iron-gray/70 mt-3">
+                  ⏱️ Takes about 5 minutes • 💬 Natural conversation • ✅ 7 sections to complete
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartConsultation}
+            className="w-full px-8 py-6 rounded-xl text-xl font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all"
+          >
+            Start Consultation
+          </button>
+
+          <button
+            onClick={() => router.back()}
+            className="w-full px-6 py-3 rounded-xl text-sm font-medium border-2 border-iron-gray text-iron-gray hover:border-iron-white hover:text-iron-white transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Success Screen (After Completion)
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-iron-black flex items-center justify-center p-4">
+        <div className="max-w-xl w-full text-center space-y-8">
+          <div className="text-6xl mb-4 animate-bounce">✅</div>
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold text-iron-white">
+              Consultation Complete!
+            </h2>
+            <p className="text-xl text-iron-gray">
+              Your personalized coaching profile has been created
+            </p>
+          </div>
+
+          <div className="bg-iron-dark-gray border-2 border-green-500/30 rounded-xl p-8 space-y-4">
+            <h3 className="text-xl font-bold text-iron-white mb-4">What's Next:</h3>
+            <ul className="space-y-3 text-left">
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <span className="text-iron-gray">Your AI coach now understands your goals and challenges</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <span className="text-iron-gray">Recommendations are personalized to your profile</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <span className="text-iron-gray">Start chatting with your coach to get started</span>
+              </li>
+            </ul>
+          </div>
+
+          <p className="text-iron-gray">
+            Taking you to your coach...
+          </p>
+
+          <div className="flex gap-1 justify-center">
+            <div className="w-2 h-2 bg-iron-orange rounded-full animate-bounce" />
+            <div className="w-2 h-2 bg-iron-orange rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+            <div className="w-2 h-2 bg-iron-orange rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Full-screen loading during completion
   if (isCompleting) {

@@ -433,8 +433,9 @@ export default function OnboardingPage() {
         // Ignore localStorage errors
       }
 
-      // Immediate redirect with full page reload to ensure fresh app state
-      window.location.href = '/coach'
+      // Show completion screen with consultation prompt
+      setStep('complete')
+      setLoading(false)
     } catch (err: any) {
       ErrorLogger.log({
         category: ErrorCategory.ONBOARDING_SUBMIT,
@@ -1494,10 +1495,66 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="w-full"
+              className="w-full max-w-2xl mx-auto"
             >
-              <Message text="✅ Profile created!" />
-              <Message text="Taking you to your dashboard..." />
+              <div className="text-center mb-8">
+                <div className="text-6xl mb-4">✅</div>
+                <h2 className="text-3xl font-bold text-iron-white mb-3">
+                  Profile Created!
+                </h2>
+                <p className="text-iron-gray text-lg">
+                  Your fitness journey starts now
+                </p>
+              </div>
+
+              {/* Consultation Prompt Card */}
+              <div className="bg-iron-dark-gray border-2 border-iron-orange/50 rounded-xl p-8 mb-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="text-4xl">🎯</div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-iron-white mb-2">
+                      Get Your Personalized Plan
+                    </h3>
+                    <p className="text-iron-gray mb-4">
+                      Complete a 5-minute AI consultation to unlock your fully personalized coaching experience. Our AI will:
+                    </p>
+                    <ul className="space-y-2 text-iron-gray">
+                      <li className="flex items-start gap-2">
+                        <span className="text-iron-orange">✓</span>
+                        <span>Create a custom training program based on your goals</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-iron-orange">✓</span>
+                        <span>Design personalized meal plans you'll actually enjoy</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-iron-orange">✓</span>
+                        <span>Understand your challenges and adapt recommendations</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => router.push('/dashboard/consultation')}
+                    className="flex-1 px-6 py-4 rounded-xl text-lg font-bold bg-iron-orange text-iron-white shadow-xl shadow-iron-orange/50 hover:shadow-2xl hover:shadow-iron-orange/60 transition-all"
+                  >
+                    Start Consultation (5 min)
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/coach'}
+                    className="flex-1 px-6 py-4 rounded-xl text-lg font-medium border-2 border-iron-gray text-iron-gray hover:border-iron-white hover:text-iron-white transition-colors"
+                  >
+                    Skip for Now
+                  </button>
+                </div>
+
+                <p className="text-xs text-iron-gray text-center mt-4">
+                  You can start the consultation anytime from Settings
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

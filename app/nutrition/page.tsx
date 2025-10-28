@@ -311,11 +311,6 @@ function NutritionPageContent() {
     }
   }
 
-  // Edit food item (navigate to edit page)
-  const handleEditFood = (mealId: string, itemId: string) => {
-    router.push(`/nutrition/edit/${itemId}?meal=${mealId}`)
-  }
-
   /**
    * Undo delete
    *
@@ -529,7 +524,6 @@ function NutritionPageContent() {
             <MealCard
               key={meal.id}
               meal={meal}
-              onEditFood={handleEditFood}
               onDeleteFood={handleDeleteFood}
               onDeleteMeal={handleDeleteMeal}
               deleteLoadingItemId={deleteLoadingItemId}

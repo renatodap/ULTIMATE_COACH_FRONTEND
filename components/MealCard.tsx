@@ -16,7 +16,7 @@ import type { MealAPI } from '@/lib/api/nutrition'
 
 interface MealCardProps {
   meal: MealAPI
-  onEditFood: (mealId: string, itemId: string) => void
+  onEditFood?: (mealId: string, itemId: string) => void
   onDeleteFood: (mealId: string, itemId: string) => void
   onDeleteMeal: (mealId: string) => void
   deleteLoadingItemId?: string | null
@@ -119,7 +119,7 @@ export function MealCard({
                     <FoodItemMicroCard
                       key={item.id}
                       item={item}
-                      onEdit={() => onEditFood(meal.id, item.id)}
+                      onEdit={onEditFood ? () => onEditFood(meal.id, item.id) : undefined}
                       onDelete={() => onDeleteFood(meal.id, item.id)}
                       deleteLoading={deleteLoadingItemId === item.id}
                     />

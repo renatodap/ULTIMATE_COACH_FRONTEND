@@ -86,6 +86,24 @@ export const COACH_SHORTCUTS: Record<string, CoachShortcut> = {
     icon: '💪'
   },
 
+  weight: {
+    patterns: [
+      'show weight',
+      'view weight',
+      'see weight',
+      'my weight',
+      'weight dashboard',
+      'weight page',
+      'weight tracking',
+      'weight history',
+      'weight log'
+    ],
+    path: '/weight',
+    title: 'Weight Tracking',
+    description: 'View your weight history and progress',
+    icon: '⚖️'
+  },
+
   profile: {
     patterns: [
       'show profile',

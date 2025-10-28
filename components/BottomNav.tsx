@@ -25,7 +25,7 @@ export function BottomNav({ hideOnScroll = true, alwaysOnTop = false }: BottomNa
   const router = useRouter()
   const scrollDirection = useScrollDirection()
 
-  // Week 2.5: Coach, Nutrition (meals), Settings
+  // Week 3: Coach, Nutrition, Activities, Settings (4-tab layout)
   const coachTab = {
     name: 'Coach',
     path: '/coach',
@@ -46,6 +46,16 @@ export function BottomNav({ hideOnScroll = true, alwaysOnTop = false }: BottomNa
     ),
   }
 
+  const activitiesTab = {
+    name: 'Activities',
+    path: '/activities',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    ),
+  }
+
   const settingsTab = {
     name: 'Settings',
     path: '/settings',
@@ -57,7 +67,7 @@ export function BottomNav({ hideOnScroll = true, alwaysOnTop = false }: BottomNa
     ),
   }
 
-  const tabs = [coachTab, nutritionTab, settingsTab]
+  const tabs = [coachTab, nutritionTab, activitiesTab, settingsTab]
 
   const isActive = (path: string) => {
     return pathname?.startsWith(path)
