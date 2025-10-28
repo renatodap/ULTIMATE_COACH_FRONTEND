@@ -52,7 +52,7 @@ export default function ActivitiesPage() {
         getDailySummary({ target_date: dateStr })
       ])
 
-      setActivities(activitiesData.data)
+      setActivities(activitiesData.activities)
       setSummary(summaryData)
     } catch (err) {
       console.error('Failed to fetch activities:', err)
