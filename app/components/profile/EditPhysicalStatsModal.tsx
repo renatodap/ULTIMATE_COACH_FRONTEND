@@ -15,7 +15,8 @@
 
 import { useState, useMemo } from 'react'
 import { X, Loader2, Scale } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 import {
   displayWeight,
   displayHeight,
@@ -63,67 +64,66 @@ export default function EditPhysicalStatsModal({
     const v = weightFromKg(profile.goal_weight_kg, unitSystem)
     return String(v)
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      const updates: any = {}
-
-      if (age && parseInt(age) !== profile.age) {
-        updates.age = parseInt(age)
+    // Calculate height in cm
+    let heightCmValue: number | undefined
+    if (unitSystem === 'imperial') {
+      const feet = parseInt(heightFeet || '0', 10)
+      const inches = parseInt(heightInches || '0', 10)
+      const cm = heightToCm({ feet, inches }, 'imperial')
+      if (!isNaN(cm)) {
+        heightCmValue = cm
       }
-      // Height updates
-      if (unitSystem === 'imperial') {
-        const feet = parseInt(heightFeet || '0', 10)
-        const inches = parseInt(heightInches || '0', 10)
-        const cm = heightToCm({ feet, inches }, 'imperial')
-        if (!isNaN(cm) && cm !== profile.height_cm) {
-          updates.height_cm = cm
-        }
-      } else {
-        if (heightCm) {
-          const cm = parseFloat(heightCm)
-          if (!isNaN(cm) && cm !== profile.height_cm) {
-            updates.height_cm = cm
-          }
+    } else {
+      if (heightCm) {
+        const cm = parseFloat(heightCm)
+        if (!isNaN(cm)) {
+          heightCmValue = cm
         }
       }
-
-      // Weight updates
-      if (currentWeightDisplay) {
-        const current = parseFloat(currentWeightDisplay)
-        const kg = unitSystem === 'imperial' ? weightToKg(current, 'imperial') : current
-        if (!isNaN(kg) && kg !== profile.current_weight_kg) {
-          updates.current_weight_kg = kg
-        }
-      }
-      if (goalWeightDisplay) {
-        const gw = parseFloat(goalWeightDisplay)
-        const kg = unitSystem === 'imperial' ? weightToKg(gw, 'imperial') : gw
-        if (!isNaN(kg) && kg !== profile.goal_weight_kg) {
-          updates.goal_weight_kg = kg
-        }
-      }
-
-      if (Object.keys(updates).length === 0) {
-        onClose()
-        return
-      }
-
-      const updatedProfile = await updateFullUserProfile(updates)
-      onSuccess(updatedProfile)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update physical stats'
-      onError(errorMessage)
-    } finally {
-      setIsSubmitting(false)
     }
+
+    // Calculate weights in kg
+    let currentWeightKg: number | undefined
+    if (currentWeightDisplay) {
+      const current = parseFloat(currentWeightDisplay)
+      currentWeightKg = unitSystem === 'imperial' ? weightToKg(current, 'imperial') : current
+      if (isNaN(currentWeightKg)) {
+        currentWeightKg = undefined
+      }
+    }
+
+    let goalWeightKg: number | undefined
+    if (goalWeightDisplay) {
+      const gw = parseFloat(goalWeightDisplay)
+      goalWeightKg = unitSystem === 'imperial' ? weightToKg(gw, 'imperial') : gw
+      if (isNaN(goalWeightKg)) {
+        goalWeightKg = undefined
+      }
+    }
+
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      age: age ? parseInt(age) : undefined,
+      height_cm: heightCmValue,
+      current_weight_kg: currentWeightKg,
+      goal_weight_kg: goalWeightKg,
+    })
+
+    // Submit via hook
+    submitProfile(e, updates)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {

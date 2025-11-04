@@ -14,7 +14,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Target } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 
 interface EditGoalsModalProps {
   profile: FullUserProfile
@@ -31,56 +32,38 @@ export default function EditGoalsModal({
   onSuccess,
   onError,
 }: EditGoalsModalProps) {
+  // Form state
   const [primaryGoal, setPrimaryGoal] = useState(profile.primary_goal || 'maintain')
   const [secondaryGoal, setSecondaryGoal] = useState(profile.secondary_goal || '')
   const [experienceLevel, setExperienceLevel] = useState(profile.experience_level || 'beginner')
   const [activityLevel, setActivityLevel] = useState(profile.activity_level || 'sedentary')
   const [workoutFrequency, setWorkoutFrequency] = useState(profile.workout_frequency?.toString() || '3')
   const [fitnessNotes, setFitnessNotes] = useState(profile.fitness_notes || '')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      const updates: any = {}
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      primary_goal: primaryGoal,
+      secondary_goal: secondaryGoal || undefined,
+      experience_level: experienceLevel,
+      activity_level: activityLevel,
+      workout_frequency: parseInt(workoutFrequency),
+      fitness_notes: fitnessNotes || undefined,
+    })
 
-      if (primaryGoal !== profile.primary_goal) {
-        updates.primary_goal = primaryGoal
-      }
-      if (secondaryGoal !== profile.secondary_goal) {
-        updates.secondary_goal = secondaryGoal || undefined
-      }
-      if (experienceLevel !== profile.experience_level) {
-        updates.experience_level = experienceLevel
-      }
-      if (activityLevel !== profile.activity_level) {
-        updates.activity_level = activityLevel
-      }
-      if (parseInt(workoutFrequency) !== profile.workout_frequency) {
-        updates.workout_frequency = parseInt(workoutFrequency)
-      }
-      if (fitnessNotes !== (profile.fitness_notes || '')) {
-        updates.fitness_notes = fitnessNotes || undefined
-      }
-
-      if (Object.keys(updates).length === 0) {
-        onClose()
-        return
-      }
-
-      const updatedProfile = await updateFullUserProfile(updates)
-      onSuccess(updatedProfile)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update goals'
-      onError(errorMessage)
-    } finally {
-      setIsSubmitting(false)
-    }
+    // Submit via hook
+    submitProfile(e, updates)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
