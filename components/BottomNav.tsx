@@ -13,7 +13,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { FEATURE_PLAN_IN_NAV } from '@/lib/constants/features'
-import { useScrollDirection } from '@/hooks/useScrollDirection'
+import { useScrollDirection } from '@/lib/hooks/useScrollDirection'
 
 interface BottomNavProps {
   hideOnScroll?: boolean
