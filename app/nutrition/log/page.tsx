@@ -240,8 +240,7 @@ function LogMealPageContent() {
       }
 
       setSelectedFood(null)
-      setSearchQuery('')
-      setSearchResults([])
+      setSearchQuery('') // Hook automatically clears searchResults when query is empty
     } catch (error) {
       console.error('Failed to add item:', error)
       setToast({ message: t('nutrition.failedToAddItem'), type: 'error' })
