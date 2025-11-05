@@ -132,9 +132,8 @@ function LogMealPageContent() {
         setQuickMeals(meals)
         setRecentFoods(recent)
 
-        // Set progressive disclosure based on data availability
-        setShowQuickMeals(meals.length > 0)
-        setShowRecentFoods(recent.length >= 3)
+        // NOTE: Progressive disclosure automatically handled by useNutritionSearch hook
+        // based on quickMealsCount and recentFoodsCount
       } catch (error) {
         console.error('Failed to load initial data:', error)
       } finally {
