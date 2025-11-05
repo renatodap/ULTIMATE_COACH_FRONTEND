@@ -114,8 +114,8 @@ export interface WearableStatus {
   /** Latest sync job (if any) */
   latest_job?: SyncJob | null
 
-  /** Total activities synced across all devices */
-  total_activities_synced: number
+  /** Total activities synced across all devices (optional - may not be implemented yet) */
+  total_activities_synced?: number
 
   /** ISO 8601 timestamp of last sync across all devices */
   last_sync_at?: string | null
