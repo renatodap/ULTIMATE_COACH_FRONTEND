@@ -10,7 +10,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Settings } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 import { UNIT_SYSTEM_OPTIONS, TIMEZONE_OPTIONS } from '@/lib/constants/profile'
 import { getLanguageDisplayName, type SupportedLanguage } from '@/lib/utils/language'
 
@@ -42,41 +43,28 @@ export default function EditPreferencesModal({
   const [language, setLanguage] = useState<SupportedLanguage>((profile.language as SupportedLanguage) || 'en')
   const [unitSystem, setUnitSystem] = useState(profile.unit_system || 'imperial')
   const [timezone, setTimezone] = useState(profile.timezone || 'America/New_York')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      const updates: any = {}
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      language,
+      unit_system: unitSystem,
+      timezone,
+    })
 
-      if (language !== profile.language) {
-        updates.language = language
-      }
-      if (unitSystem !== profile.unit_system) {
-        updates.unit_system = unitSystem
-      }
-      if (timezone !== profile.timezone) {
-        updates.timezone = timezone
-      }
-
-      if (Object.keys(updates).length === 0) {
-        onClose()
-        return
-      }
-
-      const updatedProfile = await updateFullUserProfile(updates)
-      onSuccess(updatedProfile)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update preferences'
-      onError(errorMessage)
-    } finally {
-      setIsSubmitting(false)
-    }
+    // Submit via hook
+    submitProfile(e, updates)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {

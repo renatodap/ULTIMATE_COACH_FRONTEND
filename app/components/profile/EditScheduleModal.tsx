@@ -8,7 +8,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Calendar } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 
 interface EditScheduleModalProps {
   profile: FullUserProfile
@@ -54,7 +55,13 @@ export default function EditScheduleModal({
   onError,
 }: EditScheduleModalProps) {
   const [schedule, setSchedule] = useState<ScheduleSlot[]>(profile.weekly_schedule || [])
-  const [isSaving, setIsSaving] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   const isSlotSelected = (day: number, timeBlock: TimeBlock) => {
     return schedule.some(s => s.day === day && s.time_block === timeBlock)
@@ -75,18 +82,15 @@ export default function EditScheduleModal({
     }
   }
 
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      const updated = await updateFullUserProfile({ weekly_schedule: schedule })
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update schedule'
-      onError(errorMessage)
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSave = () => {
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      weekly_schedule: schedule,
+    })
+
+    // Submit via hook
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent
+    submitProfile(syntheticEvent, updates)
   }
 
   if (!isOpen) return null
@@ -175,17 +179,17 @@ export default function EditScheduleModal({
         <div className="sticky bottom-0 bg-iron-dark-gray border-t border-iron-gray p-4 sm:p-6 flex gap-3">
           <button
             onClick={onClose}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-gray/20 text-iron-white rounded-lg hover:bg-iron-gray/40 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-orange text-iron-black font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSaving ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...

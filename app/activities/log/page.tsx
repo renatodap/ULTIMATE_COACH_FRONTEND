@@ -201,7 +201,7 @@ export default function LogActivityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-32">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-iron-black border-b border-iron-gray">
         <div className="px-4 py-4 flex items-center gap-4">

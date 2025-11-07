@@ -9,7 +9,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Shield } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 import ConstraintsForm from '@/components/onboarding/ConstraintsForm'
 import type { NonNegotiableEntry } from '@/lib/api/onboarding'
 
@@ -37,20 +38,23 @@ export default function EditConstraintsModal({
       excluded_food_ids: c.excluded_food_ids,
     }))
   )
-  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      const updated = await updateFullUserProfile({ non_negotiables: constraints })
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update constraints'
-      onError(errorMessage)
-    } finally {
-      setIsSaving(false)
-    }
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
+
+  const handleSave = () => {
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      non_negotiables: constraints,
+    })
+
+    // Submit via hook
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent
+    submitProfile(syntheticEvent, updates)
   }
 
   if (!isOpen) return null
@@ -89,17 +93,17 @@ export default function EditConstraintsModal({
         <div className="sticky bottom-0 bg-iron-dark-gray border-t border-iron-gray p-4 sm:p-6 flex gap-3">
           <button
             onClick={onClose}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-gray/20 text-iron-white rounded-lg hover:bg-iron-gray/40 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-orange text-iron-black font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSaving ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...

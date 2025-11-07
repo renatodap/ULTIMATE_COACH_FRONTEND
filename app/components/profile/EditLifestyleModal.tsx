@@ -10,7 +10,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Moon } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 import { STRESS_LEVEL_OPTIONS, VALIDATION_RULES } from '@/lib/constants/profile'
 
 interface EditLifestyleModalProps {
@@ -30,38 +31,27 @@ export default function EditLifestyleModal({
 }: EditLifestyleModalProps) {
   const [sleepHours, setSleepHours] = useState(profile.sleep_hours?.toString() || '7')
   const [stressLevel, setStressLevel] = useState(profile.stress_level || 'medium')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      const updates: any = {}
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      sleep_hours: parseFloat(sleepHours),
+      stress_level: stressLevel,
+    })
 
-      if (parseFloat(sleepHours) !== profile.sleep_hours) {
-        updates.sleep_hours = parseFloat(sleepHours)
-      }
-      if (stressLevel !== profile.stress_level) {
-        updates.stress_level = stressLevel
-      }
-
-      if (Object.keys(updates).length === 0) {
-        onClose()
-        return
-      }
-
-      const updatedProfile = await updateFullUserProfile(updates)
-      onSuccess(updatedProfile)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update lifestyle'
-      onError(errorMessage)
-    } finally {
-      setIsSubmitting(false)
-    }
+    // Submit via hook
+    submitProfile(e, updates)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {

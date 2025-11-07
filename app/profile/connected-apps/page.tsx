@@ -5,11 +5,12 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { BottomNav } from '@/components/BottomNav'
 import { LoadingScreen } from '@/components/shared/LoadingScreen'
 import { getWearableStatus, connectWearable, triggerWearableSync, triggerWearableSyncInline } from '@/lib/api/wearables'
+import { WearableStatus } from '@/lib/types/wearables'
 import toast from 'react-hot-toast'
 
 export default function ConnectedAppsPage() {
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState<any>(null)
+  const [status, setStatus] = useState<WearableStatus | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [provider] = useState<'garmin'>('garmin')
@@ -20,8 +21,8 @@ export default function ConnectedAppsPage() {
       setLoading(true)
       const s = await getWearableStatus()
       setStatus(s)
-    } catch (e: any) {
-      console.error(e)
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -40,8 +41,9 @@ export default function ConnectedAppsPage() {
       setEmail('')
       setPassword('')
       await load()
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to connect', { id: t })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect'
+      toast.error(errorMessage, { id: t })
     }
   }
 
@@ -56,8 +58,9 @@ export default function ConnectedAppsPage() {
       }
       toast.success(enqueue ? 'Sync enqueued!' : 'Sync completed!', { id: t })
       await load()
-    } catch (err: any) {
-      toast.error(err?.message || 'Sync failed', { id: t })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sync failed'
+      toast.error(errorMessage, { id: t })
     } finally {
       setSyncing(false)
     }
@@ -72,11 +75,11 @@ export default function ConnectedAppsPage() {
     )
   }
 
-  const garminAccount = status?.accounts?.find((a: any) => a.provider === 'garmin')
+  const garminAccount = status?.accounts?.find((a) => a.provider === 'garmin')
   const latestJob = status?.latest_job
 
   return (
-    <div className="min-h-screen bg-iron-black pb-20">
+    <div className="min-h-screen bg-iron-black pb-40">
       <PageHeader title="Connected Apps" showBack />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">

@@ -8,7 +8,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Dumbbell, Plus } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 
 interface EditEquipmentModalProps {
   profile: FullUserProfile
@@ -51,7 +52,13 @@ export default function EditEquipmentModal({
 }: EditEquipmentModalProps) {
   const [equipment, setEquipment] = useState<string[]>(profile.equipment_access || [])
   const [customEquipment, setCustomEquipment] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   const handleToggleEquipment = (item: string) => {
     if (equipment.includes(item)) {
@@ -73,18 +80,15 @@ export default function EditEquipmentModal({
     setEquipment(equipment.filter(e => e !== item))
   }
 
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      const updated = await updateFullUserProfile({ equipment_access: equipment })
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update equipment access'
-      onError(errorMessage)
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSave = () => {
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      equipment_access: equipment,
+    })
+
+    // Submit via hook
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent
+    submitProfile(syntheticEvent, updates)
   }
 
   if (!isOpen) return null
@@ -191,17 +195,17 @@ export default function EditEquipmentModal({
         <div className="sticky bottom-0 bg-iron-dark-gray border-t border-iron-gray p-4 sm:p-6 flex gap-3">
           <button
             onClick={onClose}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-gray/20 text-iron-white rounded-lg hover:bg-iron-gray/40 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-3 bg-iron-orange text-iron-black font-medium rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSaving ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...

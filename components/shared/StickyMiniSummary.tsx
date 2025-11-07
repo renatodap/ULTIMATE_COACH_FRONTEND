@@ -10,7 +10,7 @@
  * Used on: Activities, Nutrition pages
  */
 
-import { useScrollDirection } from '@/hooks/useScrollDirection'
+import { useScrollDirection } from '@/lib/hooks/useScrollDirection'
 
 interface StickyMiniSummaryProps {
   type: 'activity' | 'nutrition'

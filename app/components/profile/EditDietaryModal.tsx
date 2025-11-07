@@ -13,7 +13,8 @@
 
 import { useState } from 'react'
 import { X, Loader2, Apple, Plus, Trash2 } from 'lucide-react'
-import { updateFullUserProfile, type FullUserProfile } from '@/lib/api/profile'
+import { type FullUserProfile } from '@/lib/api/profile'
+import { useProfileFieldEditor, buildUpdatesWithChangeDetection } from '@/lib/hooks/useProfileFieldEditor'
 
 interface EditDietaryModalProps {
   profile: FullUserProfile
@@ -35,11 +36,17 @@ export default function EditDietaryModal({
   const [foodsToAvoid, setFoodsToAvoid] = useState<string[]>(profile.foods_to_avoid || [])
   const [mealsPerDay, setMealsPerDay] = useState(profile.meals_per_day?.toString() || '3')
   const [cooksRegularly, setCooksRegularly] = useState(profile.cooks_regularly ?? true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Temporary inputs for adding new items
   const [newAllergy, setNewAllergy] = useState('')
   const [newAvoid, setNewAvoid] = useState('')
+
+  // Profile field editor hook (replaces manual submission logic)
+  const { isSubmitting, handleSubmit: submitProfile } = useProfileFieldEditor({
+    onSuccess,
+    onError,
+    onClose,
+  })
 
   if (!isOpen) return null
 
@@ -65,50 +72,20 @@ export default function EditDietaryModal({
     setFoodsToAvoid(foodsToAvoid.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
-    try {
-      const updates: any = {}
+    // Build updates with automatic change detection
+    const updates = buildUpdatesWithChangeDetection(profile, {
+      dietary_preference: dietaryPreference,
+      food_allergies: foodAllergies,
+      foods_to_avoid: foodsToAvoid,
+      meals_per_day: parseInt(mealsPerDay),
+      cooks_regularly: cooksRegularly,
+    })
 
-      if (dietaryPreference !== profile.dietary_preference) {
-        updates.dietary_preference = dietaryPreference
-      }
-
-      // Compare arrays
-      const allergiesChanged = JSON.stringify(foodAllergies.sort()) !== JSON.stringify((profile.food_allergies || []).sort())
-      if (allergiesChanged) {
-        updates.food_allergies = foodAllergies
-      }
-
-      const avoidsChanged = JSON.stringify(foodsToAvoid.sort()) !== JSON.stringify((profile.foods_to_avoid || []).sort())
-      if (avoidsChanged) {
-        updates.foods_to_avoid = foodsToAvoid
-      }
-
-      if (parseInt(mealsPerDay) !== profile.meals_per_day) {
-        updates.meals_per_day = parseInt(mealsPerDay)
-      }
-
-      if (cooksRegularly !== profile.cooks_regularly) {
-        updates.cooks_regularly = cooksRegularly
-      }
-
-      if (Object.keys(updates).length === 0) {
-        onClose()
-        return
-      }
-
-      const updatedProfile = await updateFullUserProfile(updates)
-      onSuccess(updatedProfile)
-      onClose()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update dietary preferences'
-      onError(errorMessage)
-    } finally {
-      setIsSubmitting(false)
-    }
+    // Submit via hook
+    submitProfile(e, updates)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {

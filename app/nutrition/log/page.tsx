@@ -37,10 +37,12 @@ import { useUserLanguage } from '@/lib/hooks/useUserLanguage'
 import { useTranslation } from '@/lib/i18n'
 import { useTimezone } from '@/lib/context/TimezoneContext'
 import { toUTC } from '@/lib/utils/timezone'
-import { searchFoods, getRecentFoods, getFood } from '@/lib/api/foods'
+import { getRecentFoods, getFood } from '@/lib/api/foods'
 import { listQuickMeals, createQuickMeal, logQuickMeal } from '@/lib/api/quick-meals'
 import { createMeal } from '@/lib/api/nutrition'
 import { calculateFoodNutrition, formatNutrition } from '@/lib/utils/nutrition-calculator'
+import { useNutritionSearch } from '@/lib/hooks/useNutritionSearch'
+import { useMealBuilder, transformMealItemsForAPI } from '@/lib/hooks/useMealBuilder'
 import type { Food, FoodServing, MealItemPreview, QuickMeal } from '@/lib/types/food'
 import type { CreateMealRequest, CreateMealItemRequest } from '@/lib/api/nutrition'
 
@@ -60,20 +62,37 @@ function LogMealPageContent() {
   const [recentFoods, setRecentFoods] = useState<Food[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Food[]>([])
-  const [searching, setSearching] = useState(false)
-
-  // Meal building state
-  const [mealItems, setMealItems] = useState<MealItemPreview[]>([])
+  // Meal type state (not part of builder hook - UI-specific)
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | 'other'>(getDefaultMealType())
-  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
-  const [editQuantity, setEditQuantity] = useState<number>(0)
 
-  // Progressive disclosure states
-  const [showQuickMeals, setShowQuickMeals] = useState(true)
-  const [showRecentFoods, setShowRecentFoods] = useState(true)
+  // Search hook - replaces search state & progressive disclosure (lines 63-77 removed)
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    isSearching: searching,
+    showQuickMeals,
+    showRecentFoods,
+  } = useNutritionSearch({
+    quickMealsCount: quickMeals.length,
+    recentFoodsCount: recentFoods.length,
+  })
+
+  // Meal builder hook - replaces meal building state (lines 68-72 removed)
+  const {
+    mealItems,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    totals,
+    clearMeal,
+    hasItems,
+    editingIndex: editingItemIndex,
+    startEditing,
+    stopEditing,
+    editingQuantity: editQuantity,
+    setEditingQuantity: setEditQuantity,
+  } = useMealBuilder()
 
   // Modal states
   const [selectedFood, setSelectedFood] = useState<Food | null>(null)
@@ -113,9 +132,8 @@ function LogMealPageContent() {
         setQuickMeals(meals)
         setRecentFoods(recent)
 
-        // Set progressive disclosure based on data availability
-        setShowQuickMeals(meals.length > 0)
-        setShowRecentFoods(recent.length >= 3)
+        // NOTE: Progressive disclosure automatically handled by useNutritionSearch hook
+        // based on quickMealsCount and recentFoodsCount
       } catch (error) {
         console.error('Failed to load initial data:', error)
       } finally {
@@ -126,38 +144,8 @@ function LogMealPageContent() {
     fetchInitialData()
   }, [authLoading, onboardingComplete])
 
-  // Progressive disclosure: Hide Quick Meals & Recent Foods when searching
-  useEffect(() => {
-    if (searchQuery.length >= 2) {
-      setShowQuickMeals(false)
-      setShowRecentFoods(false)
-    } else {
-      setShowQuickMeals(quickMeals.length > 0)
-      setShowRecentFoods(recentFoods.length >= 3)
-    }
-  }, [searchQuery, quickMeals.length, recentFoods.length])
-
-  // Debounced search
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([])
-      return
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        setSearching(true)
-        const results = await searchFoods(searchQuery, 20)
-        setSearchResults(results.foods || [])
-      } catch (error) {
-        console.error('Search failed:', error)
-      } finally {
-        setSearching(false)
-      }
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+  // NOTE: Progressive disclosure & debounced search now handled by useNutritionSearch hook
+  // Removed 40+ lines of useEffect logic (lines 129-160)
 
   // Handle quick meal logging
   const handleLogQuickMeal = async (quickMealId: string) => {
@@ -242,7 +230,7 @@ function LogMealPageContent() {
         calculated_fat_g: nutrition.fat_g,
       }
 
-      setMealItems([...mealItems, newItem])
+      addItem(newItem) // Using useMealBuilder hook
 
       // UX IMPROVEMENT: Remember the last quantity entered
       // This helps when adding multiple foods of similar sizes
@@ -252,18 +240,16 @@ function LogMealPageContent() {
       }
 
       setSelectedFood(null)
-      setSearchQuery('')
-      setSearchResults([])
+      setSearchQuery('') // Hook automatically clears searchResults when query is empty
     } catch (error) {
       console.error('Failed to add item:', error)
       setToast({ message: t('nutrition.failedToAddItem'), type: 'error' })
     }
   }
 
-  // Handle inline edit
+  // Handle inline edit - using useMealBuilder hook
   const handleStartEdit = (index: number) => {
-    setEditingItemIndex(index)
-    setEditQuantity(mealItems[index].quantity)
+    startEditing(index) // Hook handles setting editingItemIndex and editQuantity
   }
 
   const handleSaveEdit = () => {
@@ -289,30 +275,25 @@ function LogMealPageContent() {
         calculated_fat_g: nutrition.fat_g,
       }
 
-      const newItems = [...mealItems]
-      newItems[editingItemIndex] = updatedItem
-      setMealItems(newItems)
-      setEditingItemIndex(null)
+      updateItemQuantity(editingItemIndex, editQuantity) // Using useMealBuilder hook
+      stopEditing() // Handles clearing editingItemIndex
     } catch (error) {
       console.error('Failed to update item:', error)
       setToast({ message: t('nutrition.failedToUpdateItem'), type: 'error' })
     }
   }
 
-  // Calculate meal totals
-  const mealTotals = mealItems.reduce(
-    (totals, item) => ({
-      calories: totals.calories + item.calculated_calories,
-      protein_g: totals.protein_g + item.calculated_protein_g,
-      carbs_g: totals.carbs_g + item.calculated_carbs_g,
-      fat_g: totals.fat_g + item.calculated_fat_g,
-    }),
-    { calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 }
-  )
+  // Meal totals from useMealBuilder hook (replaces manual reduce)
+  const mealTotals = {
+    calories: totals.calories,
+    protein_g: totals.protein,
+    carbs_g: totals.carbs,
+    fat_g: totals.fat,
+  }
 
   // Handle save as quick meal
   const handleSaveAsQuickMeal = async () => {
-    if (!quickMealName.trim() || mealItems.length === 0) {
+    if (!quickMealName.trim() || !hasItems) {
       setToast({ message: t('nutrition.pleaseProvideName'), type: 'error' })
       return
     }
@@ -356,7 +337,7 @@ function LogMealPageContent() {
 
   // Handle log meal
   const handleLogMeal = async () => {
-    if (mealItems.length === 0) {
+    if (!hasItems) {
       setToast({ message: t('nutrition.pleaseAddOneItem'), type: 'error' })
       return
     }
@@ -364,30 +345,9 @@ function LogMealPageContent() {
     try {
       setLogging(true)
 
-      // Transform MealItemPreview[] to CreateMealItemRequest[]
-      // IMPORTANT: Backend will IGNORE calculated_* values and recalculate everything
-      // We send them for logging/debugging purposes only
-      // See NUTRITION_LOGGING_ARCHITECTURE.md - Frontend/Backend Contract
-      const items: CreateMealItemRequest[] = mealItems.map(item => ({
-        food_id: item.food_id,
-
-        // CRITICAL: quantity semantic depends on serving_id
-        // - If serving_id is null → quantity = grams
-        // - If serving_id present → quantity = number of servings
-        quantity: item.quantity,
-        serving_id: item.serving_id || null,
-
-        // Frontend-calculated values (backend will RECALCULATE and ignore these)
-        grams: item.calculated_grams,
-        calories: Math.round(item.calculated_calories),
-        protein_g: Math.round(item.calculated_protein_g * 10) / 10,
-        carbs_g: Math.round(item.calculated_carbs_g * 10) / 10,
-        fat_g: Math.round(item.calculated_fat_g * 10) / 10,
-
-        // Display fields (used for showing meal history)
-        display_unit: item.unit === 'grams' ? 'g' : item.serving?.serving_unit || 'serving',
-        display_label: item.serving?.serving_label || null,
-      }))
+      // Transform using utility from useMealBuilder hook
+      // Handles rounding, display units, and API contract formatting
+      const items = transformMealItemsForAPI(mealItems)
 
       const request: CreateMealRequest = {
         meal_type: mealType,
@@ -644,7 +604,7 @@ function LogMealPageContent() {
         </div>
 
         {/* Building Meal */}
-        {mealItems.length > 0 && (
+        {hasItems && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-heading text-lg text-iron-white uppercase tracking-wider">
@@ -714,7 +674,7 @@ function LogMealPageContent() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setMealItems(mealItems.filter((_, i) => i !== index))}
+                    onClick={() => removeItem(index)} // Using useMealBuilder hook
                     className="text-iron-gray hover:text-iron-white transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -737,7 +697,7 @@ function LogMealPageContent() {
       </main>
 
       {/* Sticky Action Button - Log Meal or Save Template */}
-      {mealItems.length > 0 && (
+      {hasItems && (
         <FABFullWidth
           label={
             isTemplateMode

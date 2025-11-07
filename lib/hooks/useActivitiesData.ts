@@ -356,7 +356,7 @@ export function useActivitiesData(
         if (job && job.status === 'running') {
           setSyncInProgress(true)
           prevSyncRunning = true
-        } else if (prevSyncRunning && job && (job.status === 'success' || job.status === 'error')) {
+        } else if (prevSyncRunning && job && (job.status === 'completed' || job.status === 'failed' || job.status === 'partial')) {
           // Sync just completed - refresh activities
           setSyncInProgress(false)
           prevSyncRunning = false
